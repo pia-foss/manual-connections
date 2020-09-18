@@ -67,7 +67,7 @@ bestServer_OT_hostname="$(echo $regionData | jq -r '.servers.ovpntcp[0].cn')"
 bestServer_OU_IP="$(echo $regionData | jq -r '.servers.ovpnudp[0].ip')"
 bestServer_OU_hostname="$(echo $regionData | jq -r '.servers.ovpnudp[0].cn')"
 
-echo "The script found the best servers from the region closes to you.
+echo "The script found the best servers from the region closest to you.
 When connecting to an IP (no matter which protocol), please verify
 the SSL/TLS certificate actually contains the hostname so that you
 are sure you are connecting to a secure server, validated by the
