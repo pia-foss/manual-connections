@@ -14,13 +14,14 @@ serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
 printServerLatency() {
   serverIP="$1"
   regionID="$2"
-  regionName="${@:3}"
+  regionName="$(echo ${@:3} |
+    sed 's/ false//' | sed 's/true/(geo)/')"
   time=$(curl -o /dev/null -s \
     --connect-timeout $maximum_allowed_latency \
     --write-out "%{time_connect}" \
     http://$serverIP:443)
   if [ $? -eq 0 ]; then
-    >&2 echo The region \"$regionName\" responded in $time seconds
+    >&2 echo Got latency ${time}s for region: $regionName
     echo $time $regionID $serverIP
   fi
 }
@@ -41,10 +42,10 @@ fi
 echo "OK!"
 
 # Test one server from each region to get the closest region:
-echo Testing servers that respond \
+echo Testing regions that respond \
   faster than $maximum_allowed_latency seconds:
 region_latency_report="$( echo $all_region_data |
-  jq -r '.regions[] | .servers.meta[0].ip + " " + .id + " " + .name' )"
+  jq -r '.regions[] | .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
 
 # Get the best region
 bestRegion="$(echo "$region_latency_report" |
@@ -56,7 +57,12 @@ regionData="$( echo $all_region_data |
   jq --arg REGION_ID "$bestRegion" -r \
   '.regions[] | select(.id==$REGION_ID)')"
 
-echo The closest region is "$(echo $regionData | jq -r '.name')".
+echo -n The closest region is "$(echo $regionData | jq -r '.name')"
+if echo $regionData | jq -r '.geo' | grep true > /dev/null; then 
+  echo " (geolocated region)."
+else 
+  echo "."
+fi
 echo
 bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
 bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
