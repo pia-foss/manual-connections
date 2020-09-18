@@ -28,7 +28,7 @@ In order to help you use VPN services and PF on any device, we have prepare a fe
 Here is a list of scripts you could find useful:
  * [region and token script](get_region_and_token.sh): This script helps you to get the best region and also to get a token for VPN authentication. The script will extend it's functionality if you add extra environment variables. Adding your PIA credentials will allow the script to also get a VPN token. The script can also trigger the WireGuard script to create a connection, if you specify `WG_AUTOCONNECT=true`.
  * [wireguard and pf script](wireguard_and_pf.sh): This script allow you to connect to the VPN server via WireGuard. You can specify `PIA_PF=true` if you also wish to get Port Forwarding for your connection.
- * openvpn script: allows you to connect and to bind a port // TODO: Add Link
+ * OpenVPN automation is not ready yet, however will be available soon enough.
 
 ## Manual setup of PF
 
