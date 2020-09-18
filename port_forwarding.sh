@@ -22,7 +22,7 @@
 
 # Check if the mandatory environment variables are set.
 if [[ ! $PF_GATEWAY || ! $PIA_TOKEN ]]; then
-  echo This script requires 2 env vars:
+  echo This script requires 3 env vars:
   echo PF_GATEWAY  - the IP of your gateway
   echo PF_HOSTNAME - name of the host used for SSL/TLS certificate verification
   echo PIA_TOKEN   - the token you use to connect to the vpn services

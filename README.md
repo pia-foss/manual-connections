@@ -19,7 +19,7 @@ In order for the scripts to work (probably even if you do a manual setup), you w
  * `curl`
  * `jq`
  * (only for WireGuard) `wireguard-tools` and wireguard kernel module
- * (only for OpenVPN) `openvpn`
+ * (only for OpenVPN) `openvpn` (however the script is not available yet)
 
 ### Confirmed distributions
 
@@ -28,6 +28,12 @@ The functionality of the scripts within this repository has been tested and conf
  * Artix
  * Fedora 32
  * Ubuntu 20.04
+
+### Disclaimers
+
+These scripts do not touch IPv6 or DNS in order to give you the freedom of configuring your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
+
+For battle-tested security, please use the official PIA App, as it was designed to protect you in all scenarios.
 
 ## PIA Port Forwarding
 
@@ -40,7 +46,7 @@ This service can be used only AFTER establishing a VPN connection.
 In order to help you use VPN services and PF on any device, we have prepare a few bash scripts that should help you through the process of setting everything up. The scripts also contain a lot of comments, just in case you require detailed information regarding how the technology works.
 
 Here is a list of scripts you could find useful:
- * [Get the best region and a token](get_region_and_token.sh): This script helps you to get the best region and also to get a token for VPN authentication. The script will extend it's functionality if you add extra environment variables. Adding your PIA credentials will allow the script to also get a VPN token. The script can also trigger the WireGuard script to create a connection, if you specify `WG_AUTOCONNECT=true`.
+ * [Get the best region and a token](get_region_and_token.sh): This script helps you to get the best region and also to get a token for VPN authentication. The script will extend it's functionality if you add extra environment variables. Adding your PIA credentials will allow the script to also get a VPN token. The script can also trigger the WireGuard script to create a connection, if you specify `PIA_AUTOCONNECT=wireguard`.
  * [Connect to WireGuard](connect_to_wireguard_with_token.sh): This script allow you to connect to the VPN server via WireGuard. You can specify `PIA_PF=true` if you also wish to get Port Forwarding for your connection.
  * Connect to OpenVPN: We are still working on this script.
  * [Enable Port Forwarding](port_forwarding.sh): Enables you to add Port Forwarding to an existing VPN connection.
