@@ -87,8 +87,11 @@ echo OK!
 echo 
 echo Trying to create the wireguard interface...
 wg-quick up pia || exit 1
-echo The WireGuard interface got created.
-echo At this point, internet should work via VPN.
+echo "The WireGuard interface got created.
+At this point, internet should work via VPN.
+
+--> to disconnect the VPN, run:
+$ wg-quick down pia"
 
 # This section will stop the script if PIA_PF is not set to "true".
 if [ "$PIA_PF" != true ]; then
