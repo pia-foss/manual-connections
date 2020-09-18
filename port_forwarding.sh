@@ -20,32 +20,12 @@
 # SOFTWARE.
 
 
-
-# PIA currently does not support IPv6. In order to be sure your VPN
-# connection does not leak, it is best to disabled IPv6 altogether.
-echo 'You should consider disabling IPv6 by running:
-sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sysctl -w net.ipv6.conf.default.disable_ipv6=1
-'
-
-# check if the wireguard tools have been installed
-if ! command -v wg-quick &> /dev/null
-then
-    echo "wg-quick could not be found."
-    echo "Please install wireguard-tools"
-    exit 1
-fi
-
 # Check if the mandatory environment variables are set.
-if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
-  echo This script requires 3 env vars:
-  echo WG_SERVER_IP - IP that you want to connect to
-  echo WG_HOSTNAME  - name of the server, required for ssl
-  echo WG_TOKEN     - your authentication token
-  echo
-  echo You can also specify optional env vars:
-  echo "PIA_PF                - enable port forwarding"
-  echo "PAYLOAD_AND_SIGNATURE - In case you already have a port."
+if [[ ! $PF_GATEWAY || ! $PIA_TOKEN ]]; then
+  echo This script requires 2 env vars:
+  echo PF_GATEWAY  - the IP of your gateway
+  echo PF_HOSTNAME - name of the host used for SSL/TLS certificate verification
+  echo PIA_TOKEN   - the token you use to connect to the vpn services
   echo
   echo An easy solution is to just run get_region_and_token.sh
   echo as it will guide you through getting the best server and 
@@ -53,81 +33,6 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
   echo https://github.com/pia-foss/manual-connections
 exit 1
 fi
-
-# Create ephemeral wireguard keys, that we don't need to save to disk.
-privKey="$(wg genkey)"
-export privKey
-pubKey="$( echo "$privKey" | wg pubkey)"
-export pubKey
-
-# Authenticate via the PIA WireGuard RESTful API.
-# This will return a JSON with data required for authentication.
-# The certificate is required to verify the identity of the VPN server.
-# In case you didn't clone the entire repo, get the certificate from:
-# https://github.com/pia-foss/manual-connections/blob/master/ca.rsa.4096.crt
-# In case you want to troubleshoot the script, replace -s with -v.
-echo Trying to connect to the PIA WireGuard API on $WG_SERVER_IP...
-wireguard_json="$(curl -s -G \
-  --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
-  --cacert "ca.rsa.4096.crt" \
-  --data-urlencode "pt=${WG_TOKEN}" \
-  --data-urlencode "pubkey=$pubKey" \
-  "https://${WG_HOSTNAME}:1337/addKey" )"
-export wireguard_json
-echo "$wireguard_json"
-
-# Check if the API returned OK and stop this script if it didn't.
-if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
-  >&2 echo "Server did not return OK. Stopping now."
-  exit 1
-fi
-
-# Create the WireGuard config based on the JSON received from the API
-# The config does not contain a DNS entry, since some servers do not
-# have resolvconf, which will result in the script failing.
-# We will enforce the DNS after the connection gets established.
-echo -n "Trying to write /etc/wireguard/pia.conf... "
-echo "
-[Interface]
-Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
-PrivateKey = $privKey
-## If you want wg-quick to also set up your DNS, uncomment the line below.
-# DNS = $(echo "$json" | jq -r '.dns_servers[0]')
-
-[Peer]
-PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
-AllowedIPs = 0.0.0.0/0
-Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
-" > /etc/wireguard/pia.conf || exit 1
-echo OK!
-
-# Start the WireGuard interface.
-# If something failed, stop this script.
-# If you get DNS errors because you miss some packages,
-# just can hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
-echo 
-echo Trying to create the wireguard interface...
-wg-quick up pia || exit 1
-echo "The WireGuard interface got created.
-At this point, internet should work via VPN.
-
---> to disconnect the VPN, run:
-$ wg-quick down pia"
-
-# This section will stop the script if PIA_PF is not set to "true".
-if [ "$PIA_PF" != true ]; then
-  echo
-  echo If you want to also enable port forwarding, please start the script
-  echo with the env var PIA_PF=true. Example:
-  echo $ WG_SERVER=10.0.0.3 WG_HOSTNAME=piaserver401 \
-    WG_TOKEN=\"\$token\" PIA_PF=true \
-    ./sort_regions_by_latency.sh
-  exit
-fi
-
-echo "
-This script got started with PIA_PF=true.
-Starting procedure to enable port forwarding."
 
 # The port forwarding system has required two variables:
 # PAYLOAD: contains the token, the port and the expiration date
@@ -138,10 +43,11 @@ Starting procedure to enable port forwarding."
 # privacy is protected even if you want to host services on your systems.
 
 # You can get your PAYLOAD+SIGNATURE with a simple curl request to any VPN
-# gateway, no matter what protocol you are using.
-# Since this is the script for wireguard, you can just get the gateway
-# from the JSON response you got at the previous step from the Wireguard API.
-gateway="$(echo "$wireguard_json" | jq -r '.server_vip')"
+# gateway, no matter what protocol you are using. Considering WireGuard has
+# already been automated in this repo, here is a command to help you get
+# your gateway if you have an active OpenVPN connection:
+# $ ip route | head -1 | grep tun | awk '{ print $3 }'
+# This section will get updated as soon as we created the OpenVPN script.
 
 # Get the payload and the signature from the PF API. This will grant you
 # access to a random port, which you can activate on any server you connect to.
@@ -151,10 +57,10 @@ gateway="$(echo "$wireguard_json" | jq -r '.server_vip')"
 if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
   echo "Getting new signature..."
   payload_and_signature="$(curl -s -m 5 \
-    --connect-to "$WG_HOSTNAME::$gateway:" \
+    --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
     --cacert "ca.rsa.4096.crt" \
     -G --data-urlencode "token=${WG_TOKEN}" \
-    "https://${WG_HOSTNAME}:19999/getSignature")"
+    "https://${PF_HOSTNAME}:19999/getSignature")"
 else
   payload_and_signature="$PAYLOAD_AND_SIGNATURE"
   echo "Using the following payload_and_signature from the env var:"
@@ -197,11 +103,11 @@ Trying to bind the port..."
 # will just delete the port forwarding if you don't send keepalives.
 while true; do
   bind_port_response="$(curl -Gs -m 5 \
-    --connect-to "$WG_HOSTNAME::$gateway:" \
+    --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
     --cacert "ca.rsa.4096.crt" \
     --data-urlencode "payload=${payload}" \
     --data-urlencode "signature=${signature}" \
-    "https://${WG_HOSTNAME}:19999/bindPort")"
+    "https://${PF_HOSTNAME}:19999/bindPort")"
     echo "$bind_port_response"
 
     # If port did not bind, just exit the script.

@@ -136,16 +136,16 @@ token="$(echo "$generateTokenResponse" | jq -r '.token')"
 echo "This token will expire in 24 hours.
 "
 
-if [ "$WG_AUTOCONNECT" != true ]; then
+if [ "$PIA_AUTOCONNECT" != wireguard ]; then
   echo If you wish to automatically connect to WireGuard after detecting the best
-  echo region, please run the script with the env var WG_AUTOCONNECT=true. You can
+  echo region, please run the script with the env var PIA_AUTOCONNECT=wireguard. You can
   echo also specify the env var PIA_PF=true to get port forwarding. Example:
   echo $ PIA_USER=p0123456 PIA_PASS=xxx \
-    WG_AUTOCONNECT=true PIA_PF=true ./sort_regions_by_latency.sh
+    PIA_AUTOCONNECT=true PIA_PF=true ./sort_regions_by_latency.sh
   echo
-  echo You can connect by running:
+  echo You can also connect manually by running:
   echo WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
-    WG_HOSTNAME=$bestServer_WG_hostname ./wireguard_and_pf.sh
+    WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
   exit
 fi
 
@@ -153,7 +153,7 @@ if [ "$PIA_PF" != true ]; then
   PIA_PF="false"
 fi
 
-echo "The ./get_region_and_token.sh script got started with WG_AUTOCONNECT=true,
+echo "The ./get_region_and_token.sh script got started with PIA_AUTOCONNECT=wireguard,
 so we will automatically connect to WireGuard, by running this command:
 $ WG_TOKEN=\"$token\" \\
   WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
@@ -161,4 +161,4 @@ $ WG_TOKEN=\"$token\" \\
 "
 
 PIA_PF=$PIA_PF WG_TOKEN="$token" WG_SERVER_IP=$bestServer_WG_IP \
-  WG_HOSTNAME=$bestServer_WG_hostname ./wireguard_and_pf.sh
+  WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
