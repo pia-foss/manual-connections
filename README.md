@@ -33,6 +33,8 @@ The functionality of the scripts within this repository has been tested and conf
 
 These scripts do not touch IPv6 or DNS in order to give you the freedom of configuring your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
 
+The scripts are also really fresh at this moment, so please take into consideration the fact that you will probably be one of the first users that use the scripts.
+
 For battle-tested security, please use the official PIA App, as it was designed to protect you in all scenarios.
 
 ## PIA Port Forwarding
