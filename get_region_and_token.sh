@@ -157,7 +157,7 @@ echo "The ./get_region_and_token.sh script got started with PIA_AUTOCONNECT=wire
 so we will automatically connect to WireGuard, by running this command:
 $ WG_TOKEN=\"$token\" \\
   WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
-  PIA_PF=$PIA_PF ./wireguard_port_forwarding.sh
+  PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh
 "
 
 PIA_PF=$PIA_PF WG_TOKEN="$token" WG_SERVER_IP=$bestServer_WG_IP \

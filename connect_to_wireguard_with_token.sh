@@ -51,7 +51,7 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
   echo as it will guide you through getting the best server and 
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
-exit 1
+  exit 1
 fi
 
 # Create ephemeral wireguard keys, that we don't need to save to disk.
@@ -128,7 +128,7 @@ fi
 echo "
 This script got started with PIA_PF=true.
 Starting procedure to enable port forwarding by running the following command:
-PIA_TOKEN=$WG_TOKEN \\
+$ PIA_TOKEN=$WG_TOKEN \\
   PF_GATEWAY=\"$(echo "$wireguard_json" | jq -r '.server_vip')\" \\
   PF_HOSTNAME=\"$WG_HOSTNAME\" \\
   ./port_forwarding.sh

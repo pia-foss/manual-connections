@@ -59,7 +59,7 @@ if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
   payload_and_signature="$(curl -s -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
     --cacert "ca.rsa.4096.crt" \
-    -G --data-urlencode "token=${WG_TOKEN}" \
+    -G --data-urlencode "token=${PIA_TOKEN}" \
     "https://${PF_HOSTNAME}:19999/getSignature")"
 else
   payload_and_signature="$PAYLOAD_AND_SIGNATURE"
