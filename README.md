@@ -21,12 +21,13 @@ In order for the scripts to work (probably even if you do a manual setup), you w
  * (only for WireGuard) `wireguard-tools` and wireguard kernel module
  * (only for OpenVPN) `openvpn` (however the script is not available yet)
 
-### Confirmed distributions
+### Confirmed systems and distributions
 
-The functionality of the scripts within this repository has been tested and confirmed on the following distributions:
+The functionality of the scripts within this repository has been tested and confirmed on the following operating systems and GNU/Linux distributions:
  * Arch
  * Artix
  * Fedora 32
+ * FreeBSD 12.1
  * Ubuntu 20.04
 
 ### Disclaimers
