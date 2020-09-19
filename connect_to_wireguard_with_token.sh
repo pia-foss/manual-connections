@@ -92,7 +92,7 @@ echo "
 Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
 PrivateKey = $privKey
 ## If you want wg-quick to also set up your DNS, uncomment the line below.
-# DNS = $(echo "$json" | jq -r '.dns_servers[0]')
+# DNS = $(echo "$wireguard_json" | jq -r '.dns_servers[0]')
 
 [Peer]
 PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
