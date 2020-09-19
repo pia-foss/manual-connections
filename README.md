@@ -32,11 +32,10 @@ The functionality of the scripts within this repository has been tested and conf
 
 ### Disclaimers
 
-These scripts do not touch IPv6 or DNS in order to give you the freedom of configuring your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
-
-The scripts are also really fresh at this moment, so please take into consideration the fact that you will probably be one of the first users that use the scripts. The scripts work only on the NextGen network.
-
-For battle-tested security, please use the official PIA App, as it was designed to protect you in all scenarios.
+ * Port Forwarding is disabled on server-side in the United States.
+ * These scripts do not touch IPv6 or DNS, so that you have the freedom to configure your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
+ * For battle-tested security, please use the official PIA App, as it was designed to protect you in all scenarios.
+ * This repo is really fresh at this moment, so please take into consideration the fact that you will probably be one of the first users that use the scripts.
 
 ## PIA Port Forwarding
 

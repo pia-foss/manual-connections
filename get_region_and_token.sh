@@ -63,13 +63,11 @@ fi
 echo "OK!"
 
 # Test one server from each region to get the closest region:
+summarized_region_data="$( echo $all_region_data |
+  jq -r '.regions[] | .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
 echo Testing regions that respond \
   faster than $maximum_allowed_latency seconds:
-region_latency_report="$( echo $all_region_data |
-  jq -r '.regions[] | .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
-
-# Get the best region
-bestRegion="$(echo "$region_latency_report" |
+bestRegion="$(echo "$summarized_region_data" |
   xargs -i bash -c 'printServerLatency {}' |
   sort | head -1 | awk '{ print $2 }')"
 
@@ -143,8 +141,8 @@ if [ "$PIA_AUTOCONNECT" != wireguard ]; then
   echo $ PIA_USER=p0123456 PIA_PASS=xxx \
     PIA_AUTOCONNECT=true PIA_PF=true ./sort_regions_by_latency.sh
   echo
-  echo You can also connect manually by running:
-  echo WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
+  echo You can also connect now by running this command:
+  echo $ WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
     WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
   exit
 fi
