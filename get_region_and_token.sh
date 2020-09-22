@@ -104,18 +104,31 @@ OpenVPN TCP: $bestServer_OT_IP // $bestServer_OT_hostname
 OpenVPN UDP: $bestServer_OU_IP // $bestServer_OU_hostname
 "
 
-if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
+if [ -z "$PIA_USER" ]; then
   echo If you want this script to automatically get a token from the Meta
-  echo service, please add the variables PIA_USER and PIA_PASS. Example:
-  echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region_and_token.sh
+  echo service, please add the variable PIA_USER. Example:
+  echo $ PIA_USER=p0123456 ./get_region_and_token.sh
+  echo "You may optionally also supply PIA_PASS, however it may be visible"
+  echo "  in plaintext to other users on this system."
+  echo "If you do not supply PIA_PASS, you will be prompted to enter it"
+  echo "  and it won't be visible to other users on this system"
   exit 1
 fi
 
-echo "The ./get_region_and_token.sh script got started with PIA_USER and PIA_PASS,
-so we will also use a meta service to get a new VPN token."
+# prepend a colon to the password so curl can use it
+# if PIA_PASS is empty, curl will only see a username and thus prompt for a
+#   password by itself - avoiding ever leaking the password via /proc/*/env
+#   or `ps ax`
+# Users can still provide PIA_PASS if they accept this risk
+PIA_PASS="${PIA_PASS:+:$PIA_PASS}"
 
 echo "Trying to get a new token by authenticating with the meta service..."
-generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
+
+if [ -z "$PIA_PASS" ]; then
+  echo "* Your password will not be stored, nor be visible to other users on this system"
+fi
+
+generateTokenResponse=$(curl -s -S -u "$PIA_USER$PIA_PASS" \
   --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
   --cacert "ca.rsa.4096.crt" \
   "https://$bestServer_meta_hostname/authv3/generateToken")
@@ -123,10 +136,6 @@ echo "$generateTokenResponse"
 
 if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo "Could not get a token. Please check your account credentials."
-  echo "You can also try debugging by manually running the curl command:"
-  echo $ curl -vs -u "$PIA_USER:$PIA_PASS" --cacert ca.rsa.4096.crt \
-    --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-    https://$bestServer_meta_hostname/authv3/generateToken
   exit 1
 fi
 
