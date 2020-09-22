@@ -23,8 +23,8 @@
 
 # Set this to the maximum allowed latency in seconds.
 # All servers that repond slower than this will be ignore.
-# The value is currently set to 50 milliseconds.
-maximum_allowed_latency=0.05
+# The default value is 50 milliseconds.
+maximum_allowed_latency=${maximum_allowed_latency:-0.05}
 export maximum_allowed_latency
 
 serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
