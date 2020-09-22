@@ -30,7 +30,7 @@ function check_tool() {
     exit 1
   fi
 }
-# Now we call the function to make sure we can use wg-quick, curl and jq.
+# Now we call the function to make sure we can use curl and jq.
 check_tool curl curl
 check_tool jq jq
 
