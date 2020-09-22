@@ -33,29 +33,25 @@ fi
 # so we can print more than one error about missing tools in a single run
 EXIT=0
 
+function check_tool() {
+	COMMAND=$1
+	PACKAGE=$2
+	if ! command -v $COMMAND &>/dev/null
+	then
+		echo "$COMMAND could not be found"
+		echo "Please install $PACKAGE"
+	fi
+	EXIT=1
+}
+
 # check if the wireguard tools have been installed
-if ! command -v wg-quick &> /dev/null
-then
-    echo "wg-quick could not be found."
-    echo "Please install wireguard-tools"
-    EXIT=1
-fi
+check_tool wg-quick wireguard-tools
 
 # check if curl has been installed
-if ! command -v curl &> /dev/null
-then
-    echo "curl could not be found."
-    echo "Please install curl"
-    EXIT=1
-fi
+check_tool curl curl
 
 # check if jq has been installed
-if ! command -v jq &> /dev/null
-then
-    echo "jq could not be found."
-    echo "Please install jq"
-    EXIT=1
-fi
+check_tool jq jq
 
 # Check if the mandatory environment variables are set.
 if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
