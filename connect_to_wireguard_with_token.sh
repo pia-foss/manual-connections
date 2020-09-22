@@ -28,12 +28,31 @@ sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 '
 
+# so we can print more than one error about missing tools in a single run
+EXIT=0
+
 # check if the wireguard tools have been installed
 if ! command -v wg-quick &> /dev/null
 then
     echo "wg-quick could not be found."
     echo "Please install wireguard-tools"
-    exit 1
+    EXIT=1
+fi
+
+# check if curl has been installed
+if ! command -v curl &> /dev/null
+then
+    echo "curl could not be found."
+    echo "Please install curl"
+    EXIT=1
+fi
+
+# check if jq has been installed
+if ! command -v jq &> /dev/null
+then
+    echo "jq could not be found."
+    echo "Please install jq"
+    EXIT=1
 fi
 
 # Check if the mandatory environment variables are set.
@@ -51,7 +70,13 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
   echo as it will guide you through getting the best server and 
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
-  exit 1
+  EXIT=1
+fi
+
+# exit if any required tools are missing
+if [ $EXIT -ne 0 ]
+then
+  exit $EXIT
 fi
 
 # Create ephemeral wireguard keys, that we don't need to save to disk.
