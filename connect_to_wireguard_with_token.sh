@@ -19,39 +19,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
+# This function allows you to check if the required tools have been installed.
+function check_tool() {
+  cmd=$1
+  package=$2
+  if ! command -v $cmd &>/dev/null
+  then
+    echo "$cmd could not be found"
+    echo "Please install $package"
+    exit 1
+  fi
+}
+# Now we call the function to make sure we can use wg-quick, curl and jq.
+check_tool wg-quick wireguard-tools
+check_tool curl curl
+check_tool jq jq
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
-if [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] || [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]
+if [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] ||
+  [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]
 then
   echo 'You should consider disabling IPv6 by running:'
   echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
   echo 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'
 fi
-
-# so we can print more than one error about missing tools in a single run
-EXIT=0
-
-function check_tool() {
-	COMMAND=$1
-	PACKAGE=$2
-	if ! command -v $COMMAND &>/dev/null
-	then
-		echo "$COMMAND could not be found"
-		echo "Please install $PACKAGE"
-	fi
-	EXIT=1
-}
-
-# check if the wireguard tools have been installed
-check_tool wg-quick wireguard-tools
-
-# check if curl has been installed
-check_tool curl curl
-
-# check if jq has been installed
-check_tool jq jq
 
 # Check if the mandatory environment variables are set.
 if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
@@ -68,13 +60,7 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
   echo as it will guide you through getting the best server and 
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
-  EXIT=1
-fi
-
-# exit if any required tools are missing
-if [ $EXIT -ne 0 ]
-then
-  exit $EXIT
+  exit 1
 fi
 
 # Create ephemeral wireguard keys, that we don't need to save to disk.
