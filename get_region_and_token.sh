@@ -27,6 +27,15 @@
 maximum_allowed_latency=0.05
 export maximum_allowed_latency
 
+# test if curl accepts timeouts below 1s - see https://github.com/curl/curl/blob/master/lib/hostip.c#L700
+curl -s --connect-timeout 0.999 -m 1 255.255.255.255 &>/dev/null
+if [ $? -eq 28 ]
+then
+  echo "Your system's curl doesn't accept timeouts below 1 second"
+  echo "Altering maximum_allowed_latency to 1s"
+  export maximum_allowed_latency=1
+fi
+
 serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
 
 # This function checks the latency you have to a specific region.
