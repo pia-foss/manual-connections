@@ -19,10 +19,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# This function allows you to check if the required tools have been installed.
+function check_tool() {
+  cmd=$1
+  package=$2
+  if ! command -v $cmd &>/dev/null
+  then
+    echo "$cmd could not be found"
+    echo "Please install $package"
+    exit 1
+  fi
+}
+# Now we call the function to make sure we can use wg-quick, curl and jq.
+check_tool curl curl
+check_tool jq jq
 
-
-# Set this to the maximum allowed latency in seconds.
-# All servers that repond slower than this will be ignore.
+# This allows you to set the maximum allowed latency in seconds.
+# All servers that repond slower than this will be ignored.
+# You can inject this with the environment variable MAX_LATENCY.
 # The default value is 50 milliseconds.
 MAX_LATENCY=${MAX_LATENCY:-0.05}
 export MAX_LATENCY
