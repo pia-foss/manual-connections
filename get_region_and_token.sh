@@ -24,8 +24,8 @@
 # Set this to the maximum allowed latency in seconds.
 # All servers that repond slower than this will be ignore.
 # The default value is 50 milliseconds.
-maximum_allowed_latency=${maximum_allowed_latency:-0.05}
-export maximum_allowed_latency
+MAX_LATENCY=${MAX_LATENCY:-0.05}
+export MAX_LATENCY
 
 serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
 
@@ -38,7 +38,7 @@ printServerLatency() {
   regionName="$(echo ${@:3} |
     sed 's/ false//' | sed 's/true/(geo)/')"
   time=$(curl -o /dev/null -s \
-    --connect-timeout $maximum_allowed_latency \
+    --connect-timeout $MAX_LATENCY \
     --write-out "%{time_connect}" \
     http://$serverIP:443)
   if [ $? -eq 0 ]; then
@@ -66,7 +66,7 @@ echo "OK!"
 summarized_region_data="$( echo $all_region_data |
   jq -r '.regions[] | .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
 echo Testing regions that respond \
-  faster than $maximum_allowed_latency seconds:
+  faster than $MAX_LATENCY seconds:
 bestRegion="$(echo "$summarized_region_data" |
   xargs -i bash -c 'printServerLatency {}' |
   sort | head -1 | awk '{ print $2 }')"
