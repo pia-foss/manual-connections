@@ -112,6 +112,7 @@ fi
 # have resolvconf, which will result in the script failing.
 # We will enforce the DNS after the connection gets established.
 echo -n "Trying to write /etc/wireguard/pia.conf... "
+mkdir -p /etc/wireguard
 echo "
 [Interface]
 Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
