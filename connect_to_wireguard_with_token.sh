@@ -23,18 +23,35 @@
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
-echo 'You should consider disabling IPv6 by running:
-sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sysctl -w net.ipv6.conf.default.disable_ipv6=1
-'
+if [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] || [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]
+then
+  echo 'You should consider disabling IPv6 by running:'
+  echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
+  echo 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'
+fi
+
+# so we can print more than one error about missing tools in a single run
+EXIT=0
+
+function check_tool() {
+	COMMAND=$1
+	PACKAGE=$2
+	if ! command -v $COMMAND &>/dev/null
+	then
+		echo "$COMMAND could not be found"
+		echo "Please install $PACKAGE"
+	fi
+	EXIT=1
+}
 
 # check if the wireguard tools have been installed
-if ! command -v wg-quick &> /dev/null
-then
-    echo "wg-quick could not be found."
-    echo "Please install wireguard-tools"
-    exit 1
-fi
+check_tool wg-quick wireguard-tools
+
+# check if curl has been installed
+check_tool curl curl
+
+# check if jq has been installed
+check_tool jq jq
 
 # Check if the mandatory environment variables are set.
 if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
@@ -51,7 +68,13 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
   echo as it will guide you through getting the best server and 
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
-  exit 1
+  EXIT=1
+fi
+
+# exit if any required tools are missing
+if [ $EXIT -ne 0 ]
+then
+  exit $EXIT
 fi
 
 # Create ephemeral wireguard keys, that we don't need to save to disk.
@@ -87,6 +110,7 @@ fi
 # have resolvconf, which will result in the script failing.
 # We will enforce the DNS after the connection gets established.
 echo -n "Trying to write /etc/wireguard/pia.conf... "
+mkdir -p /etc/wireguard
 echo "
 [Interface]
 Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
