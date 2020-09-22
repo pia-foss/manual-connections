@@ -23,10 +23,12 @@
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
-echo 'You should consider disabling IPv6 by running:
-sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sysctl -w net.ipv6.conf.default.disable_ipv6=1
-'
+if [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] || [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]
+then
+  echo 'You should consider disabling IPv6 by running:'
+  echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
+  echo 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'
+fi
 
 # so we can print more than one error about missing tools in a single run
 EXIT=0
