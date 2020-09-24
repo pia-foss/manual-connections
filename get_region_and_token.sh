@@ -76,8 +76,8 @@ fi
 # Notify the user that we got the server list.
 echo "OK!"
 
-# Test one server from each region to get the closest region
-# Only filter port forwarding enabled servers if specified
+# Test one server from each region to get the closest region.
+# If port forwarding is enabled, filter out regions that don't support it.
 if [[ $PIA_PF == "true" ]]; then
   echo Port Forwarding is enabled, so regions that do not support
   echo port forwarding will get filtered out.
@@ -94,6 +94,14 @@ echo Testing regions that respond \
 bestRegion="$(echo "$summarized_region_data" |
   xargs -i bash -c 'printServerLatency {}' |
   sort | head -1 | awk '{ print $2 }')"
+
+if [ -z "$bestRegion" ]; then
+  echo ...
+  echo No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
+  echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
+  echo $ MAX_LATENCY=1 ./get_region_and_token.sh
+  exit 1
+fi
 
 # Get all data for the best region
 regionData="$( echo $all_region_data |
@@ -160,8 +168,9 @@ echo "This token will expire in 24 hours.
 
 if [ "$PIA_AUTOCONNECT" != wireguard ]; then
   echo If you wish to automatically connect to WireGuard after detecting the best
-  echo region, please run the script with the env var PIA_AUTOCONNECT=wireguard. You can
-  echo also specify the env var PIA_PF=true to get port forwarding. Example:
+  echo region, please run the script with the env var PIA_AUTOCONNECT=wireguard.
+  echo You can echo also specify the env var PIA_PF=true to get port forwarding.
+  echo Example:
   echo $ PIA_USER=p0123456 PIA_PASS=xxx \
     PIA_AUTOCONNECT=true PIA_PF=true ./sort_regions_by_latency.sh
   echo
@@ -175,8 +184,9 @@ if [ "$PIA_PF" != true ]; then
   PIA_PF="false"
 fi
 
-echo "The ./get_region_and_token.sh script got started with PIA_AUTOCONNECT=wireguard,
-so we will automatically connect to WireGuard, by running this command:
+echo "The ./get_region_and_token.sh script got started with
+PIA_AUTOCONNECT=wireguard, so we will automatically connect to WireGuard,
+by running this command:
 $ WG_TOKEN=\"$token\" \\
   WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
   PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh
