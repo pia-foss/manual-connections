@@ -80,6 +80,13 @@ bestRegion="$(echo "$summarized_region_data" |
   xargs -i bash -c 'printServerLatency {}' |
   sort | head -1 | awk '{ print $2 }')"
 
+# test if we got any valid results
+if ! grep -q '[[:alnum:]]' <<< "$bestRegion"; then
+	echo "No region responded within ${maximum_allowed_latency}s, consider using a higher timeout"
+	echo "Example: $ maximum_allowed_latency=1 $0"
+	exit 1
+fi
+
 # Get all data for the best region
 regionData="$( echo $all_region_data |
   jq --arg REGION_ID "$bestRegion" -r \
