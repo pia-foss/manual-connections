@@ -19,21 +19,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# This function allows you to check if the required tools have been installed.
+function check_tool() {
+  cmd=$1
+  package=$2
+  if ! command -v $cmd &>/dev/null
+  then
+    echo "$cmd could not be found"
+    echo "Please install $package"
+    exit 1
+  fi
+}
+# Now we call the function to make sure we can use curl and jq.
+check_tool curl curl
+check_tool jq jq
 
-
-# Set this to the maximum allowed latency in seconds.
-# All servers that repond slower than this will be ignore.
-# The value is currently set to 50 milliseconds.
-maximum_allowed_latency=0.05
-export maximum_allowed_latency
+# This allows you to set the maximum allowed latency in seconds.
+# All servers that repond slower than this will be ignored.
+# You can inject this with the environment variable MAX_LATENCY.
+# The default value is 50 milliseconds.
+MAX_LATENCY=${MAX_LATENCY:-0.05}
+export MAX_LATENCY
 
 # test if curl accepts timeouts below 1s - see https://github.com/curl/curl/blob/master/lib/hostip.c#L700
 curl -s --connect-timeout 0.999 -m 1 255.255.255.255 &>/dev/null
 if [ $? -eq 28 ]
 then
   echo "Your system's curl doesn't accept timeouts below 1 second"
-  echo "Altering maximum_allowed_latency to 1s"
-  export maximum_allowed_latency=1
+  echo "Altering MAX_LATENCY to 1s"
+  export MAX_LATENCY=1
 fi
 
 serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
@@ -47,7 +61,7 @@ printServerLatency() {
   regionName="$(echo ${@:3} |
     sed 's/ false//' | sed 's/true/(geo)/')"
   time=$(curl -o /dev/null -s \
-    --connect-timeout $maximum_allowed_latency \
+    --connect-timeout $MAX_LATENCY \
     --write-out "%{time_connect}" \
     http://$serverIP:443)
   if [ $? -eq 0 ]; then
@@ -75,15 +89,15 @@ echo "OK!"
 summarized_region_data="$( echo $all_region_data |
   jq -r '.regions[] | .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
 echo Testing regions that respond \
-  faster than $maximum_allowed_latency seconds:
+  faster than $MAX_LATENCY seconds:
 bestRegion="$(echo "$summarized_region_data" |
   xargs -i bash -c 'printServerLatency {}' |
   sort | head -1 | awk '{ print $2 }')"
 
 # test if we got any valid results
 if ! grep -q '[[:alnum:]]' <<< "$bestRegion"; then
-	echo "No region responded within ${maximum_allowed_latency}s, consider using a higher timeout"
-	echo "Example: $ maximum_allowed_latency=1 $0"
+	echo "No region responded within ${MAX_LATENCY}s, consider using a higher timeout"
+	echo "Example: $ MAX_LATENCY=1 $0"
 	exit 1
 fi
 

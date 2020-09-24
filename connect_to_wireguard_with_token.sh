@@ -19,21 +19,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
+# This function allows you to check if the required tools have been installed.
+function check_tool() {
+  cmd=$1
+  package=$2
+  if ! command -v $cmd &>/dev/null
+  then
+    echo "$cmd could not be found"
+    echo "Please install $package"
+    exit 1
+  fi
+}
+# Now we call the function to make sure we can use wg-quick, curl and jq.
+check_tool wg-quick wireguard-tools
+check_tool curl curl
+check_tool jq jq
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
-echo 'You should consider disabling IPv6 by running:
-sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sysctl -w net.ipv6.conf.default.disable_ipv6=1
-'
-
-# check if the wireguard tools have been installed
-if ! command -v wg-quick &> /dev/null
+if [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] ||
+  [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]
 then
-    echo "wg-quick could not be found."
-    echo "Please install wireguard-tools"
-    exit 1
+  echo 'You should consider disabling IPv6 by running:'
+  echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
+  echo 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'
 fi
 
 # Check if the mandatory environment variables are set.
@@ -87,6 +96,7 @@ fi
 # have resolvconf, which will result in the script failing.
 # We will enforce the DNS after the connection gets established.
 echo -n "Trying to write /etc/wireguard/pia.conf... "
+mkdir -p /etc/wireguard
 echo "
 [Interface]
 Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
