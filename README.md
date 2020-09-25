@@ -1,3 +1,6 @@
+# Modifications from the original
+ * Add PIA_REGION environment variable which forces the specified region.
+
 # Manual PIA VPN Connections
  __This project is "Work in Progress"__
 

@@ -89,11 +89,24 @@ else
     jq -r '.regions[] |
     .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
 fi
-echo Testing regions that respond \
-  faster than $MAX_LATENCY seconds:
-bestRegion="$(echo "$summarized_region_data" |
-  xargs -i bash -c 'printServerLatency {}' |
-  sort | head -1 | awk '{ print $2 }')"
+
+if [[ -n $PIA_REGION ]]; then
+	echo -n Checking if specified region works...
+	bestRegion="$(echo "$summarized_region_data" | awk "{if (\$2 == \"$PIA_REGION\") print \$2;}")"
+	if [[ -n $bestRegion ]]; then
+		echo yes
+	else
+		echo no.
+		echo No servers found in $PIA_REGION with the required features.
+		exit 1
+	fi
+else
+	echo Testing regions that respond \
+	  faster than $MAX_LATENCY seconds:
+	bestRegion="$(echo "$summarized_region_data" |
+	  xargs -i bash -c 'printServerLatency {}' |
+	  sort | head -1 | awk '{ print $2 }')"
+fi
 
 if [ -z "$bestRegion" ]; then
   echo ...
