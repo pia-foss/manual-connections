@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright (C) 2020 Private Internet Access, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -49,10 +49,16 @@ serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
 printServerLatency() {
   serverIP="$1"
   regionID="$2"
-  regionName="$(echo ${@:3} |
-    sed 's/ false//' | sed 's/true/(geo)/')"
+  shift 2
+  regionName="$(echo ${@} |
+    sed 's/ false//;s/true/(geo)/')"
+
+  # Connection timeout is MAX_LATENCY.
+  # The whole process (from connection to transmission)
+  # should not take more than MAX_LATENCY * 2
   time=$(curl -o /dev/null -s \
     --connect-timeout $MAX_LATENCY \
+    --max-time $((${MAX_LATENCY} * 2)) \
     --write-out "%{time_connect}" \
     http://$serverIP:443)
   if [ $? -eq 0 ]; then
@@ -60,14 +66,13 @@ printServerLatency() {
     echo $time $regionID $serverIP
   fi
 }
-export -f printServerLatency
 
 echo -n "Getting the server list... "
 # Get all region data since we will need this on multiple ocasions
 all_region_data=$(curl -s "$serverlist_url" | head -1)
 
 # If the server list has less than 1000 characters, it means curl failed.
-if [[ ${#all_region_data} < 1000 ]]; then
+if [ "${#all_region_data}" -lt 1000 ]; then
   echo "Could not get correct region data. To debug this, run:"
   echo "$ curl -v $serverlist_url"
   echo "If it works, you will get a huge JSON as a response."
@@ -76,24 +81,34 @@ fi
 # Notify the user that we got the server list.
 echo "OK!"
 
+##
 # Test one server from each region to get the closest region.
 # If port forwarding is enabled, filter out regions that don't support it.
-if [[ $PIA_PF == "true" ]]; then
-  echo Port Forwarding is enabled, so regions that do not support
-  echo port forwarding will get filtered out.
-  summarized_region_data="$( echo $all_region_data |
-    jq -r '.regions[] | select(.port_forward==true) |
-    .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
-else
-  summarized_region_data="$( echo $all_region_data |
-    jq -r '.regions[] |
-    .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
+# If geo virtual location is disabled, filter out virtual regions.
+JQ_FILTER='.regions[]'
+#
+# Servers have to support port forward
+if [ "${PIA_PF}" == "true" ]; then
+  JQ_FILTER="${JQ_FILTER} | select(.port_forward==true)"
 fi
+#
+# Servers cannot be on geo virtual locations
+if [ "${PIA_NO_GEO}" == "true" ]; then
+  JQ_FILTER="${JQ_FILTER} | select(.geo==false)"
+fi
+#
+JQ_FILTER="${JQ_FILTER} | .servers.meta[0].ip+\" \"+.id+\" \"+.name+\" \"+(.geo|tostring)"
+#
+##
+
+summarized_region_data=$(echo $all_region_data |
+  jq -r "${JQ_FILTER}")
+
 echo Testing regions that respond \
   faster than $MAX_LATENCY seconds:
-bestRegion="$(echo "$summarized_region_data" |
-  xargs -I{} bash -c 'printServerLatency {}' |
-  sort | head -1 | awk '{ print $2 }')"
+bestRegion=$(echo "$summarized_region_data" |
+  { while read -r LINE ; do printServerLatency ${LINE} ; done } |
+  sort -n | head -1 | awk '{ print $2 }')
 
 if [ -z "$bestRegion" ]; then
   echo ...
@@ -136,7 +151,7 @@ OpenVPN TCP: $bestServer_OT_IP // $bestServer_OT_hostname
 OpenVPN UDP: $bestServer_OU_IP // $bestServer_OU_hostname
 "
 
-if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
+if [ -z "${PIA_USER}" -o -z "{$PIA_PASS}" ]; then
   echo If you want this script to automatically get a token from the Meta
   echo service, please add the variables PIA_USER and PIA_PASS. Example:
   echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region_and_token.sh
@@ -169,10 +184,12 @@ echo "This token will expire in 24 hours.
 if [ "$PIA_AUTOCONNECT" != wireguard ]; then
   echo If you wish to automatically connect to WireGuard after detecting the best
   echo region, please run the script with the env var PIA_AUTOCONNECT=wireguard.
-  echo You can echo also specify the env var PIA_PF=true to get port forwarding.
+  echo You can also specify the env var PIA_PF=true to get port forwarding.
+  echo Or, the env var PIA_NO_GEO=true to avoid virtual geo locations.
   echo Example:
   echo $ PIA_USER=p0123456 PIA_PASS=xxx \
-    PIA_AUTOCONNECT=true PIA_PF=true ./sort_regions_by_latency.sh
+    PIA_AUTOCONNECT=true PIA_NO_GEO=true \
+	PIA_PF=true ./sort_regions_by_latency.sh
   echo
   echo You can also connect now by running this command:
   echo $ WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
