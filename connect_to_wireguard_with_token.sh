@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright (C) 2020 Private Internet Access, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -37,16 +37,14 @@ check_tool jq jq
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
-if [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] ||
-  [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]
-then
+if [ "$(sysctl -n net.ipv6.conf.all.disable_ipv6)" -ne 1 -o "$(sysctl -n net.ipv6.conf.default.disable_ipv6)" -ne 1 ]; then
   echo 'You should consider disabling IPv6 by running:'
   echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
   echo 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'
 fi
 
 # Check if the mandatory environment variables are set.
-if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $WG_TOKEN ]]; then
+if [ -z "${WG_SERVER_IP}" -o -z "${WG_HOSTNAME}" -o -z "${WG_TOKEN}" ]; then
   echo This script requires 3 env vars:
   echo WG_SERVER_IP - IP that you want to connect to
   echo WG_HOSTNAME  - name of the server, required for ssl
@@ -125,7 +123,7 @@ At this point, internet should work via VPN.
 $ wg-quick down pia"
 
 # This section will stop the script if PIA_PF is not set to "true".
-if [ "$PIA_PF" != true ]; then
+if [ "$PIA_PF" != "true" ]; then
   echo
   echo If you want to also enable port forwarding, please start the script
   echo with the env var PIA_PF=true. Example:
