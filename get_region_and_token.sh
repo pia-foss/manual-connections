@@ -92,7 +92,7 @@ fi
 echo Testing regions that respond \
   faster than $MAX_LATENCY seconds:
 bestRegion="$(echo "$summarized_region_data" |
-  xargs -i bash -c 'printServerLatency {}' |
+  xargs -I{} bash -c 'printServerLatency {}' |
   sort | head -1 | awk '{ print $2 }')"
 
 if [ -z "$bestRegion" ]; then
