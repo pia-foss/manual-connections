@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright (C) 2020 Private Internet Access, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,7 +21,7 @@
 
 
 # Check if the mandatory environment variables are set.
-if [[ ! $PF_GATEWAY || ! $PIA_TOKEN ]]; then
+if [ -z "${PF_GATEWAY}" -o -z "${PIA_TOKEN}" ]; then
   echo This script requires 3 env vars:
   echo PF_GATEWAY  - the IP of your gateway
   echo PF_HOSTNAME - name of the host used for SSL/TLS certificate verification
@@ -54,7 +54,7 @@ fi
 # If you already have a signature, and you would like to re-use that port,
 # save the payload_and_signature received from your previous request
 # in the env var PAYLOAD_AND_SIGNATURE, and that will be used instead.
-if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
+if [ -z "${PAYLOAD_AND_SIGNATURE}" ]; then
   echo "Getting new signature..."
   payload_and_signature="$(curl -s -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
