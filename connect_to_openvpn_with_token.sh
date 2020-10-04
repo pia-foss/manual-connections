@@ -81,9 +81,14 @@ if [[ ! $OVPN_SERVER_IP ||
   ! $PIA_TOKEN ||
   ! $CONNECTION_SETTINGS ]]; then
   echo This script requires 5 env vars:
-  echo OVPN_SERVER_IP - IP that you want to connect to
-  echo OVPN_HOSTNAME  - name of the server, required for ssl
-  echo CONNECTION_SETTINGS - the encryption and protocol specification
+  echo OVPN_SERVER_IP      - IP that you want to connect to
+  echo OVPN_HOSTNAME       - name of the server, required for ssl
+  echo CONNECTION_SETTINGS - the protocol and encryption specification
+  echo                     - available options for CONNECTION_SETTINGS are:
+  echo                         * openvpn_udp_standard
+  echo                         * openvpn_udp_strong
+  echo                         * openvpn_tcp_standard
+  echo                         * openvpn_tcp_strong
   echo
   echo You can also specify optional env vars:
   echo "PIA_PF                - enable port forwarding"

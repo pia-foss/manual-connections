@@ -217,7 +217,7 @@ echo  - openvpn_udp_standard
 echo  - openvpn_udp_strong
 echo  - openvpn_tcp_standard
 echo  - openvpn_tcp_strong
-echo You can echo also specify the env var PIA_PF=true to get port forwarding.
+echo You can also specify the env var PIA_PF=true to get port forwarding.
 echo
 echo Example:
 echo $ PIA_USER=p0123456 PIA_PASS=xxx \
