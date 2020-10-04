@@ -1,15 +1,14 @@
 # Manual PIA VPN Connections
 
-This repository contains documentation on how to create native WireGuard connections to our __NextGen network__, and also on how to enable Port Forwarding in case you require this feature. Documentation on OpenVPN will follow soon enough.
+This repository contains documentation on how to create native WireGuard and OpenVPN connections to our __NextGen network__, and also on how to enable Port Forwarding in case you require this feature. You will find a lot of information below. However if you prefer quick test, here is the __TL/DR__:
 
-You will find a lot of information below. However if you prefer quick test, here is the __TL/DR__:
 ```
 git clone https://github.com/pia-foss/manual-connections.git
 cd manual-connections
 ./run_setup.sh
 ```
 
-The scripts were however written so that they are easy to read and to modify. We hope you will enjoy forking the repo and customizing the scripts for your setup!
+The scripts were written so that they are easy to read and to modify. We hope you will enjoy forking the repo and customizing the scripts for your setup!
 
 ### Dependencies
 
