@@ -21,7 +21,7 @@
 
 
 # Check if the mandatory environment variables are set.
-if [[ ! $PF_GATEWAY || ! $PIA_TOKEN ]]; then
+if [[ ! $PF_GATEWAY || ! $PIA_TOKEN || ! $PF_HOSTNAME ]]; then
   echo This script requires 3 env vars:
   echo PF_GATEWAY  - the IP of your gateway
   echo PF_HOSTNAME - name of the host used for SSL/TLS certificate verification
