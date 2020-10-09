@@ -124,9 +124,9 @@ export MAX_LATENCY
 echo "MAX_LATENCY=\"$MAX_LATENCY\"
 "
 
-echo "Do you want to disable IPv6 on your system; if you do not, "
-echo "you may experience IPv6 leaks that would compromise "
-echo -n "the security of your traffic (Y/n): "
+echo "Having active IPv6 connections might compromise security by allowing"
+echo "split tunnel connections that run outside the VPN tunnel."
+echo -n "Do you want to disable IPv6? (Y/n): "
 read disable_IPv6
 echo
 

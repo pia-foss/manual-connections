@@ -141,8 +141,8 @@ if [ "$PIA_PF" != true ]; then
   echo
   echo If you want to also enable port forwarding, please start the script
   echo with the env var PIA_PF=true. Example:
-  echo $ WG_SERVER=10.0.0.3 WG_HOSTNAME=piaserver401 \
-    WG_TOKEN=\"\$token\" PIA_PF=true \
+  echo $ WG_SERVER_IP=10.0.0.3 WG_HOSTNAME=piaserver401 \
+    PIA_TOKEN=\"\$token\" PIA_PF=true \
     ./sort_regions_by_latency.sh
   exit
 fi

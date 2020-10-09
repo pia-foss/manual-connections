@@ -80,7 +80,7 @@ if [[ ! $OVPN_SERVER_IP ||
   ! $PIA_PF ||
   ! $PIA_TOKEN ||
   ! $CONNECTION_SETTINGS ]]; then
-  echo 'This script requires 5 env vars:'
+  echo 'This script requires 3 env vars:'
   echo 'OVPN_SERVER_IP      - IP that you want to connect to'
   echo 'OVPN_HOSTNAME       - name of the server, required for ssl'
   echo 'CONNECTION_SETTINGS - the protocol and encryption specification'
@@ -213,7 +213,7 @@ if [ "$PIA_PF" != true ]; then
   echo
   echo If you want to also enable port forwarding, please start the script
   echo with the env var PIA_PF=true. Example:
-  echo $ SERVER_IP=\"$OVPN_SERVER_IP\" HOSTNAME=\"$OVPN_HOSTNAME\" \
+  echo $ OVPN_SERVER_IP=\"$OVPN_SERVER_IP\" OVPN_HOSTNAME=\"$OVPN_HOSTNAME\" \
     PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
     PIA_PF=true ./connect_to_openvpn_with_token.sh
   exit
