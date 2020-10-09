@@ -155,6 +155,7 @@ echo "$generateTokenResponse"
 
 if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo "Could not get a token. Please check your account credentials."
+  echo
   echo "You can also try debugging by manually running the curl command:"
   echo $ curl -vs -u "$PIA_USER:$PIA_PASS" --cacert ca.rsa.4096.crt \
     --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
@@ -166,31 +167,62 @@ token="$(echo "$generateTokenResponse" | jq -r '.token')"
 echo "This token will expire in 24 hours.
 "
 
-if [ "$PIA_AUTOCONNECT" != wireguard ]; then
-  echo If you wish to automatically connect to WireGuard after detecting the best
-  echo region, please run the script with the env var PIA_AUTOCONNECT=wireguard.
-  echo You can echo also specify the env var PIA_PF=true to get port forwarding.
-  echo Example:
-  echo $ PIA_USER=p0123456 PIA_PASS=xxx \
-    PIA_AUTOCONNECT=true PIA_PF=true ./sort_regions_by_latency.sh
-  echo
-  echo You can also connect now by running this command:
-  echo $ WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
-    WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
-  exit
-fi
-
+# just making sure this variable doesn't contain some strange string
 if [ "$PIA_PF" != true ]; then
   PIA_PF="false"
 fi
 
-echo "The ./get_region_and_token.sh script got started with
-PIA_AUTOCONNECT=wireguard, so we will automatically connect to WireGuard,
-by running this command:
-$ WG_TOKEN=\"$token\" \\
-  WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
-  PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh
-"
+if [[ $PIA_AUTOCONNECT == wireguard ]]; then
+  echo The ./get_region_and_token.sh script got started with
+  echo PIA_AUTOCONNECT=wireguard, so we will automatically connect to WireGuard,
+  echo by running this command:
+  echo $ WG_TOKEN=\"$token\" \\
+  echo WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
+  echo PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh
+  echo
+  PIA_PF=$PIA_PF PIA_TOKEN="$token" WG_SERVER_IP=$bestServer_WG_IP \
+    WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
+  exit 0
+fi
 
-PIA_PF=$PIA_PF WG_TOKEN="$token" WG_SERVER_IP=$bestServer_WG_IP \
+if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
+  serverIP=$bestServer_OU_IP
+  serverHostname=$bestServer_OU_hostname
+  if [[ $PIA_AUTOCONNECT == *tcp* ]]; then
+    serverIP=$bestServer_OT_IP
+    serverHostname=$bestServer_OT_hostname
+  fi
+  echo The ./get_region_and_token.sh script got started with
+  echo PIA_AUTOCONNECT=$PIA_AUTOCONNECT, so we will automatically
+  echo connect to OpenVPN, by running this command:
+  echo PIA_PF=$PIA_PF PIA_TOKEN=\"$token\" \\
+  echo   OVPN_SERVER_IP=$serverIP \\
+  echo   OVPN_HOSTNAME=$serverHostname \\
+  echo   CONNECTION_SETTINGS=$PIA_AUTOCONNECT \\
+  echo   ./connect_to_openvpn_with_token.sh
+  echo
+  PIA_PF=$PIA_PF PIA_TOKEN="$token" \
+    OVPN_SERVER_IP=$serverIP \
+    OVPN_HOSTNAME=$serverHostname \
+    CONNECTION_SETTINGS=$PIA_AUTOCONNECT \
+    ./connect_to_openvpn_with_token.sh
+  exit 0
+fi
+
+echo If you wish to automatically connect to the VPN after detecting the best
+echo region, please run the script with the env var PIA_AUTOCONNECT.
+echo 'The available options for PIA_AUTOCONNECT are (from fastest to slowest):'
+echo  - wireguard
+echo  - openvpn_udp_standard
+echo  - openvpn_udp_strong
+echo  - openvpn_tcp_standard
+echo  - openvpn_tcp_strong
+echo You can also specify the env var PIA_PF=true to get port forwarding.
+echo
+echo Example:
+echo $ PIA_USER=p0123456 PIA_PASS=xxx \
+  PIA_AUTOCONNECT=wireguard PIA_PF=true ./get_region_and_token.sh
+echo
+echo You can also connect now by running this command:
+echo $ WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
   WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
