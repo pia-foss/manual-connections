@@ -147,7 +147,7 @@ if [ "$PIA_DNS" != true ]; then
   echo This configuration will not use PIA DNS.
   echo If you want to also enable PIA DNS, please start the script
   echo with the env var PIA_DNS=true. Example:
-  echo $ SERVER_IP=\"$OVPN_SERVER_IP\" HOSTNAME=\"$OVPN_HOSTNAME\" \
+  echo $ OVPN_SERVER_IP=\"$OVPN_SERVER_IP\" OVPN_HOSTNAME=\"$OVPN_HOSTNAME\" \
     PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
     PIA_PF=true PIA_DNS=true ./connect_to_openvpn_with_token.sh
 else
