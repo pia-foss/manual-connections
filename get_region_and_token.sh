@@ -221,7 +221,7 @@ echo You can also specify the env var PIA_PF=true to get port forwarding.
 echo
 echo Example:
 echo $ PIA_USER=p0123456 PIA_PASS=xxx \
-  PIA_AUTOCONNECT=wireguard PIA_PF=true ./sort_regions_by_latency.sh
+  PIA_AUTOCONNECT=wireguard PIA_PF=true ./get_region_and_token.sh
 echo
 echo You can also connect now by running this command:
 echo $ WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \

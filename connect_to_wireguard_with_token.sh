@@ -143,7 +143,7 @@ if [ "$PIA_PF" != true ]; then
   echo with the env var PIA_PF=true. Example:
   echo $ WG_SERVER_IP=10.0.0.3 WG_HOSTNAME=piaserver401 \
     PIA_TOKEN=\"\$token\" PIA_PF=true \
-    ./sort_regions_by_latency.sh
+    ./get_region_and_token.sh
   exit
 fi
 
