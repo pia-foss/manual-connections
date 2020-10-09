@@ -81,11 +81,27 @@ fi
 export PIA_AUTOCONNECT
 echo PIA_AUTOCONNECT=$PIA_AUTOCONNECT"
 "
+
+# Check for the required presence of resolvconf for settnig DNS on wireguard connections.
+setDNS="yes"
+if [ ! command -v resolvconf &>/dev/null ] && [ "$PIA_AUTOCONNECT"=="wireguard" ]; then
+  echo The resolvconf package could not be found.
+  echo This script can not set DNS for you and you will
+  echo need to invoke DNS protection some other way.
+  setDNS="no"
+fi
+
+if [ $setDNS!="no" ]; then
+  echo Using third party DNS could allow DNS monitoring.
+  echo -n "Do you want to force PIA DNS ([Y]es/[n]o): "
+  read setDNS
+  echo
+fi
   
-echo Using third party DNS could allow DNS monitoring.
-echo -n "Do you want to force PIA DNS ([Y]es/[n]o): "
-read setDNS
-echo
+PIA_DNS="true"
+if echo ${setDNS:0:1} | grep -iq n; then
+  PIA_DNS="false"
+fi
 
 PIA_DNS="true"
 if  echo ${setDNS:0:1} | grep -iq n; then
