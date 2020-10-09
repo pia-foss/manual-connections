@@ -51,7 +51,7 @@ if [[ "$adapter_check" != "$should_read" ]]; then
       echo It seems likely that process $old_pid is an OpenVPN connection
       echo that was established by using this script. Unless it is closed
       echo you would not be able to get a new connection.
-      echo -n "Do you want to run $ sudo kill $old_pid (Y/n): "
+      echo -n "Do you want to run $ kill $old_pid (Y/n): "
       read close_connection
     fi
     if echo ${close_connection:0:1} | grep -iq n ; then
@@ -59,7 +59,7 @@ if [[ "$adapter_check" != "$should_read" ]]; then
       exit 1
     fi
     echo Killing the existing OpenVPN process and waiting 5 seconds...
-    sudo kill $old_pid
+    kill $old_pid
     sleep 5
   fi
 fi
@@ -104,9 +104,9 @@ fi
 # Create a credentials file with the login token
 echo "Trying to write /opt/piavpn-manual/pia.ovpn...
 "
-sudo mkdir -p /opt/piavpn-manual
-sudo rm -f /opt/piavpn-manual/credentials /opt/piavpn-manual/route_info
-sudo echo ${PIA_TOKEN:0:62}"
+mkdir -p /opt/piavpn-manual
+rm -f /opt/piavpn-manual/credentials /opt/piavpn-manual/route_info
+echo ${PIA_TOKEN:0:62}"
 "${PIA_TOKEN:62} > /opt/piavpn-manual/credentials || exit 1
 
 # Translate connection settings variable
@@ -162,7 +162,7 @@ fi
 #rm -f /opt/piavpn-manual/debug_info
 echo "
 Trying to start the OpenVPN connection..."
-sudo openvpn --daemon \
+openvpn --daemon \
   --config "/opt/piavpn-manual/pia.ovpn" \
   --writepid "/opt/piavpn-manual/pia_pid" \
   --log "/opt/piavpn-manual/debug_info" || exit 1
@@ -191,7 +191,7 @@ gateway_ip="$( cat /opt/piavpn-manual/route_info )"
 # Report and exit if connection was not initialized within 10 seconds.
 if [ "$connected" != true ]; then
   echo "The VPN connection was not established within 10 seconds."
-  sudo kill $ovpn_pid
+  kill $ovpn_pid
   exit 1
 fi
 
