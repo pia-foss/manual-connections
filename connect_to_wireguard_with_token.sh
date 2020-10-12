@@ -57,7 +57,7 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
   echo "PAYLOAD_AND_SIGNATURE - In case you already have a port."
   echo
   echo An easy solution is to just run get_region_and_token.sh
-  echo as it will guide you through getting the best server and 
+  echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
   exit 1
@@ -126,8 +126,8 @@ echo OK!
 # Start the WireGuard interface.
 # If something failed, stop this script.
 # If you get DNS errors because you miss some packages,
-# just can hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
-echo 
+# just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
+echo
 echo Trying to create the wireguard interface...
 wg-quick up pia || exit 1
 echo "The WireGuard interface got created.

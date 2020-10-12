@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Only allow script to run as 
+# Only allow script to run as
 if [ "$(whoami)" != "root" ]; then
   echo "This script needs to be run as root. Try again with 'sudo $0'"
   exit 1
@@ -60,17 +60,17 @@ if echo ${connection_method:0:1} | grep -iq o; then
   echo -n "Connection method ([U]dp/[t]cp): "
   read protocolInput
   echo
-  
+
   protocol="udp"
   if echo ${protocolInput:0:1} | grep -iq t; then
     protocol="tcp"
   fi
-  
+
   echo "Higher levels of encryption trade performance for security. "
   echo -n "Do you want to use strong encryption ([N]o/[y]es): "
   read strongEncryption
   echo
-  
+
   encryption="standard"
   if echo ${strongEncryption:0:1} | grep -iq y; then
     encryption="strong"
@@ -82,7 +82,7 @@ export PIA_AUTOCONNECT
 echo PIA_AUTOCONNECT=$PIA_AUTOCONNECT"
 "
 
-# Check for the required presence of resolvconf for settnig DNS on wireguard connections.
+# Check for the required presence of resolvconf for setting DNS on wireguard connections.
 setDNS="yes"
 if ! command -v resolvconf &>/dev/null && [ "$PIA_AUTOCONNECT" == wireguard ]; then
   echo The resolvconf package could not be found.
@@ -98,14 +98,9 @@ if [ "$setDNS" != no ]; then
   read setDNS
   echo
 fi
-  
-PIA_DNS="true"
-if echo ${setDNS:0:1} | grep -iq n; then
-  PIA_DNS="false"
-fi
 
 PIA_DNS="true"
-if  echo ${setDNS:0:1} | grep -iq n; then
+if echo ${setDNS:0:1} | grep -iq n; then
   PIA_DNS="false"
 fi
 export PIA_DNS
@@ -124,7 +119,7 @@ export PIA_PF
 echo PIA_PF=$PIA_PF
 
 # Set this to the maximum allowed latency in seconds.
-# All servers that repond slower than this will be ignored.
+# All servers that respond slower than this will be ignored.
 echo -n "
 With no input, the maximum allowed latency will be set to 0.05s (50ms).
 If your connection has high latency, you may need to increase this value.
