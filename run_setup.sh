@@ -103,11 +103,6 @@ PIA_DNS="true"
 if echo ${setDNS:0:1} | grep -iq n; then
   PIA_DNS="false"
 fi
-
-PIA_DNS="true"
-if  echo ${setDNS:0:1} | grep -iq n; then
-  PIA_DNS="false"
-fi
 export PIA_DNS
 echo PIA_DNS=$PIA_DNS"
 "
