@@ -34,7 +34,7 @@ check_tool curl
 check_tool jq
 check_tool openvpn
 
-# Check if manual PIA OpenVPN connection is alread intitialized.
+# Check if manual PIA OpenVPN connection is already initialized.
 # Multi-hop is out of the scope of this repo, but you should be able to
 # get multi-hop running with both OpenVPN and WireGuard.
 adapter_check="$( ip a s tun06 )"
@@ -158,7 +158,7 @@ fi
 # Start the OpenVPN interface.
 # If something failed, stop this script.
 # If you get DNS errors because you miss some packages,
-# just can hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
+# just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
 #rm -f /opt/piavpn-manual/debug_info
 echo "
 Trying to start the OpenVPN connection..."
@@ -172,8 +172,8 @@ The OpenVPN connect command was issued.
 
 Confirming OpenVPN connection state... "
 
-# Check if manual PIA OpenVPN connection is intitialized.
-# Manually adjust the connectino_wait_time if needed
+# Check if manual PIA OpenVPN connection is initialized.
+# Manually adjust the connection_wait_time if needed
 connection_wait_time=10
 confirmation="Initialization Sequence Complete"
 for (( timeout=0; timeout <=$connection_wait_time; timeout++ ))

@@ -126,7 +126,7 @@ echo OK!
 # Start the WireGuard interface.
 # If something failed, stop this script.
 # If you get DNS errors because you miss some packages,
-# just can hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
+# just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
 echo
 echo Trying to create the wireguard interface...
 wg-quick up pia || exit 1

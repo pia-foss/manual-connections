@@ -82,7 +82,7 @@ export PIA_AUTOCONNECT
 echo PIA_AUTOCONNECT=$PIA_AUTOCONNECT"
 "
 
-# Check for the required presence of resolvconf for settnig DNS on wireguard connections.
+# Check for the required presence of resolvconf for setting DNS on wireguard connections.
 setDNS="yes"
 if ! command -v resolvconf &>/dev/null && [ "$PIA_AUTOCONNECT" == wireguard ]; then
   echo The resolvconf package could not be found.
@@ -119,7 +119,7 @@ export PIA_PF
 echo PIA_PF=$PIA_PF
 
 # Set this to the maximum allowed latency in seconds.
-# All servers that repond slower than this will be ignored.
+# All servers that respond slower than this will be ignored.
 echo -n "
 With no input, the maximum allowed latency will be set to 0.05s (50ms).
 If your connection has high latency, you may need to increase this value.

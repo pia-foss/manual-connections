@@ -35,7 +35,7 @@ check_tool curl curl
 check_tool jq jq
 
 # This allows you to set the maximum allowed latency in seconds.
-# All servers that repond slower than this will be ignored.
+# All servers that respond slower than this will be ignored.
 # You can inject this with the environment variable MAX_LATENCY.
 # The default value is 50 milliseconds.
 MAX_LATENCY=${MAX_LATENCY:-0.05}
@@ -63,7 +63,7 @@ printServerLatency() {
 export -f printServerLatency
 
 echo -n "Getting the server list... "
-# Get all region data since we will need this on multiple ocasions
+# Get all region data since we will need this on multiple occasions
 all_region_data=$(curl -s "$serverlist_url" | head -1)
 
 # If the server list has less than 1000 characters, it means curl failed.
