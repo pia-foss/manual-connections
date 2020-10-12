@@ -67,7 +67,7 @@ echo -n "Getting the server list... "
 all_region_data=$(curl -s "$serverlist_url" | head -1)
 
 # If the server list has less than 1000 characters, it means curl failed.
-if [[ ${#all_region_data} < 1000 ]]; then
+if [[ ${#all_region_data} -lt 1000 ]]; then
   echo "Could not get correct region data. To debug this, run:"
   echo "$ curl -v $serverlist_url"
   echo "If it works, you will get a huge JSON as a response."
