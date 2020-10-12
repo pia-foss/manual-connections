@@ -109,9 +109,9 @@ regionData="$( echo $all_region_data |
   '.regions[] | select(.id==$REGION_ID)')"
 
 echo -n The closest region is "$(echo $regionData | jq -r '.name')"
-if echo $regionData | jq -r '.geo' | grep true > /dev/null; then 
+if echo $regionData | jq -r '.geo' | grep true > /dev/null; then
   echo " (geolocated region)."
-else 
+else
   echo "."
 fi
 echo

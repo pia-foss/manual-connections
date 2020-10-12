@@ -28,7 +28,7 @@ if [[ ! $PF_GATEWAY || ! $PIA_TOKEN || ! $PF_HOSTNAME ]]; then
   echo PIA_TOKEN   - the token you use to connect to the vpn services
   echo
   echo An easy solution is to just run get_region_and_token.sh
-  echo as it will guide you through getting the best server and 
+  echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
 exit 1

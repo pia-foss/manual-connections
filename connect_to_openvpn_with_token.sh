@@ -41,7 +41,7 @@ adapter_check="$( ip a s tun06 )"
 should_read="Device \"tun06\" does not exist"
 pid_filepath="/opt/piavpn-manual/pia_pid"
 if [[ "$adapter_check" != "$should_read" ]]; then
-  echo The tun06 adapter already exists, that interface is required 
+  echo The tun06 adapter already exists, that interface is required
   echo for this configuration.
   if [ -f "$pid_filepath" ]; then
     old_pid="$( cat "$pid_filepath" )"
@@ -95,7 +95,7 @@ if [[ ! $OVPN_SERVER_IP ||
   echo "PAYLOAD_AND_SIGNATURE - In case you already have a port."
   echo
   echo An easy solution is to just run get_region_and_token.sh
-  echo as it will guide you through getting the best server and 
+  echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
   exit 1
@@ -139,7 +139,7 @@ fi
 cat $prefix_filepath > /opt/piavpn-manual/pia.ovpn || exit 1
 echo remote $OVPN_SERVER_IP $port $protocol >> /opt/piavpn-manual/pia.ovpn
 
-# Copy the up/down scripts to /opt/piavpn-manual/ 
+# Copy the up/down scripts to /opt/piavpn-manual/
 # based upon use of PIA DNS
 if [ "$PIA_DNS" != true ]; then
   cp openvpn_config/openvpn_up.sh /opt/piavpn-manual/
@@ -203,7 +203,7 @@ At this point, internet should work via VPN.
 echo "OpenVPN Process ID: $ovpn_pid
 VPN route IP: $gateway_ip
 
-To disconnect the VPN, run: 
+To disconnect the VPN, run:
 
 --> sudo kill $ovpn_pid <--
 "
