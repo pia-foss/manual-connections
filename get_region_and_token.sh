@@ -176,7 +176,7 @@ if [[ $PIA_AUTOCONNECT == wireguard ]]; then
   echo The ./get_region_and_token.sh script got started with
   echo PIA_AUTOCONNECT=wireguard, so we will automatically connect to WireGuard,
   echo by running this command:
-  echo $ WG_TOKEN=\"$token\" \\
+  echo $ PIA_TOKEN=\"$token\" \\
   echo WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
   echo PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh
   echo
@@ -224,5 +224,5 @@ echo $ PIA_USER=p0123456 PIA_PASS=xxx \
   PIA_AUTOCONNECT=wireguard PIA_PF=true ./get_region_and_token.sh
 echo
 echo You can also connect now by running this command:
-echo $ WG_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
+echo $ PIA_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
   WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
