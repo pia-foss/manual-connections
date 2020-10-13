@@ -102,6 +102,9 @@ echo
 # Create the WireGuard config based on the JSON received from the API
 # In case you want this section to also add the DNS setting, please
 # start the script with PIA_DNS=true.
+# This uses a PersistentKeepalive of 25 seconds to keep the NAT active
+# on firewalls. You can remove that line if your network does not
+# require it.
 echo -n "Trying to write /etc/wireguard/pia.conf... "
 mkdir -p /etc/wireguard
 if [ "$PIA_DNS" == true ]; then
@@ -117,6 +120,7 @@ Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
 PrivateKey = $privKey
 $dnsSettingForVPN
 [Peer]
+PersistentKeepalive = 25
 PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
