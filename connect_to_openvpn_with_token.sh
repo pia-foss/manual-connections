@@ -77,10 +77,10 @@ fi
 #  Check if the mandatory environment variables are set.
 if [[ ! $OVPN_SERVER_IP ||
   ! $OVPN_HOSTNAME ||
-  ! $PIA_PF ||
   ! $PIA_TOKEN ||
   ! $CONNECTION_SETTINGS ]]; then
-  echo 'This script requires 3 env vars:'
+  echo 'This script requires 4 env vars:'
+  echo 'PIA_TOKEN           - the token used for authentication'
   echo 'OVPN_SERVER_IP      - IP that you want to connect to'
   echo 'OVPN_HOSTNAME       - name of the server, required for ssl'
   echo 'CONNECTION_SETTINGS - the protocol and encryption specification'
