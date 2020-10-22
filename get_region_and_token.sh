@@ -51,7 +51,7 @@ printServerLatency() {
   regionID="$2"
   regionName="$(echo ${@:3} |
     sed 's/ false//' | sed 's/true/(geo)/')"
-  time=$(curl -o /dev/null -s \
+  time=$(LC_NUMERIC=en_US.utf8 curl -o /dev/null -s \
     --connect-timeout $MAX_LATENCY \
     --write-out "%{time_connect}" \
     http://$serverIP:443)
