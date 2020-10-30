@@ -31,7 +31,7 @@ if [[ ! $PF_GATEWAY || ! $PIA_TOKEN || ! $PF_HOSTNAME ]]; then
   echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
-exit 1
+  exit 1
 fi
 
 # The port forwarding system has required two variables:
