@@ -38,9 +38,9 @@ check_tool openvpn
 # Multi-hop is out of the scope of this repo, but you should be able to
 # get multi-hop running with both OpenVPN and WireGuard.
 adapter_check="$( ip a s tun06 2>&1 )"
-should_read_pattern="^[:space:]*Device \"tun06\" does not exist\\.?[:space:]*$"
+should_read="Device \"tun06\" does not exist"
 pid_filepath="/opt/piavpn-manual/pia_pid"
-if [[ ! "$adapter_check" =~ $should_read_pattern ]]; then
+if [[ "$adapter_check" != *"$should_read"* ]]; then
   echo The tun06 adapter already exists, that interface is required
   echo for this configuration.
   if [ -f "$pid_filepath" ]; then
