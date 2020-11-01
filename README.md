@@ -23,14 +23,16 @@ In order for the scripts to work (probably even if you do a manual setup), you w
 The functionality of the scripts within this repository has been tested and confirmed on the following operating systems and GNU/Linux distributions:
  * Arch
  * Artix
- * Fedora 32
- * FreeBSD 12.1
- * Ubuntu 20.04
+ * Fedora 32, 33
+ * FreeBSD 12.1 (tweaks are required)
+ * Manjaro
+ * Raspberry Pi OS 2020-08-20
+ * Ubuntu 18.04, 20.04
 
 ### Disclaimers
 
  * Port Forwarding is disabled on server-side in the United States.
- * These scripts do not touch IPv6 or DNS, so that you have the freedom to configure your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
+ * These scripts do not enforce IPv6 or DNS settings, so that you have the freedom to configure your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
  * For battle-tested security, please use the official PIA App, as it was designed to protect you in all scenarios.
  * This repo is really fresh at this moment, so please take into consideration the fact that you will probably be one of the first users that use the scripts.
 
