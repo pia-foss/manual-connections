@@ -26,6 +26,7 @@ The functionality of the scripts within this repository has been tested and conf
  * Fedora 32, 33
  * FreeBSD 12.1 (tweaks are required)
  * Manjaro
+ * PureOS amber
  * Raspberry Pi OS 2020-08-20
  * Ubuntu 18.04, 20.04
 
