@@ -34,6 +34,11 @@ function check_tool() {
 check_tool curl curl
 check_tool jq jq
 
+mkdir -p /opt/piavpn-manual
+# Erase old latencyList file
+rm -f /opt/piavpn-manual/latencyList
+touch /opt/piavpn-manual/latencyList
+
 # This allows you to set the maximum allowed latency in seconds.
 # All servers that respond slower than this will be ignored.
 # You can inject this with the environment variable MAX_LATENCY.
@@ -58,63 +63,75 @@ printServerLatency() {
   if [ $? -eq 0 ]; then
     >&2 echo Got latency ${time}s for region: $regionName
     echo $time $regionID $serverIP
+    # Write a list of servers with acceptable latancy to latencyList
+    echo $time $regionID $serverIP $regionName >> /opt/piavpn-manual/latencyList
   fi
 }
 export -f printServerLatency
 
-echo -n "Getting the server list... "
-# Get all region data since we will need this on multiple occasions
+# If a server location isn't specified, set the variable to false.
+if [[ -z "$CONNECT_TO" ]]; then
+  CONNECT_TO=false
+fi
+
+# Get all region data
 all_region_data=$(curl -s "$serverlist_url" | head -1)
 
-# If the server list has less than 1000 characters, it means curl failed.
-if [[ ${#all_region_data} -lt 1000 ]]; then
-  echo "Could not get correct region data. To debug this, run:"
-  echo "$ curl -v $serverlist_url"
-  echo "If it works, you will get a huge JSON as a response."
-  exit 1
-fi
-# Notify the user that we got the server list.
-echo "OK!"
+# If a server isn't being specified, auto-select the server with the lowest latency
+if [[ $CONNECT_TO = false ]]; then
+  echo -n "Getting the server list... "
 
-# Test one server from each region to get the closest region.
-# If port forwarding is enabled, filter out regions that don't support it.
-if [[ $PIA_PF == "true" ]]; then
-  echo Port Forwarding is enabled, so regions that do not support
-  echo port forwarding will get filtered out.
-  summarized_region_data="$( echo $all_region_data |
-    jq -r '.regions[] | select(.port_forward==true) |
-    .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
-else
-  summarized_region_data="$( echo $all_region_data |
+  # If the server list has less than 1000 characters, it means curl failed.
+  if [[ ${#all_region_data} -lt 1000 ]]; then
+    echo "Could not get correct region data. To debug this, run:"
+    echo "$ curl -v $serverlist_url"
+    echo "If it works, you will get a huge JSON as a response."
+    exit 1
+  fi
+  # Notify the user that we got the server list.
+  echo "OK!"
+
+  # Making sure this variable doesn't contain some strange string
+  if [ "$PIA_PF" != true ]; then
+    PIA_PF="false"
+  fi
+
+  # Test one server from each region to get the closest region.
+  # If port forwarding is enabled, filter out regions that don't support it.
+  if [[ $PIA_PF == "true" ]]; then
+    echo Port Forwarding is enabled, so regions that do not support
+    echo port forwarding will get filtered out.
+    summarized_region_data="$( echo $all_region_data |
+      jq -r '.regions[] | select(.port_forward==true) |
+      .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
+  else
+    summarized_region_data="$( echo $all_region_data |
     jq -r '.regions[] |
     .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
-fi
-echo Testing regions that respond \
-  faster than $MAX_LATENCY seconds:
-bestRegion="$(echo "$summarized_region_data" |
-  xargs -I{} bash -c 'printServerLatency {}' |
-  sort | head -1 | awk '{ print $2 }')"
+  fi
+  echo Testing regions that respond \
+    faster than $MAX_LATENCY seconds:
+  bestRegion="$(echo "$summarized_region_data" |
+    xargs -I{} bash -c 'printServerLatency {}' |
+    sort | head -1 | awk '{ print $2 }')"
 
-if [ -z "$bestRegion" ]; then
-  echo ...
-  echo No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
-  echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
-  echo $ MAX_LATENCY=1 ./get_region_and_token.sh
-  exit 1
+  if [ -z "$bestRegion" ]; then
+    echo ...
+    echo No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
+    echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
+    echo $ MAX_LATENCY=1 ./get_region_and_token.sh
+    exit 1
+  fi
+else
+  # Set the region the user has specified
+  bestRegion=$CONNECT_TO
 fi
 
-# Get all data for the best region
+# Get all data for the selected region
 regionData="$( echo $all_region_data |
   jq --arg REGION_ID "$bestRegion" -r \
   '.regions[] | select(.id==$REGION_ID)')"
 
-echo -n The closest region is "$(echo $regionData | jq -r '.name')"
-if echo $regionData | jq -r '.geo' | grep true > /dev/null; then
-  echo " (geolocated region)."
-else
-  echo "."
-fi
-echo
 bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
 bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
 bestServer_WG_IP="$(echo $regionData | jq -r '.servers.wg[0].ip')"
@@ -124,7 +141,14 @@ bestServer_OT_hostname="$(echo $regionData | jq -r '.servers.ovpntcp[0].cn')"
 bestServer_OU_IP="$(echo $regionData | jq -r '.servers.ovpnudp[0].ip')"
 bestServer_OU_hostname="$(echo $regionData | jq -r '.servers.ovpnudp[0].cn')"
 
-echo "The script found the best servers from the region closest to you.
+echo -n The selected region is "$(echo $regionData | jq -r '.name')"
+if echo $regionData | jq -r '.geo' | grep true > /dev/null; then
+  echo " (geolocated region)."
+else
+  echo "."
+fi
+echo "
+The script found the best servers from the region you selected.
 When connecting to an IP (no matter which protocol), please verify
 the SSL/TLS certificate actually contains the hostname so that you
 are sure you are connecting to a secure server, validated by the
@@ -143,35 +167,70 @@ if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
   exit 1
 fi
 
-echo "The ./get_region_and_token.sh script got started with PIA_USER and PIA_PASS,
-so we will also use a meta service to get a new VPN token."
+tokenLocation=/opt/piavpn-manual/token
 
-echo "Trying to get a new token by authenticating with the meta service..."
-generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
-  --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-  --cacert "ca.rsa.4096.crt" \
-  "https://$bestServer_meta_hostname/authv3/generateToken")
-echo "$generateTokenResponse"
-
-if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
-  echo "Could not get a token. Please check your account credentials."
-  echo
-  echo "You can also try debugging by manually running the curl command:"
-  echo $ curl -vs -u "$PIA_USER:$PIA_PASS" --cacert ca.rsa.4096.crt \
+if test -f "$tokenLocation"; then
+  # If the script has been called with run_setup, an authentication token is
+  # generated and an ordered latency list is created on the first pass.
+  # This will retrieve that token on the second pass.
+  token=$(<$tokenLocation)
+elif [[ $PIA_AUTOCONNECT == no ]]; then
+  # This section will only run when calling this scrpt from run_setup and will
+  # only run on the first pass.
+  echo -n "Checking login credentials..."
+  
+  generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
     --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-    https://$bestServer_meta_hostname/authv3/generateToken
-  exit 1
+    --cacert "ca.rsa.4096.crt" \
+    "https://$bestServer_meta_hostname/authv3/generateToken")
+
+  if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
+    echo
+    echo "Could not authenticate with the login credentials provided : "
+    echo
+    echo Username : $PIA_USER
+    echo Password : $PIA_PASS
+    exit 1
+  fi
+  
+  echo OK!  
+  echo
+  echo "$generateTokenResponse"
+  token="$(echo "$generateTokenResponse" | jq -r '.token')"
+  echo $token > /opt/piavpn-manual/token || exit 1
+  echo "This token will expire in 24 hours.
+  "
+  # Sort the latencyList, ordered by latency and exit to run_setup
+  sort -no /opt/piavpn-manual/latencyList /opt/piavpn-manual/latencyList
+  exit 0
+else
+  # This will only run if get_region_and_token is called directly with credentials
+  echo "The ./get_region_and_token.sh script got started with PIA_USER and PIA_PASS,
+  so we will also use a meta service to get a new VPN token."
+
+  echo "Trying to get a new token by authenticating with the meta service..."
+  generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
+    --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
+    --cacert "ca.rsa.4096.crt" \
+    "https://$bestServer_meta_hostname/authv3/generateToken")
+  echo "$generateTokenResponse"
+
+  if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
+    echo "Could not get a token. Please check your account credentials."
+    echo
+    echo "You can also try debugging by manually running the curl command:"
+    echo $ curl -vs -u "$PIA_USER:$PIA_PASS" --cacert ca.rsa.4096.crt \
+      --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
+      https://$bestServer_meta_hostname/authv3/generateToken
+    exit 1
+  fi
+  
+  token="$(echo "$generateTokenResponse" | jq -r '.token')"
+  echo "This token will expire in 24 hours.
+  "
 fi
 
-token="$(echo "$generateTokenResponse" | jq -r '.token')"
-echo "This token will expire in 24 hours.
-"
-
-# just making sure this variable doesn't contain some strange string
-if [ "$PIA_PF" != true ]; then
-  PIA_PF="false"
-fi
-
+# Connect with WireGuard and clear authentication token file
 if [[ $PIA_AUTOCONNECT == wireguard ]]; then
   echo The ./get_region_and_token.sh script got started with
   echo PIA_AUTOCONNECT=wireguard, so we will automatically connect to WireGuard,
@@ -182,9 +241,11 @@ if [[ $PIA_AUTOCONNECT == wireguard ]]; then
   echo
   PIA_PF=$PIA_PF PIA_TOKEN="$token" WG_SERVER_IP=$bestServer_WG_IP \
     WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
+  rm -f /opt/piavpn-manual/token
   exit 0
 fi
 
+# Connect with OpenVPN and clear authentication token file
 if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
   serverIP=$bestServer_OU_IP
   serverHostname=$bestServer_OU_hostname
@@ -206,23 +267,29 @@ if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
     OVPN_HOSTNAME=$serverHostname \
     CONNECTION_SETTINGS=$PIA_AUTOCONNECT \
     ./connect_to_openvpn_with_token.sh
+  rm -f /opt/piavpn-manual/token
   exit 0
 fi
 
-echo If you wish to automatically connect to the VPN after detecting the best
-echo region, please run the script with the env var PIA_AUTOCONNECT.
-echo 'The available options for PIA_AUTOCONNECT are (from fastest to slowest):'
-echo  - wireguard
-echo  - openvpn_udp_standard
-echo  - openvpn_udp_strong
-echo  - openvpn_tcp_standard
-echo  - openvpn_tcp_strong
-echo You can also specify the env var PIA_PF=true to get port forwarding.
-echo
-echo Example:
-echo $ PIA_USER=p0123456 PIA_PASS=xxx \
-  PIA_AUTOCONNECT=wireguard PIA_PF=true ./get_region_and_token.sh
-echo
-echo You can also connect now by running this command:
-echo $ PIA_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
-  WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
+# Tutorial notes to specify autoconnect and clear authentication token file
+if [[ ! $PIA_AUTOCONNECT ]]; then
+  echo If you wish to automatically connect to the VPN after detecting the best
+  echo region, please run the script with the env var PIA_AUTOCONNECT.
+  echo 'The available options for PIA_AUTOCONNECT are (from fastest to slowest):'
+  echo  - wireguard
+  echo  - openvpn_udp_standard
+  echo  - openvpn_udp_strong
+  echo  - openvpn_tcp_standard
+  echo  - openvpn_tcp_strong
+  echo You can also specify the env var PIA_PF=true to get port forwarding
+  echo and specify the env var CONNECT_TO to select a specific PIA server
+  echo
+  echo Example:
+  echo $ PIA_USER=p0123456 PIA_PASS=xxx PIA_AUTOCONNECT=wireguard \
+    PIA_PF=true CONNECT_TO=us_west ./get_region_and_token.sh
+  echo
+  echo You can also connect now by running this command:
+  echo $ PIA_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
+    WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
+  rm -f /opt/piavpn-manual/token
+fi
