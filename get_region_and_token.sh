@@ -146,6 +146,11 @@ fi
 echo "The ./get_region_and_token.sh script got started with PIA_USER and PIA_PASS,
 so we will also use a meta service to get a new VPN token."
 
+# NOTE for those customizing this script
+# If you are already connected to PIA, this will fail. 
+# replace $bestServer_meta_IP with 10.0.0.1 to contact the 
+# meta interface.
+
 echo "Trying to get a new token by authenticating with the meta service..."
 generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
   --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
