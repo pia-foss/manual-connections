@@ -115,8 +115,8 @@ else
   echo "."
 fi
 echo
-bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
-bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
+export PIA_SERVER_META_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
+export PIA_SERVER_META_HOSTNAME="$(echo $regionData | jq -r '.servers.meta[0].cn')"
 bestServer_WG_IP="$(echo $regionData | jq -r '.servers.wg[0].ip')"
 bestServer_WG_hostname="$(echo $regionData | jq -r '.servers.wg[0].cn')"
 bestServer_OT_IP="$(echo $regionData | jq -r '.servers.ovpntcp[0].ip')"
@@ -130,13 +130,18 @@ the SSL/TLS certificate actually contains the hostname so that you
 are sure you are connecting to a secure server, validated by the
 PIA authority. Please find bellow the list of best IPs and matching
 hostnames for each protocol:
-Meta Services: $bestServer_meta_IP // $bestServer_meta_hostname
+Meta Services: $PIA_SERVER_META_IP // $PIA_SERVER_META_HOSTNAME
 WireGuard: $bestServer_WG_IP // $bestServer_WG_hostname
 OpenVPN TCP: $bestServer_OT_IP // $bestServer_OT_hostname
 OpenVPN UDP: $bestServer_OU_IP // $bestServer_OU_hostname
 "
 
 token="$(./get_token.sh)"
+
+if [[ -z "$token" ]]; then
+  echo "Error: Could not get token."
+  exit 1
+fi
 
 # just making sure this variable doesn't contain some strange string
 if [ "$PIA_PF" != true ]; then
