@@ -108,6 +108,7 @@ mkdir -p /opt/piavpn-manual
 rm -f /opt/piavpn-manual/credentials /opt/piavpn-manual/route_info
 echo ${PIA_TOKEN:0:62}"
 "${PIA_TOKEN:62} > /opt/piavpn-manual/credentials || exit 1
+chmod 600 /opt/piavpn-manual/credentials
 
 # Translate connection settings variable
 IFS='_'
