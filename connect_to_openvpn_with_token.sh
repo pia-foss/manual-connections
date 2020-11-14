@@ -66,8 +66,11 @@ fi
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
-if [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] ||
-  [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]
+# IPv6 can also be disabled via kernel commandline param, so we must
+# first check if this is the case.
+if [[ -f /proc/net/if_inet6 ]] &&
+  [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ||
+     $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]
 then
   echo 'You should consider disabling IPv6 by running:'
   echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
