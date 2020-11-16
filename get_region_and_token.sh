@@ -64,7 +64,7 @@ export -f printServerLatency
 
 echo -n "Getting the server list... "
 # Get all region data since we will need this on multiple occasions
-all_region_data=$(curl -s "$serverlist_url" | head -1)
+all_region_data=$(curl -s -N "$serverlist_url" | head -1)
 
 # If the server list has less than 1000 characters, it means curl failed.
 if [[ ${#all_region_data} -lt 1000 ]]; then

@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+umask 0077
+
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
@@ -39,7 +41,7 @@ check_tool openvpn
 # get multi-hop running with both OpenVPN and WireGuard.
 adapter_check="$( ip a s tun06 2>&1 )"
 should_read="Device \"tun06\" does not exist"
-pid_filepath="/opt/piavpn-manual/pia_pid"
+pid_filepath="/var/run/piavpn-manual.pid"
 if [[ "$adapter_check" != *"$should_read"* ]]; then
   echo The tun06 adapter already exists, that interface is required
   echo for this configuration.
@@ -105,13 +107,12 @@ if [[ ! $OVPN_SERVER_IP ||
 fi
 
 # Create a credentials file with the login token
-echo "Trying to write /opt/piavpn-manual/pia.ovpn...
+echo "Trying to write /var/opt/piavpn-manual/pia.ovpn...
 "
-mkdir -p /opt/piavpn-manual
-rm -f /opt/piavpn-manual/credentials /opt/piavpn-manual/route_info
+mkdir -p /var/opt/piavpn-manual
+rm -f /var/opt/piavpn-manual/credentials /var/opt/piavpn-manual/route_info
 echo ${PIA_TOKEN:0:62}"
-"${PIA_TOKEN:62} > /opt/piavpn-manual/credentials || exit 1
-chmod 600 /opt/piavpn-manual/credentials
+"${PIA_TOKEN:62} > /var/opt/piavpn-manual/credentials || exit 1
 
 # Translate connection settings variable
 IFS='_'
@@ -140,14 +141,15 @@ else
 fi
 
 # Create the OpenVPN config based on the settings specified
-cat $prefix_filepath > /opt/piavpn-manual/pia.ovpn || exit 1
-echo remote $OVPN_SERVER_IP $port $protocol >> /opt/piavpn-manual/pia.ovpn
+cat $prefix_filepath > /var/opt/piavpn-manual/pia.ovpn || exit 1
+echo remote $OVPN_SERVER_IP $port $protocol >> /var/opt/piavpn-manual/pia.ovpn
 
-# Copy the up/down scripts to /opt/piavpn-manual/
+# Copy the up/down scripts to /var/opt/piavpn-manual/
 # based upon use of PIA DNS
+mkdir -p /var/opt/piavpn-manual
 if [ "$PIA_DNS" != true ]; then
-  cp openvpn_config/openvpn_up.sh /opt/piavpn-manual/
-  cp openvpn_config/openvpn_down.sh /opt/piavpn-manual/
+  cp openvpn_config/openvpn_up.sh /var/opt/piavpn-manual/
+  cp openvpn_config/openvpn_down.sh /var/opt/piavpn-manual/
   echo This configuration will not use PIA DNS.
   echo If you want to also enable PIA DNS, please start the script
   echo with the env var PIA_DNS=true. Example:
@@ -155,21 +157,21 @@ if [ "$PIA_DNS" != true ]; then
     PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
     PIA_PF=true PIA_DNS=true ./connect_to_openvpn_with_token.sh
 else
-  cp openvpn_config/openvpn_up_dnsoverwrite.sh /opt/piavpn-manual/openvpn_up.sh
-  cp openvpn_config/openvpn_down_dnsoverwrite.sh /opt/piavpn-manual/openvpn_down.sh
+  cp openvpn_config/openvpn_up_dnsoverwrite.sh /var/opt/piavpn-manual/openvpn_up.sh
+  cp openvpn_config/openvpn_down_dnsoverwrite.sh /var/opt/piavpn-manual/openvpn_down.sh
 fi
 
 # Start the OpenVPN interface.
 # If something failed, stop this script.
 # If you get DNS errors because you miss some packages,
 # just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
-#rm -f /opt/piavpn-manual/debug_info
+#rm -f /var/opt/piavpn-manual/debug_info
 echo "
 Trying to start the OpenVPN connection..."
 openvpn --daemon \
-  --config "/opt/piavpn-manual/pia.ovpn" \
-  --writepid "/opt/piavpn-manual/pia_pid" \
-  --log "/opt/piavpn-manual/debug_info" || exit 1
+  --config "/var/opt/piavpn-manual/pia.ovpn" \
+  --writepid "/var/run/piavpn-manual.pid" \
+  --log "/var/opt/piavpn-manual/debug_info" || exit 1
 
 echo "
 The OpenVPN connect command was issued.
@@ -183,14 +185,13 @@ confirmation="Initialization Sequence Complete"
 for (( timeout=0; timeout <=$connection_wait_time; timeout++ ))
 do
   sleep 1
-  if grep -q "$confirmation" /opt/piavpn-manual/debug_info; then
+  if grep -q "$confirmation" /var/opt/piavpn-manual/debug_info; then
     connected=true
     break
   fi
 done
 
-ovpn_pid="$( cat /opt/piavpn-manual/pia_pid )"
-gateway_ip="$( cat /opt/piavpn-manual/route_info )"
+ovpn_pid="$( cat /var/run/piavpn-manual.pid )"
 
 # Report and exit if connection was not initialized within 10 seconds.
 if [ "$connected" != true ]; then
@@ -203,6 +204,8 @@ echo "Initialization Sequence Complete!
 
 At this point, internet should work via VPN.
 "
+
+gateway_ip="$( cat /var/opt/piavpn-manual/route_info )"
 
 echo "OpenVPN Process ID: $ovpn_pid
 VPN route IP: $gateway_ip
