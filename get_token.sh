@@ -53,8 +53,6 @@ export MAX_LATENCY
 serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
 
 # This function checks the latency you have to a specific region.
-# It will print a human-readable message to stderr,
-# and it will print the variables to stdout
 printServerLatency() {
   serverIP="$1"
   regionID="$2"
