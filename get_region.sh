@@ -181,6 +181,7 @@ else
     echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh
     exit 0
   else
+    echo -n "Checking login credentials..."
     echo PIA_USER=$PIA_USER PIA_PASS=$PIA_PASS ./get_token
   fi
 fi
