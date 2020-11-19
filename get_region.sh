@@ -63,9 +63,12 @@ printServerLatency() {
   if [ $? -eq 0 ]; then
     >&2 echo Got latency ${time}s for region: $regionName
     echo $time $regionID $serverIP
-    # Write a list of servers with acceptable latancy to latencyList
+    # Write a list of servers with acceptable latancy
+    # to /opt/piavpn-manual/latencyList
     echo $time $regionID $serverIP $regionName >> /opt/piavpn-manual/latencyList
   fi
+  # Sort the latencyList, ordered by latency
+  sort -no /opt/piavpn-manual/latencyList /opt/piavpn-manual/latencyList
 }
 export -f printServerLatency
 
@@ -119,7 +122,7 @@ if [[ $CONNECT_TO = false ]]; then
     echo ...
     echo No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
     echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
-    echo $ MAX_LATENCY=1 ./get_region_and_token.sh
+    echo $ MAX_LATENCY=1 ./get_region.sh
     exit 1
   fi
 else
@@ -160,77 +163,40 @@ OpenVPN TCP: $bestServer_OT_IP // $bestServer_OT_hostname
 OpenVPN UDP: $bestServer_OU_IP // $bestServer_OU_hostname
 "
 
-if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
-  echo If you want this script to automatically get a token from the Meta
-  echo service, please add the variables PIA_USER and PIA_PASS. Example:
-  echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region_and_token.sh
-  exit 1
-fi
-
 tokenLocation=/opt/piavpn-manual/token
 
-if test -f "$tokenLocation"; then
-  # If the script has been called with run_setup, an authentication token is
-  # generated and an ordered latency list is created on the first pass.
-  # This will retrieve that token on the second pass.
-  token=$(<$tokenLocation)
-elif [[ $PIA_AUTOCONNECT == no ]]; then
-  # This section will only run when calling this scrpt from run_setup and will
-  # only run on the first pass.
-  echo -n "Checking login credentials..."
-  
-  generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
-    --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-    --cacert "ca.rsa.4096.crt" \
-    "https://$bestServer_meta_hostname/authv3/generateToken")
-
-  if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
-    echo
-    echo "Could not authenticate with the login credentials provided : "
-    echo
-    echo Username : $PIA_USER
-    echo Password : $PIA_PASS
-    exit 1
-  fi
-  
-  echo OK!  
-  echo
-  echo "$generateTokenResponse"
-  token="$(echo "$generateTokenResponse" | jq -r '.token')"
-  echo $token > /opt/piavpn-manual/token || exit 1
-  echo "This token will expire in 24 hours.
-  "
-  # Sort the latencyList, ordered by latency and exit to run_setup
-  sort -no /opt/piavpn-manual/latencyList /opt/piavpn-manual/latencyList
-  exit 0
-else
-  # This will only run if get_region_and_token is called directly with credentials
-  echo "The ./get_region_and_token.sh script got started with PIA_USER and PIA_PASS,
-  so we will also use a meta service to get a new VPN token."
-
-  echo "Trying to get a new token by authenticating with the meta service..."
-  generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
-    --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-    --cacert "ca.rsa.4096.crt" \
-    "https://$bestServer_meta_hostname/authv3/generateToken")
-  echo "$generateTokenResponse"
-
-  if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
-    echo "Could not get a token. Please check your account credentials."
-    echo
-    echo "You can also try debugging by manually running the curl command:"
-    echo $ curl -vs -u "$PIA_USER:$PIA_PASS" --cacert ca.rsa.4096.crt \
-      --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-      https://$bestServer_meta_hostname/authv3/generateToken
-    exit 1
-  fi
-  
-  token="$(echo "$generateTokenResponse" | jq -r '.token')"
-  echo "This token will expire in 24 hours.
-  "
+if [[ -z "$PIA_AUTOCONNECT" ]]; then
+  PIA_AUTOCONNECT=no
 fi
 
-# Connect with WireGuard and clear authentication token file
+# The script will check for an authentication token, and use it if present
+# If no token exists, the script will check for login credentials to generate one
+if test -f "$tokenLocation"; then
+  echo "Using existing token.
+  "
+else
+  if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
+    echo If you want this script to automatically get a token from the Meta
+    echo service, please add the variables PIA_USER and PIA_PASS. Example:
+    echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh
+    exit 0
+  else
+    echo PIA_USER=$PIA_USER PIA_PASS=$PIA_PASS ./get_token
+  fi
+fi
+token=$(<$tokenLocation)
+
+# If the script is called without specifying PIA_AUTOCONNECT, or if it is
+# set to "no" the script will generate a list of servers, with neccessary
+# connection details at /opt/piavpn-manual/latencyList
+if [[ $PIA_AUTOCONNECT == no ]]; then
+  echo "A list of servers and connection details, ordered by latency can be 
+found in at : 
+/opt/piavpn-manual/latencyList"
+  exit 0
+fi
+
+# Connect with WireGuard and clear authentication token file and latencyList
 if [[ $PIA_AUTOCONNECT == wireguard ]]; then
   echo The ./get_region_and_token.sh script got started with
   echo PIA_AUTOCONNECT=wireguard, so we will automatically connect to WireGuard,
@@ -241,11 +207,11 @@ if [[ $PIA_AUTOCONNECT == wireguard ]]; then
   echo
   PIA_PF=$PIA_PF PIA_TOKEN="$token" WG_SERVER_IP=$bestServer_WG_IP \
     WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
-  rm -f /opt/piavpn-manual/token
+  rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
   exit 0
 fi
 
-# Connect with OpenVPN and clear authentication token file
+# Connect with OpenVPN and clear authentication token file and latencyList
 if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
   serverIP=$bestServer_OU_IP
   serverHostname=$bestServer_OU_hostname
@@ -253,7 +219,7 @@ if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
     serverIP=$bestServer_OT_IP
     serverHostname=$bestServer_OT_hostname
   fi
-  echo The ./get_region_and_token.sh script got started with
+  echo The ./get_region.sh script got started with
   echo PIA_AUTOCONNECT=$PIA_AUTOCONNECT, so we will automatically
   echo connect to OpenVPN, by running this command:
   echo PIA_PF=$PIA_PF PIA_TOKEN=\"$token\" \\
@@ -267,29 +233,6 @@ if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
     OVPN_HOSTNAME=$serverHostname \
     CONNECTION_SETTINGS=$PIA_AUTOCONNECT \
     ./connect_to_openvpn_with_token.sh
-  rm -f /opt/piavpn-manual/token
+  rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
   exit 0
-fi
-
-# Tutorial notes to specify autoconnect and clear authentication token file
-if [[ ! $PIA_AUTOCONNECT ]]; then
-  echo If you wish to automatically connect to the VPN after detecting the best
-  echo region, please run the script with the env var PIA_AUTOCONNECT.
-  echo 'The available options for PIA_AUTOCONNECT are (from fastest to slowest):'
-  echo  - wireguard
-  echo  - openvpn_udp_standard
-  echo  - openvpn_udp_strong
-  echo  - openvpn_tcp_standard
-  echo  - openvpn_tcp_strong
-  echo You can also specify the env var PIA_PF=true to get port forwarding
-  echo and specify the env var CONNECT_TO to select a specific PIA server
-  echo
-  echo Example:
-  echo $ PIA_USER=p0123456 PIA_PASS=xxx PIA_AUTOCONNECT=wireguard \
-    PIA_PF=true CONNECT_TO=us_west ./get_region_and_token.sh
-  echo
-  echo You can also connect now by running this command:
-  echo $ PIA_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
-    WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
-  rm -f /opt/piavpn-manual/token
 fi

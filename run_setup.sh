@@ -27,7 +27,7 @@ if [ "$(whoami)" != "root" ]; then
 fi
 
 # Erase previous authentication token if present
-rm -f /opt/piavpn-manual/token
+rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
 
 # This section asks for PIA user credentials
 echo
@@ -49,21 +49,7 @@ if [ -z "$PIA_PASS" ]; then
   echo Password is required, aborting.
   exit 1
 fi
-echo
 export PIA_PASS
-
-# This section asks for connection preferences that are
-# relevant to manual server selection
-echo -n "Do you want a forwarding port assigned ([N]o/[y]es): "
-read portForwarding
-echo
-
-PIA_PF="false"
-if echo ${portForwarding:0:1} | grep -iq y; then
-  PIA_PF="true"
-fi
-export PIA_PF
-echo PIA_PF=$PIA_PF
 
 # Set this to the maximum allowed latency in seconds.
 # All servers that respond slower than this will be ignored.
@@ -83,29 +69,47 @@ export MAX_LATENCY
 echo "MAX_LATENCY=\"$MAX_LATENCY\"
 "
 
+echo -n "Checking login credentials..."
+# Confirm MAX_LATENCY allowance, then confirm credentials and generate token
+./get_token.sh
+
+# If the script failed to generate an authentication token, the script will exit early.
+tokenLocation=/opt/piavpn-manual/token
+if [ ! -f "$tokenLocation" ]; then
+  exit 1
+fi
+
+# This section asks for connection preferences that are
+# relevant to manual server selection
+echo -n "Do you want a forwarding port assigned ([N]o/[y]es): "
+read portForwarding
+echo
+
+PIA_PF="false"
+if echo ${portForwarding:0:1} | grep -iq y; then
+  PIA_PF="true"
+fi
+export PIA_PF
+echo PIA_PF=$PIA_PF
+
 # Prompt the user to specify a server or auto-connect to the lowest latency
+echo
 echo -n "Do you want to manually select a server, instead of auto-connecting to the
 server with the lowest latency ([N]o/[y]es): "
 read selectServer
 echo
 
+# Call the region script with input to create an ordered list based upon latency
+# When $CONNECT_TO is set to false, get_region.sh will generate a list of servers
+# that meet the latency requirements speciied by $MAX_LATENCY.
+# When $PIA_AUTOCONNECT is set to no, get_region.sh will sort that list of servers
+# to allow for numeric selection, or an easy manual review of options.
 if echo ${selectServer:0:1} | grep -iq y; then
-  # Call the region and token script with input to create an ordered list based upon latency
-  # When $CONNECT_TO is set to false, get_region_and_token will generate a list of servers
-  # that meet the latency requirements speciied by $MAX_LATENCY.
-  # When $PIA_AUTOCONNECT is set to no, get_region_and_token will sort that list of servers
-  # and generate an authentication token without trying to call connection scripts.
   CONNECT_TO="false"
   export CONNECT_TO
   PIA_AUTOCONNECT="no"
   export PIA_AUTOCONNECT
-  ./get_region_and_token.sh
-  
-  # If the script failed to generate an authentication token, the script will exit early.
-  tokenLocation=/opt/piavpn-manual/token
-  if [ ! -f "$tokenLocation" ]; then
-    exit 1
-  fi
+  ./get_region.sh
   
   # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
   i=0
@@ -213,4 +217,4 @@ else
   "
 fi
 
-./get_region_and_token.sh
+./get_region.sh
