@@ -157,8 +157,8 @@ if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo "Could not get a token. Please check your account credentials."
   echo
   echo "You can also try debugging by manually running the curl command:"
-  echo $ curl -vs -u "$PIA_USER:$PIA_PASS" --cacert ca.rsa.4096.crt \
-    --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
+  echo $ curl -vs -u \"$PIA_USER:$PIA_PASS\" --cacert ca.rsa.4096.crt \
+    --connect-to \"$bestServer_meta_hostname::$bestServer_meta_IP:\" \
     https://$bestServer_meta_hostname/authv3/generateToken
   exit 1
 fi
