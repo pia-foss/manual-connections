@@ -155,7 +155,7 @@ The script found the best servers from the region you selected.
 When connecting to an IP (no matter which protocol), please verify
 the SSL/TLS certificate actually contains the hostname so that you
 are sure you are connecting to a secure server, validated by the
-PIA authority. Please find bellow the list of best IPs and matching
+PIA authority. Please find below the list of best IPs and matching
 hostnames for each protocol:
 Meta Services: $bestServer_meta_IP // $bestServer_meta_hostname
 WireGuard: $bestServer_WG_IP // $bestServer_WG_hostname

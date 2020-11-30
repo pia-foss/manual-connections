@@ -8,9 +8,20 @@ cd manual-connections
 ./run_setup.sh
 ```
 
-The scripts were written so that they are easy to read and to modify. We hope you will enjoy forking the repo and customizing the scripts for your setup!
+The scripts were written so that they are easy to read and to modify. The code also has a lot of comments, so that you find all the information you might need. We hope you will enjoy forking the repo and customizing the scripts for your setup!
 
-### Dependencies
+## Table of Contents
+
+- [Dependencies](#dependencies)
+- [Disclaimers](#disclaimers)
+- [Confirmed distributions](#confirmed-distributions)
+- [3rd Party Repositories](#3rd-party-repositories)
+- [PIA Port Forwarding](#pia-port-forwarding)
+- [Automated setup](#automated-setup)
+- [Manual PF testing](#manual-pf-testing)
+- [License](#license)
+
+## Dependencies
 
 In order for the scripts to work (probably even if you do a manual setup), you will need the following packages:
  * `curl`
@@ -18,7 +29,15 @@ In order for the scripts to work (probably even if you do a manual setup), you w
  * (only for WireGuard) `wg-quick` and `wireguard` kernel module
  * (only for OpenVPN) `openvpn`
 
-### Confirmed systems and distributions
+## Disclaimers
+
+ * Port Forwarding is disabled on server-side in the United States.
+ * These scripts do not enforce IPv6 or DNS settings, so that you have the freedom to configure your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
+ * For battle-tested security, please use the official PIA App, as it was designed to protect you in all scenarios.
+ * This repo is really fresh at this moment, so please take into consideration the fact that you will probably be one of the first users that use the scripts.
+ * Though we support research of open source technologies, we can not provide official support for all FOSS platforms, as there are simply too many platforms (which is a good thing). That is why we link 3rd Party repos in this README. We can not guarantee the quality of the code in the 3rd Party Repos, so use them only if you understand the risks.
+
+## Confirmed distributions
 
 The functionality of the scripts within this repository has been tested and confirmed on the following operating systems and GNU/Linux distributions:
  * Arch
@@ -30,20 +49,27 @@ The functionality of the scripts within this repository has been tested and conf
  * Raspberry Pi OS 2020-08-20
  * Ubuntu 18.04, 20.04
 
-### Disclaimers
+## 3rd Party Repositories
 
- * Port Forwarding is disabled on server-side in the United States.
- * These scripts do not enforce IPv6 or DNS settings, so that you have the freedom to configure your setup the way you desire it to work. This means you should have good understanding of VPN and cybersecurity in order to properly configure your setup.
- * For battle-tested security, please use the official PIA App, as it was designed to protect you in all scenarios.
- * This repo is really fresh at this moment, so please take into consideration the fact that you will probably be one of the first users that use the scripts.
+Some users have created their own repositories for manual connections, based on the information they found within this repository. We can not guarantee the quality of the code found within these 3rd party repos, but we can create a centralized list so it's easy for you to find repos contain scripts to enable PIA services for your system.
+
+| System | Fork | Language | Scope | Repository |
+|:-:|:-:|:-:|:-:|-|
+| FreeBSD | Yes | Bash | Compatibility | [glorious1/manual-connections](https://github.com/glorious1/manual-connections) |
+| OPNsense | No | Python | WireGuard, PF | [FingerlessGlov3s/OPNsensePIAWireguard](https://github.com/FingerlessGlov3s/OPNsensePIAWireguard) |
+| pfSense | No | Sh | OpenVPN, PF | [fm407/PIA-NextGen-PortForwarding](https://github.com/fm407/PIA-NextGen-PortForwarding) |
+| Synology | Yes | Bash | Compatibility | [steff2632/manual-connections](https://github.com/steff2632/manual-connections) |
+| Synology | No | Python | PF | [stmty9/synology](https://github.com/stmty9/synology) |
+| TrueNAS | No | Bash | PF | [dak180/TrueNAS-Scripts](https://github.com/dak180/TrueNAS-Scripts/blob/master/pia-port-forward.sh) |
+| UFW | Yes | Bash | Firewall Rules | [iPherian/manual-connections](https://github.com/iPherian/manual-connections) |
 
 ## PIA Port Forwarding
 
-The PIA Port Forwarding service (a.k.a. PF) allows you run services on your own devices, and expose them to the internet by using the PIA VPN Network. The easiest way to set this up is by using a native PIA aplication. In case you require port forwarding on native clients, please follow this documentation in order to enable port forwarding for your VPN connection.
+The PIA Port Forwarding service (a.k.a. PF) allows you run services on your own devices, and expose them to the internet by using the PIA VPN Network. The easiest way to set this up is by using a native PIA application. In case you require port forwarding on native clients, please follow this documentation in order to enable port forwarding for your VPN connection.
 
 This service can be used only AFTER establishing a VPN connection.
 
-## Automated setup of VPN and/or PF
+## Automated setup
 
 In order to help you use VPN services and PF on any device, we have prepared a few bash scripts that should help you through the process of setting everything up. The scripts also contain a lot of comments, just in case you require detailed information regarding how the technology works. The functionality is controlled via environment variables, so that you have an easy time automating your setup.
 
@@ -53,7 +79,7 @@ Here is a list of scripts you could find useful:
  * [Connect to OpenVPN](connect_to_openvpn_with_token.sh): This script allows you to connect to the VPN server via OpenVPN.
  * [Enable Port Forwarding](port_forwarding.sh): Enables you to add Port Forwarding to an existing VPN connection. Adding the environment variable `PIA_PF=true` to any of the previous scripts will also trigger this script.
 
-## Manual setup of PF
+## Manual PF tesing
 
 To use port forwarding on the NextGen network, first of all establish a connection with your favorite protocol. After this, you will need to find the private IP of the gateway you are connected to. In case you are WireGuard, the gateway will be part of the JSON response you get from the server, as you can see in the [bash script](https://github.com/pia-foss/manual-connections/blob/master/wireguard_and_pf.sh#L119). In case you are using OpenVPN, you can find the gateway by checking the routing table with `ip route s t all`.
 
@@ -100,12 +126,12 @@ To test that it works, you can tcpdump on the port you received:
 bash-5.0# tcpdump -ni any port 47047
 ```
 
-After that, use curl on the IP of the traffic server and the port specified in the payload which in our case is `47047`:
+After that, use curl __from another machine__ on the IP of the traffic server and the port specified in the payload which in our case is `47047`:
 ```bash
 $ curl "http://178.162.208.237:47047"
 ```
 
-and you should see the traffic in your tcpdump:
+You should see the traffic in your tcpdump:
 ```
 bash-5.0# tcpdump -ni any port 47047
 tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
@@ -113,6 +139,8 @@ listening on any, link-type LINUX_SLL (Linux cooked v1), capture size 262144 byt
 22:44:01.510804 IP 81.180.227.170.33884 > 10.4.143.34.47047: Flags [S], seq 906854496, win 64860, options [mss 1380,sackOK,TS val 2608022390 ecr 0,nop,wscale 7], length 0
 22:44:01.510895 IP 10.4.143.34.47047 > 81.180.227.170.33884: Flags [R.], seq 0, ack 906854497, win 0, length 0
 ```
+
+If you run curl on the same machine (the one that is connected to the VPN), you will see the traffic in tcpdump anyway and the test won't prove anything. At the same time, the request will get firewall so you will not be able to access the port from the same machine. This can only be tested properly by running curl on another system.
 
 ## License
 This project is licensed under the [MIT (Expat) license](https://choosealicense.com/licenses/mit/), which can be found [here](/LICENSE).
