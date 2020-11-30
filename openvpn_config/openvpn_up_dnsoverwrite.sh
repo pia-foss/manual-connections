@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPTDIR=$(dirname $(realpath $BASH_SOURCE)/..)
+
 # Write gateway IP for reference
 echo $route_vpn_gateway > "$SCRIPTDIR"/route_info
 
