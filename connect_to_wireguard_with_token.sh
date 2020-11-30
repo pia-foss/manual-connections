@@ -35,6 +35,8 @@ check_tool wg-quick wireguard-tools
 check_tool curl curl
 check_tool jq jq
 
+SCRIPTDIR=$(dirname $(realpath $BASH_SOURCE))
+
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
 # IPv6 can also be disabled via kernel commandline param, so we must
@@ -150,7 +152,7 @@ if [ "$PIA_PF" != true ]; then
   echo with the env var PIA_PF=true. Example:
   echo $ WG_SERVER_IP=10.0.0.3 WG_HOSTNAME=piaserver401 \
     PIA_TOKEN=\"\$token\" PIA_PF=true \
-    ./connect_to_wireguard_with_token.sh
+    . \"$SCRIPTDIR/connect_to_wireguard_with_token.sh\"
   exit
 fi
 
@@ -161,8 +163,8 @@ command:
 $ PIA_TOKEN=$PIA_TOKEN \\
   PF_GATEWAY=\"$(echo "$wireguard_json" | jq -r '.server_vip')\" \\
   PF_HOSTNAME=\"$WG_HOSTNAME\" \\
-  ./port_forwarding.sh
-  
+  . \"$SCRIPTDIR/port_forwarding.sh\"
+
 Starting PF in "
 for i in {5..1}; do
   echo -n "$i... "
@@ -174,4 +176,4 @@ echo
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY="$(echo "$wireguard_json" | jq -r '.server_vip')" \
   PF_HOSTNAME="$WG_HOSTNAME" \
-  ./port_forwarding.sh
+  . "$SCRIPTDIR/port_forwarding.sh"

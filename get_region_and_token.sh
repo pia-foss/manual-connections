@@ -34,6 +34,8 @@ function check_tool() {
 check_tool curl curl
 check_tool jq jq
 
+SCRIPTDIR=$(dirname $(realpath $BASH_SOURCE))
+
 # This allows you to set the maximum allowed latency in seconds.
 # All servers that respond slower than this will be ignored.
 # You can inject this with the environment variable MAX_LATENCY.
@@ -99,7 +101,7 @@ if [ -z "$bestRegion" ]; then
   echo ...
   echo No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
   echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
-  echo $ MAX_LATENCY=1 ./get_region_and_token.sh
+  echo $ MAX_LATENCY=1 . \"$SCRIPTDIR/get_region_and_token.sh\"
   exit 1
 fi
 
@@ -139,11 +141,11 @@ OpenVPN UDP: $bestServer_OU_IP // $bestServer_OU_hostname
 if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
   echo If you want this script to automatically get a token from the Meta
   echo service, please add the variables PIA_USER and PIA_PASS. Example:
-  echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region_and_token.sh
+  echo $ PIA_USER=p0123456 PIA_PASS=xxx . \"$SCRIPTDIR/get_region_and_token.sh\"
   exit 1
 fi
 
-echo "The ./get_region_and_token.sh script got started with PIA_USER and PIA_PASS,
+echo "The . \"$SCRIPTDIR/get_region_and_token.sh\" script got started with PIA_USER and PIA_PASS,
 so we will also use a meta service to get a new VPN token."
 
 echo "Trying to get a new token by authenticating with the meta service..."
@@ -173,15 +175,15 @@ if [ "$PIA_PF" != true ]; then
 fi
 
 if [[ $PIA_AUTOCONNECT == wireguard ]]; then
-  echo The ./get_region_and_token.sh script got started with
+  echo The . \"$SCRIPTDIR/get_region_and_token.sh\" script got started with
   echo PIA_AUTOCONNECT=wireguard, so we will automatically connect to WireGuard,
   echo by running this command:
   echo $ PIA_TOKEN=\"$token\" \\
   echo WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
-  echo PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh
+  echo PIA_PF=$PIA_PF . \"$SCRIPTDIR/connect_to_wireguard_with_token.sh\"
   echo
   PIA_PF=$PIA_PF PIA_TOKEN="$token" WG_SERVER_IP=$bestServer_WG_IP \
-    WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
+    WG_HOSTNAME=$bestServer_WG_hostname . "$SCRIPTDIR/connect_to_wireguard_with_token.sh"
   exit 0
 fi
 
@@ -192,20 +194,20 @@ if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
     serverIP=$bestServer_OT_IP
     serverHostname=$bestServer_OT_hostname
   fi
-  echo The ./get_region_and_token.sh script got started with
+  echo The . \"$SCRIPTDIR/get_region_and_token.sh\" script got started with
   echo PIA_AUTOCONNECT=$PIA_AUTOCONNECT, so we will automatically
   echo connect to OpenVPN, by running this command:
   echo PIA_PF=$PIA_PF PIA_TOKEN=\"$token\" \\
   echo   OVPN_SERVER_IP=$serverIP \\
   echo   OVPN_HOSTNAME=$serverHostname \\
   echo   CONNECTION_SETTINGS=$PIA_AUTOCONNECT \\
-  echo   ./connect_to_openvpn_with_token.sh
+  echo   . \"$SCRIPTDIR/connect_to_openvpn_with_token.sh\"
   echo
   PIA_PF=$PIA_PF PIA_TOKEN="$token" \
     OVPN_SERVER_IP=$serverIP \
     OVPN_HOSTNAME=$serverHostname \
     CONNECTION_SETTINGS=$PIA_AUTOCONNECT \
-    ./connect_to_openvpn_with_token.sh
+    . "$SCRIPTDIR/connect_to_openvpn_with_token.sh"
   exit 0
 fi
 
@@ -221,8 +223,8 @@ echo You can also specify the env var PIA_PF=true to get port forwarding.
 echo
 echo Example:
 echo $ PIA_USER=p0123456 PIA_PASS=xxx \
-  PIA_AUTOCONNECT=wireguard PIA_PF=true ./get_region_and_token.sh
+  PIA_AUTOCONNECT=wireguard PIA_PF=true . \"$SCRIPTDIR/get_region_and_token.sh\"
 echo
 echo You can also connect now by running this command:
 echo $ PIA_TOKEN=\"$token\" WG_SERVER_IP=$bestServer_WG_IP \
-  WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
+  WG_HOSTNAME=$bestServer_WG_hostname . \"$SCRIPTDIR/connect_to_wireguard_with_token.sh\"
