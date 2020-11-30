@@ -25,7 +25,7 @@ if [ "$(whoami)" != "root" ]; then
   echo "This script needs to be run as root. Try again with 'sudo $0'"
   exit 1
 fi
-
+SCRIPTDIR=$(dirname $(realpath $BASH_SOURCE))
 echo
 echo -n "PIA username (pNNNNNNN): "
 read PIA_USER
@@ -155,4 +155,4 @@ else
   "
 fi
 
-./get_region_and_token.sh
+."$SCRIPTDIR/get_region_and_token.sh"
