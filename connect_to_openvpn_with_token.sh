@@ -34,6 +34,8 @@ check_tool curl
 check_tool jq
 check_tool openvpn
 
+SCRIPTDIR=$(dirname $(realpath $BASH_SOURCE))
+
 # Check if manual PIA OpenVPN connection is already initialized.
 # Multi-hop is out of the scope of this repo, but you should be able to
 # get multi-hop running with both OpenVPN and WireGuard.
@@ -153,7 +155,7 @@ if [ "$PIA_DNS" != true ]; then
   echo with the env var PIA_DNS=true. Example:
   echo $ OVPN_SERVER_IP=\"$OVPN_SERVER_IP\" OVPN_HOSTNAME=\"$OVPN_HOSTNAME\" \
     PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
-    PIA_PF=true PIA_DNS=true ./connect_to_openvpn_with_token.sh
+    PIA_PF=true PIA_DNS=true . \"$SCRIPTDIR/connect_to_openvpn_with_token.sh\"
 else
   cp openvpn_config/openvpn_up_dnsoverwrite.sh /opt/piavpn-manual/openvpn_up.sh
   cp openvpn_config/openvpn_down_dnsoverwrite.sh /opt/piavpn-manual/openvpn_down.sh
@@ -219,7 +221,7 @@ if [ "$PIA_PF" != true ]; then
   echo with the env var PIA_PF=true. Example:
   echo $ OVPN_SERVER_IP=\"$OVPN_SERVER_IP\" OVPN_HOSTNAME=\"$OVPN_HOSTNAME\" \
     PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
-    PIA_PF=true ./connect_to_openvpn_with_token.sh
+    PIA_PF=true . \"$SCRIPTDIR/connect_to_openvpn_with_token.sh\"
   exit
 fi
 
@@ -229,10 +231,10 @@ Starting procedure to enable port forwarding by running the following command:
 $ PIA_TOKEN=\"$PIA_TOKEN\" \\
   PF_GATEWAY=\"$gateway_ip\" \\
   PF_HOSTNAME=\"$OVPN_HOSTNAME\" \\
-  ./port_forwarding.sh
+  . \"$SCRIPTDIR/port_forwarding.sh\"
 "
 
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY="$gateway_ip" \
   PF_HOSTNAME="$OVPN_HOSTNAME" \
-  ./port_forwarding.sh
+  . "$SCRIPTDIR/port_forwarding.sh"
