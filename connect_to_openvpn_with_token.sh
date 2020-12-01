@@ -162,8 +162,9 @@ else
 fi
 
 # Replace $SCRIPTDIR with its value in final script
-sed -i "s,\$SCRIPTDIR,$SCRIPTDIR,g" openvpn_up.sh
-sed -i "s,\$SCRIPTDIR,$SCRIPTDIR,g" openvpn_down.sh
+sed -i "s,\$SCRIPTDIR,$SCRIPTDIR,g" "$SCRIPTDIR/openvpn_up.sh"
+sed -i "s,\$SCRIPTDIR,$SCRIPTDIR,g" "$SCRIPTDIR/openvpn_down.sh"
+sed -i "s,\$SCRIPTDIR,$SCRIPTDIR,g" "$SCRIPTDIR/pia.ovpn"
 
 # Start the OpenVPN interface.
 # If something failed, stop this script.
