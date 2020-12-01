@@ -161,6 +161,10 @@ else
   cp openvpn_config/openvpn_down_dnsoverwrite.sh "$SCRIPTDIR"/openvpn_down.sh
 fi
 
+# Replace $SCRIPTDIR with its value in final script
+sed -i "s,\$SCRIPTDIR,$SCRIPTDIR,g" openvpn_up.sh
+sed -i "s,\$SCRIPTDIR,$SCRIPTDIR,g" openvpn_down.sh
+
 # Start the OpenVPN interface.
 # If something failed, stop this script.
 # If you get DNS errors because you miss some packages,
