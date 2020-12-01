@@ -148,8 +148,8 @@ echo remote $OVPN_SERVER_IP $port $protocol >> "$SCRIPTDIR"/pia.ovpn
 # Copy the up/down scripts to "$SCRIPTDIR"/
 # based upon use of PIA DNS
 if [ "$PIA_DNS" != true ]; then
-  cp openvpn_config/openvpn_up.sh "$SCRIPTDIR"/
-  cp openvpn_config/openvpn_down.sh "$SCRIPTDIR"/
+  cp "$SCRIPTDIR/openvpn_config/openvpn_up.sh" "$SCRIPTDIR"/
+  cp "$SCRIPTDIR/openvpn_config/openvpn_down.sh" "$SCRIPTDIR"/
   echo This configuration will not use PIA DNS.
   echo If you want to also enable PIA DNS, please start the script
   echo with the env var PIA_DNS=true. Example:
@@ -157,8 +157,8 @@ if [ "$PIA_DNS" != true ]; then
     PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
     PIA_PF=true PIA_DNS=true . \"$SCRIPTDIR/connect_to_openvpn_with_token.sh\"
 else
-  cp openvpn_config/openvpn_up_dnsoverwrite.sh "$SCRIPTDIR"/openvpn_up.sh
-  cp openvpn_config/openvpn_down_dnsoverwrite.sh "$SCRIPTDIR"/openvpn_down.sh
+  cp "$SCRIPTDIR/openvpn_config/openvpn_up_dnsoverwrite.sh" "$SCRIPTDIR"/openvpn_up.sh
+  cp "$SCRIPTDIR/openvpn_config/openvpn_down_dnsoverwrite.sh" "$SCRIPTDIR"/openvpn_down.sh
 fi
 
 # Replace $SCRIPTDIR with its value in final script
