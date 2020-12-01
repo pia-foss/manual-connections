@@ -142,7 +142,7 @@ else
 fi
 
 # Create the OpenVPN config based on the settings specified
-cat $prefix_filepath > "$SCRIPTDIR"/pia.ovpn || exit 1
+cat "$SCRIPTDIR/$prefix_filepath" > "$SCRIPTDIR"/pia.ovpn || exit 1
 echo remote $OVPN_SERVER_IP $port $protocol >> "$SCRIPTDIR"/pia.ovpn
 
 # Copy the up/down scripts to "$SCRIPTDIR"/
