@@ -43,73 +43,10 @@ if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
   exit 1
 fi
 
-# This allows you to set the maximum allowed latency in seconds.
-# All servers that respond slower than this will be ignored.
-# You can inject this with the environment variable MAX_LATENCY.
-# The default value is 50 milliseconds.
-MAX_LATENCY=${MAX_LATENCY:-0.05}
-export MAX_LATENCY
-
-serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
-
-# This function checks the latency you have to a specific region.
-printServerLatency() {
-  serverIP="$1"
-  regionID="$2"
-  regionName="$(echo ${@:3} |
-    sed 's/ false//' | sed 's/true/(geo)/')"
-  time=$(LC_NUMERIC=en_US.utf8 curl -o /dev/null -s \
-    --connect-timeout $MAX_LATENCY \
-    --write-out "%{time_connect}" \
-    http://$serverIP:443)
-  if [ $? -eq 0 ]; then
-    echo $time $regionID $serverIP
-  fi
-}
-export -f printServerLatency
-
-# Get all region data
-all_region_data=$(curl -s "$serverlist_url" | head -1)
-
-# If the server list has less than 1000 characters, it means curl failed.
-if [[ ${#all_region_data} -lt 1000 ]]; then
-  echo "Could not get correct region data. To debug this, run:"
-  echo "$ curl -v $serverlist_url"
-  echo "If it works, you will get a huge JSON as a response."
-  exit 1
-fi
-
-# Test one server from each region to get the closest region.
-summarized_region_data="$( echo $all_region_data |
-jq -r '.regions[] |
-.servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
-
-bestRegion="$(echo "$summarized_region_data" |
-  xargs -I{} bash -c 'printServerLatency {}' |
-  sort | head -1 | awk '{ print $2 }')"
-
-if [ -z "$bestRegion" ]; then
-  echo ...
-  echo No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
-  echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
-  echo $ MAX_LATENCY=1 ./get_token.sh
-  exit 1
-fi
-
-# Get all data for the fasest region
-regionData="$( echo $all_region_data |
-  jq --arg REGION_ID "$bestRegion" -r \
-  '.regions[] | select(.id==$REGION_ID)')"
-
-bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
-bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
-
 tokenLocation=/opt/piavpn-manual/token
   
 generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
-  --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-  --cacert "ca.rsa.4096.crt" \
-  "https://$bestServer_meta_hostname/authv3/generateToken")
+  "https://https://privateinternetaccess.com/gtoken/generateToken")
 
 if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo
