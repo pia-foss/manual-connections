@@ -106,11 +106,11 @@ if [[ $CONNECT_TO = false ]]; then
     echo port forwarding will get filtered out.
     summarized_region_data="$( echo $all_region_data |
       jq -r '.regions[] | select(.port_forward==true) |
-      .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
+      .id+" "+.name+" "+(.geo|tostring)' )"
   else
     summarized_region_data="$( echo $all_region_data |
     jq -r '.regions[] |
-    .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
+    .id+" "+.name+" "+(.geo|tostring)' )"
   fi
   echo Testing regions that respond \
     faster than $MAX_LATENCY seconds:
@@ -135,8 +135,6 @@ regionData="$( echo $all_region_data |
   jq --arg REGION_ID "$bestRegion" -r \
   '.regions[] | select(.id==$REGION_ID)')"
 
-bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
-bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
 bestServer_WG_IP="$(echo $regionData | jq -r '.servers.wg[0].ip')"
 bestServer_WG_hostname="$(echo $regionData | jq -r '.servers.wg[0].cn')"
 bestServer_OT_IP="$(echo $regionData | jq -r '.servers.ovpntcp[0].ip')"
@@ -157,7 +155,6 @@ the SSL/TLS certificate actually contains the hostname so that you
 are sure you are connecting to a secure server, validated by the
 PIA authority. Please find below the list of best IPs and matching
 hostnames for each protocol:
-Meta Services: $bestServer_meta_IP // $bestServer_meta_hostname
 WireGuard: $bestServer_WG_IP // $bestServer_WG_hostname
 OpenVPN TCP: $bestServer_OT_IP // $bestServer_OT_hostname
 OpenVPN UDP: $bestServer_OU_IP // $bestServer_OU_hostname
@@ -176,8 +173,8 @@ if test -f "$tokenLocation"; then
   "
 else
   if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
-    echo If you want this script to automatically get a token from the Meta
-    echo service, please add the variables PIA_USER and PIA_PASS. Example:
+    echo If you want this script to automatically get an authentication
+    echo token, please add the variables PIA_USER and PIA_PASS. Example:
     echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh
     exit 0
   else
