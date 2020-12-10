@@ -51,24 +51,6 @@ if [ -z "$PIA_PASS" ]; then
 fi
 export PIA_PASS
 
-# Set this to the maximum allowed latency in seconds.
-# All servers that respond slower than this will be ignored.
-echo -n "
-With no input, the maximum allowed latency will be set to 0.05s (50ms).
-If your connection has high latency, you may need to increase this value.
-For example, you can try 0.2 for 200ms allowed latency.
-Custom latency (no input required for 50ms): "
-read customLatency
-echo
-
-MAX_LATENCY=0.05
-if [[ $customLatency != "" ]]; then
-  MAX_LATENCY=$customLatency
-fi
-export MAX_LATENCY
-echo "MAX_LATENCY=\"$MAX_LATENCY\"
-"
-
 echo -n "Checking login credentials..."
 # Confirm MAX_LATENCY allowance, then confirm credentials and generate token
 ./get_token.sh
@@ -91,6 +73,24 @@ if echo ${portForwarding:0:1} | grep -iq y; then
 fi
 export PIA_PF
 echo PIA_PF=$PIA_PF
+
+# Set this to the maximum allowed latency in seconds.
+# All servers that respond slower than this will be ignored.
+echo -n "
+With no input, the maximum allowed latency will be set to 0.05s (50ms).
+If your connection has high latency, you may need to increase this value.
+For example, you can try 0.2 for 200ms allowed latency.
+Custom latency (no input required for 50ms): "
+read customLatency
+echo
+
+MAX_LATENCY=0.05
+if [[ $customLatency != "" ]]; then
+  MAX_LATENCY=$customLatency
+fi
+export MAX_LATENCY
+echo "MAX_LATENCY=\"$MAX_LATENCY\"
+"
 
 # Prompt the user to specify a server or auto-connect to the lowest latency
 echo
