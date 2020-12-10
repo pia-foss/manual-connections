@@ -34,6 +34,11 @@ function check_tool() {
 check_tool curl curl
 check_tool jq jq
 
+# Define colors for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 mkdir -p /opt/piavpn-manual
 
 if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
@@ -44,6 +49,28 @@ if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
 fi
 
 tokenLocation=/opt/piavpn-manual/token
+  
+generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
+  "https://privateinternetaccess.com/gtoken/generateToken")
+
+if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
+  echo
+  echo
+  echo -e ${RED}"Could not authenticate with the login credentials provided : "
+  echo
+  echo "Username : "$PIA_USER
+  echo "Password : "$PIA_PASS
+  exit 1
+fi
+  
+echo -e ${GREEN}OK!
+echo
+token="$(echo "$generateTokenResponse" | jq -r '.token')"
+echo -e PIA_TOKEN=$token${NC}
+echo $token > /opt/piavpn-manual/token || exit 1
+echo 
+echo This token will expire in 24 hours.
+echo
   
 generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
   "https://privateinternetaccess.com/gtoken/generateToken")
