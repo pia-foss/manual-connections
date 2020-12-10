@@ -93,7 +93,6 @@ echo "MAX_LATENCY=\"$MAX_LATENCY\"
 "
 
 # Prompt the user to specify a server or auto-connect to the lowest latency
-echo
 echo -n "Do you want to manually select a server, instead of auto-connecting to the
 server with the lowest latency ([N]o/[y]es): "
 read selectServer
