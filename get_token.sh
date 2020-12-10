@@ -46,7 +46,7 @@ fi
 tokenLocation=/opt/piavpn-manual/token
   
 generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
-  "https://https://privateinternetaccess.com/gtoken/generateToken")
+  "https://privateinternetaccess.com/gtoken/generateToken")
 
 if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo
