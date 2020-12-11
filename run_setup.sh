@@ -119,7 +119,7 @@ else
   sysctl -w net.ipv6.conf.all.disable_ipv6=1
   sysctl -w net.ipv6.conf.default.disable_ipv6=1
   echo
-  echo -e "${GREEN}IPv6 has been disabled, you can enable it again with: "
+  echo -e "${RED}IPv6 has been disabled${NC}, you can ${GREEN}enable it again with: "
   echo "sysctl -w net.ipv6.conf.all.disable_ipv6=0"
   echo "sysctl -w net.ipv6.conf.default.disable_ipv6=0"
   echo -e ${NC}
@@ -139,7 +139,7 @@ if [[ $customLatency != "" ]]; then
   MAX_LATENCY=$customLatency
 fi
 export MAX_LATENCY
-echo -e "${GREEN}MAX_LATENCY=\"$MAX_LATENCY\"${NC}
+echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
 "
 
 # Prompt the user to specify a server or auto-connect to the lowest latency
@@ -162,6 +162,7 @@ if echo ${selectServer:0:1} | grep -iq y; then
   
   if [ -s /opt/piavpn-manual/latencyList ]; then
     # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
+    echo -e "Orderd list of servers with latency less than ${GREEN}$MAX_LATENCY${NC} seconds:"
     i=0
     while read line; do
       i=$((i+1))
@@ -178,6 +179,8 @@ if echo ${selectServer:0:1} | grep -iq y; then
       exit 1
     else
       CONNECT_TO=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
+      echo
+      echo -e ${GREEN}CONNECT_TO=$CONNECT_TO${NC}
     fi
   
     # Write the serverID for use when connecting, and display the serverName for user confirmation
