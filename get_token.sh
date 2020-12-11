@@ -65,29 +65,9 @@ fi
   
 echo -e ${GREEN}OK!
 echo
-token="$(echo "$generateTokenResponse" | jq -r '.token')"
+token=$(echo "$generateTokenResponse" | jq -r '.token')
 echo -e PIA_TOKEN=$token${NC}
 echo $token > /opt/piavpn-manual/token || exit 1
 echo 
 echo This token will expire in 24 hours.
 echo
-  
-generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
-  "https://privateinternetaccess.com/gtoken/generateToken")
-
-if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
-  echo
-  echo "Could not authenticate with the login credentials provided : "
-  echo
-  echo Username : $PIA_USER
-  echo Password : $PIA_PASS
-  exit 1
-fi
-  
-echo OK!  
-echo
-echo "$generateTokenResponse"
-token="$(echo "$generateTokenResponse" | jq -r '.token')"
-echo $token > /opt/piavpn-manual/token || exit 1
-echo "This token will expire in 24 hours.
-"
