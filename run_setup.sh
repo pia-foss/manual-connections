@@ -56,16 +56,25 @@ while :; do
   else
     echo
     echo -e ${GREEN}PIA_USER=$PIA_USER${NC}
+    echo
     break
   fi
 done
-echo
 export PIA_USER
 
-echo -n "PIA password: "
-read -s PIA_PASS
-echo
-echo
+while :; do
+  read -sp "PIA password: " PIA_PASS
+  
+  if [[ -z "$PIA_PASS" ]]; then
+    echo -e "\n${RED}You must provide input.${NC}"
+  elif [[ ${#PIA_PASS} -lt 8 ]]; then
+    echo -e "\n${RED}A PIA password is always a minimum of 8 characters long.${NC}"
+  else
+    echo
+    echo
+    break
+  fi
+done
 
 if [ -z "$PIA_PASS" ]; then
   echo -e ${RED}Password is required, aborting.
