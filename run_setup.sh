@@ -131,7 +131,7 @@ echo -n "With no input, the maximum allowed latency will be set to 0.05s (50ms).
 If your connection has high latency, you may need to increase this value.
 For example, you can try 0.2 for 200ms allowed latency.
 Custom latency (no input required for 50ms): "
-read customLatency
+read latencyInput
 echo
 
 # Assure that input is numeric and properly formatted.
@@ -183,7 +183,7 @@ if echo ${selectServer:0:1} | grep -iq y; then
       location3=$( awk 'NR == '$i' {print $6}' /opt/piavpn-manual/latencyList )
       location4=$( awk 'NR == '$i' {print $7}' /opt/piavpn-manual/latencyList )
       location=$location1" "$location2" "$location3" "$location4
-      printf " %3s : %-8s %-15s %17s" $i $time $ip $id
+      printf "%3s : %-8s %-15s %17s" $i $time $ip $id
       echo " - "$location
     done < /opt/piavpn-manual/latencyList
   
