@@ -127,6 +127,7 @@ if [[ $CONNECT_TO = false ]]; then
   bestRegion="$(echo "$summarized_region_data" |
     xargs -I{} bash -c 'printServerLatency {}' |
     sort | head -1 | awk '{ print $2 }')"
+  echo
 
   if [ -z "$bestRegion" ]; then
     echo -e ${RED}
@@ -186,12 +187,12 @@ ${NC}"
       echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh
       exit 0
     else
-      echo -n "Checking login credentials..."
+      echo -n "Checking login credentials... "
       echo PIA_USER=$PIA_USER PIA_PASS=$PIA_PASS ./get_token
     fi
   fi
-  token=$(<$tokenLocation)
 fi
+token=$(<$tokenLocation)
 
 # If the script is called without specifying PIA_AUTOCONNECT, or if it is
 # set to "no" the script will generate a list of servers, with neccessary
