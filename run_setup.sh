@@ -25,6 +25,10 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Variables to use for validating input
+intCheck='^[0-9]+$'
+floatCheck='^[0-9]+([.][0-9]+)?$'
+
 # Only allow script to run as
 if [ "$(whoami)" != "root" ]; then
   echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'"
@@ -36,13 +40,25 @@ rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
 
 # This section asks for PIA user credentials
 echo
-echo -n "PIA username (pNNNNNNN): "
-read PIA_USER
-
-if [ -z "$PIA_USER" ]; then
-  echo -e ${RED}Username is required, aborting.
-  exit 1
-fi
+while :; do
+  read -p "PIA username (p#######): " PIA_USER
+  unPrefix=$( echo ${PIA_USER:0:1} )
+  unSuffix=$( echo ${PIA_USER:1} )
+  
+  if [[ -z "$PIA_USER" ]]; then
+    echo -e "${RED}You must provide input.${NC}"
+  elif [[ ${#PIA_USER} != 8 ]]; then
+    echo -e "${RED}A PIA username is always 8 characters long.${NC}"
+  elif [[ $unPrefix != "P" ]] && [[ $unPrefix != "p" ]]; then
+    echo -e "${RED}A PIA username must start with \"p\".${NC}"
+  elif ! [[ $unSuffix =~ $intCheck ]]; then
+    echo -e "${RED}Username formatting is always p#######!${NC}"
+  else
+    echo
+    echo -e ${GREEN}PIA_USER=$PIA_USER${NC}
+    break
+  fi
+done
 echo
 export PIA_USER
 
@@ -138,7 +154,6 @@ echo
 customLatency=0
 customLatency+=$latencyInput
 MAX_LATENCY=0.05
-floatCheck='^[0-9]+([.][0-9]+)?$'
 if [[ $latencyInput != "" ]]; then
   if [[ $customLatency =~ $floatCheck ]]; then
     MAX_LATENCY=$customLatency
@@ -189,7 +204,6 @@ if echo ${selectServer:0:1} | grep -iq y; then
     echo
   
     # Receive input to specify the server to connect to manually
-    intCheck='^[0-9]+$'
     while :; do 
       read -p "Input the number of the server you want to connect to ([1]-[$i]) : "  serverSelection
         if [[ -z "$serverSelection" ]]; then
