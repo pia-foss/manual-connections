@@ -20,19 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Define colors for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 # Only allow script to run as
 if [ "$(whoami)" != "root" ]; then
-  echo "This script needs to be run as root. Try again with 'sudo $0'"
+  echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'"
   exit 1
 fi
 
 # Erase previous authentication token if present
 rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
-
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
 
 # This section asks for PIA user credentials
 echo
