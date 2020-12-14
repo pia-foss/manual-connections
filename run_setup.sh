@@ -134,9 +134,18 @@ Custom latency (no input required for 50ms): "
 read customLatency
 echo
 
+# Assure that input is numeric and properly formatted.
+customLatency=0
+customLatency+=$latencyInput
 MAX_LATENCY=0.05
+numberCheck='^[0-9]+([.][0-9]+)?$'
 if [[ $customLatency != "" ]]; then
-  MAX_LATENCY=$customLatency
+  if [[ $customLatency =~ $numberCheck ]]; then
+    MAX_LATENCY=$customLatency
+  else
+    echo -e ${RED}Latency input must be numeric, aborting.
+    exit 1
+  fi
 fi
 export MAX_LATENCY
 echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
