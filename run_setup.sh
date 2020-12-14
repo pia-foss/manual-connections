@@ -229,8 +229,10 @@ if echo ${selectServer:0:1} | grep -iq y; then
           echo -e "${RED}You must provide input.${NC}"
         elif ! [[ $serverSelection =~ $intCheck ]]; then
           echo -e "${RED}You must enter a number.${NC}"
-        elif [[ $serverSelection > $i ]] || [[ $serverSelection -eq 0 ]]; then
-          echo -e "${RED}You must enter a number between 1 and $i!${NC}"
+        elif [[ $serverSelection -lt 1 ]]; then
+          echo -e "${RED}You must enter a number greater than 1.${NC}"
+        elif [[ $serverSelection -gt $i ]]; then
+          echo -e "${RED}You must enter a number between 1 and $i.${NC}"
         else
           CONNECT_TO=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
           echo
