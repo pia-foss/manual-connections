@@ -38,55 +38,64 @@ fi
 # Erase previous authentication token if present
 rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
 
-# This section asks for PIA user credentials
-echo
+# Retry login if no token is generated
 while :; do
-  read -p "PIA username (p#######): " PIA_USER
-  unPrefix=$( echo ${PIA_USER:0:1} )
-  unSuffix=$( echo ${PIA_USER:1} )
+  # Confirm PIA_USER input
+  echo
+  while :; do
+    read -p "PIA username (p#######): " PIA_USER
+    unPrefix=$( echo ${PIA_USER:0:1} )
+    unSuffix=$( echo ${PIA_USER:1} )
   
-  if [[ -z "$PIA_USER" ]]; then
-    echo -e "${RED}You must provide input.${NC}"
-  elif [[ ${#PIA_USER} != 8 ]]; then
-    echo -e "${RED}A PIA username is always 8 characters long.${NC}"
-  elif [[ $unPrefix != "P" ]] && [[ $unPrefix != "p" ]]; then
-    echo -e "${RED}A PIA username must start with \"p\".${NC}"
-  elif ! [[ $unSuffix =~ $intCheck ]]; then
-    echo -e "${RED}Username formatting is always p#######!${NC}"
+    if [[ -z "$PIA_USER" ]]; then
+      echo -e "${RED}You must provide input.${NC}"
+    elif [[ ${#PIA_USER} != 8 ]]; then
+      echo -e "${RED}A PIA username is always 8 characters long.${NC}"
+    elif [[ $unPrefix != "P" ]] && [[ $unPrefix != "p" ]]; then
+      echo -e "${RED}A PIA username must start with \"p\".${NC}"
+    elif ! [[ $unSuffix =~ $intCheck ]]; then
+      echo -e "${RED}Username formatting is always p#######!${NC}"
+    else
+      echo
+      echo -e ${GREEN}PIA_USER=$PIA_USER${NC}
+      echo
+      break
+    fi
+  done
+  export PIA_USER
+
+  # Confirm PIA_PASS input
+  while :; do
+    read -sp "PIA password: " PIA_PASS
+  
+    if [[ -z "$PIA_PASS" ]]; then
+      echo -e "\n${RED}You must provide input.${NC}"
+    elif [[ ${#PIA_PASS} -lt 8 ]]; then
+      echo -e "\n${RED}A PIA password is always a minimum of 8 characters long.${NC}"
+    else
+      echo
+      echo
+      break
+    fi
+  done
+  export PIA_PASS
+
+  echo -n "Checking login credentials..."
+  # Confirm MAX_LATENCY allowance, then confirm credentials and generate token
+  ./get_token.sh
+
+  # If the script failed to generate an authentication token, the script will exit early.
+  tokenLocation=/opt/piavpn-manual/token
+  if [ ! -f "$tokenLocation" ]; then
+    echo
+    read -p "Do you want to try again ([N]o/[y]es): " tryAgain
+    if ! echo ${tryAgain:0:1} | grep -iq y; then
+      exit 1
+    fi
   else
-    echo
-    echo -e ${GREEN}PIA_USER=$PIA_USER${NC}
-    echo
     break
   fi
 done
-export PIA_USER
-
-while :; do
-  read -sp "PIA password: " PIA_PASS
-  
-  if [[ -z "$PIA_PASS" ]]; then
-    echo -e "\n${RED}You must provide input.${NC}"
-  elif [[ ${#PIA_PASS} -lt 8 ]]; then
-    echo -e "\n${RED}A PIA password is always a minimum of 8 characters long.${NC}"
-  else
-    echo
-    echo
-    break
-  fi
-done
-
-export PIA_PASS
-
-echo -n "Checking login credentials..."
-# Confirm MAX_LATENCY allowance, then confirm credentials and generate token
-./get_token.sh
-
-# If the script failed to generate an authentication token, the script will exit early.
-tokenLocation=/opt/piavpn-manual/token
-if [ ! -f "$tokenLocation" ]; then
-  exit 1
-fi
 
 # This section asks for connection preferences that are
 # relevant to manual server selection
@@ -162,11 +171,11 @@ while :; do
   
   if [[ -z "$latencyInput" ]]; then
     break
+  elif ! [[ $customLatency =~ $floatCheck ]]; then
+    echo -e ${RED}Latency input must be numeric.${NC}
   elif [[ $latencyInput =~ $intCheck ]]; then
     MAX_LATENCY=$latencyInput
     break
-  elif ! [[ $customLatency =~ $floatCheck ]]; then
-    echo -e ${RED}Latency input must be numeric.${NC}
   else
     MAX_LATENCY=$customLatency
     break
