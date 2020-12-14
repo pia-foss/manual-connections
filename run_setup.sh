@@ -76,10 +76,6 @@ while :; do
   fi
 done
 
-if [ -z "$PIA_PASS" ]; then
-  echo -e ${RED}Password is required, aborting.
-  exit 1
-fi
 export PIA_PASS
 
 echo -n "Checking login credentials..."
@@ -155,24 +151,30 @@ fi
 echo -n "With no input, the maximum allowed latency will be set to 0.05s (50ms).
 If your connection has high latency, you may need to increase this value.
 For example, you can try 0.2 for 200ms allowed latency.
-Custom latency (no input required for 50ms): "
-read latencyInput
-echo
+"
 
 # Assure that input is numeric and properly formatted.
-customLatency=0
-customLatency+=$latencyInput
-MAX_LATENCY=0.05
-if [[ $latencyInput != "" ]]; then
-  if [[ $customLatency =~ $floatCheck ]]; then
-    MAX_LATENCY=$customLatency
+MAX_LATENCY=0.05 # default
+while :; do
+  customLatency=0
+  read -p "Custom latency (no input required for 50ms): " latencyInput
+  customLatency+=$latencyInput
+  
+  if [[ -z "$latencyInput" ]]; then
+    break
+  elif [[ $latencyInput =~ $intCheck ]]; then
+    MAX_LATENCY=$latencyInput
+    break
+  elif ! [[ $customLatency =~ $floatCheck ]]; then
+    echo -e ${RED}Latency input must be numeric.${NC}
   else
-    echo -e ${RED}Latency input must be numeric, aborting.
-    exit 1
+    MAX_LATENCY=$customLatency
+    break
   fi
-fi
+done
 export MAX_LATENCY
-echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
+echo -e "
+${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
 "
 
 # Prompt the user to specify a server or auto-connect to the lowest latency
