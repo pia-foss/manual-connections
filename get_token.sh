@@ -34,6 +34,13 @@ function check_tool() {
 check_tool curl curl
 check_tool jq jq
 
+mask_password() {
+ str=$1
+ num=$2
+ v=$(printf "%-${num}s" "$str")
+ echo "${v// /*}"
+}
+
 # Define colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -59,8 +66,10 @@ if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo -e ${RED}"Could not authenticate with the login credentials provided : "
   echo
   echo "Username : "$PIA_USER
-  echo -e "Password : "$PIA_PASS${NC}
-  exit 1
+  echo -ne "Password : "
+  mask_password "*" ${#PIA_PASS}
+  echo -e ${NC}
+  exit
 fi
   
 echo -e ${GREEN}OK!
