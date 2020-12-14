@@ -87,7 +87,6 @@ while :; do
   # If the script failed to generate an authentication token, the script will exit early.
   tokenLocation=/opt/piavpn-manual/token
   if [ ! -f "$tokenLocation" ]; then
-    echo
     read -p "Do you want to try again ([N]o/[y]es): " tryAgain
     if ! echo ${tryAgain:0:1} | grep -iq y; then
       exit 1
