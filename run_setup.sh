@@ -40,7 +40,7 @@ echo -n "PIA username (pNNNNNNN): "
 read PIA_USER
 
 if [ -z "$PIA_USER" ]; then
-  echo Username is required, aborting.
+  echo -e ${RED}Username is required, aborting.
   exit 1
 fi
 echo
@@ -52,7 +52,7 @@ echo
 echo
 
 if [ -z "$PIA_PASS" ]; then
-  echo Password is required, aborting.
+  echo -e ${RED}Password is required, aborting.
   exit 1
 fi
 export PIA_PASS
@@ -84,9 +84,9 @@ echo
 # Check for the required presence of resolvconf for setting DNS on wireguard connections.
 setDNS="yes"
 if ! command -v resolvconf &>/dev/null && [ "$PIA_AUTOCONNECT" == wireguard ]; then
-  echo The resolvconf package could not be found.
+  echo -e ${RED}The resolvconf package could not be found.
   echo This script can not set DNS for you and you will
-  echo need to invoke DNS protection some other way.
+  echo -e need to invoke DNS protection some other way.${NC}
   echo
   setDNS="no"
 fi
