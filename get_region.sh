@@ -130,8 +130,7 @@ if [[ $CONNECT_TO = false ]]; then
   echo
 
   if [ -z "$bestRegion" ]; then
-    echo -e ${RED}
-    echo No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
+    echo -e ${RED}No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
     echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
     echo $ MAX_LATENCY=1 ./get_region.sh
     exit 1
@@ -198,7 +197,6 @@ token=$(<$tokenLocation)
 # set to "no" the script will generate a list of servers, with neccessary
 # connection details at /opt/piavpn-manual/latencyList
 if [[ $PIA_AUTOCONNECT == no ]]; then
-  echo
   echo -e "${GREEN}A list of servers and connection details, ordered by latency can be 
 found in at : /opt/piavpn-manual/latencyList${NC}
 "
