@@ -138,9 +138,9 @@ echo
 customLatency=0
 customLatency+=$latencyInput
 MAX_LATENCY=0.05
-numberCheck='^[0-9]+([.][0-9]+)?$'
+floatCheck='^[0-9]+([.][0-9]+)?$'
 if [[ $latencyInput != "" ]]; then
-  if [[ $customLatency =~ $numberCheck ]]; then
+  if [[ $customLatency =~ $floatCheck ]]; then
     MAX_LATENCY=$customLatency
   else
     echo -e ${RED}Latency input must be numeric, aborting.
@@ -186,20 +186,25 @@ if echo ${selectServer:0:1} | grep -iq y; then
       printf "%3s : %-8s %-15s %17s" $i $time $ip $id
       echo " - "$location
     done < /opt/piavpn-manual/latencyList
+    echo
   
     # Receive input to specify the server to connect to manually
-    echo
-    echo -n "Input the number of the server you want to connect to ([1]-[$i]) : "
-    read serverSelection
-
-    if [[ -z "$serverSelection" ]]; then
-      echo -e ${RED}Invalid input, you must input the number of the server you want to connect to.
-      exit 1
-    else
-      CONNECT_TO=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
-      echo
-      echo -e ${GREEN}CONNECT_TO=$CONNECT_TO${NC}
-    fi
+    intCheck='^[0-9]+$'
+    while :; do 
+      read -p "Input the number of the server you want to connect to ([1]-[$i]) : "  serverSelection
+        if [[ -z "$serverSelection" ]]; then
+          echo -e "${RED}You must provide input.${NC}"
+        elif ! [[ $serverSelection =~ $intCheck ]]; then
+          echo -e "${RED}You must enter a number.${NC}"
+        elif [[ $serverSelection > $i ]] || [[ $serverSelection -eq 0 ]]; then
+          echo -e "${RED}You must enter a number between 1 and $i!${NC}"
+        else
+          CONNECT_TO=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
+          echo
+          echo -e ${GREEN}CONNECT_TO=$CONNECT_TO${NC}
+          break
+        fi
+    done
   
     # Write the serverID for use when connecting, and display the serverName for user confirmation
     export CONNECT_TO
