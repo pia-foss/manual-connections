@@ -65,9 +65,14 @@ if [[ "$adapter_check" != *"$should_read"* ]]; then
     fi
     echo
     echo -e ${GREEN}Killing the existing OpenVPN process and waiting 5 seconds...${NC}
-    echo
     kill $old_pid
-    sleep 5
+    echo
+    for i in {5..1}; do
+      echo -n "$i... "
+      sleep 1
+      done
+    echo
+    echo
   fi
 fi
 
@@ -221,13 +226,15 @@ To disconnect the VPN, run:
 
 # This section will stop the script if PIA_PF is not set to "true".
 if [ "$PIA_PF" != true ]; then
+  echo If you want to also enable port forwarding, you can start the script:
+  echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
+    PF_GATEWAY=$gateway_ip \
+    PF_HOSTNAME=$OVPN_HOSTNAME \
+    ./port_forwarding.sh
   echo
-  echo If you want to also enable port forwarding, please start the script
-  echo with the env var PIA_PF=true. Example:
-  echo $ OVPN_SERVER_IP=\"$OVPN_SERVER_IP\" OVPN_HOSTNAME=\"$OVPN_HOSTNAME\" \
-    PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
-    PIA_PF=true ./connect_to_openvpn_with_token.sh
-  exit
+  echo -e ${RED}The location used must be port forwarding enabled, or this will fail.
+  echo -e Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  exit 1
 fi
 
 echo -ne "This script got started with ${GREEN}PIA_PF=true${NC}.
