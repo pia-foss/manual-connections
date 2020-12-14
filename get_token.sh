@@ -59,7 +59,7 @@ if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo -e ${RED}"Could not authenticate with the login credentials provided : "
   echo
   echo "Username : "$PIA_USER
-  echo "Password : "$PIA_PASS
+  echo -e "Password : "$PIA_PASS${NC}
   exit 1
 fi
   
