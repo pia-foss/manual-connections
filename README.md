@@ -56,6 +56,7 @@ Some users have created their own repositories for manual connections, based on 
 | System | Fork | Language | Scope | Repository |
 |:-:|:-:|:-:|:-:|-|
 | FreeBSD | Yes | Bash | Compatibility | [glorious1/manual-connections](https://github.com/glorious1/manual-connections) |
+| Linux | No | Groovy/Java | WireGuard, PF | [Slugger/piawgmgr](https://github.com/Slugger/piawgmgr) |
 | OPNsense | No | Python | WireGuard, PF | [FingerlessGlov3s/OPNsensePIAWireguard](https://github.com/FingerlessGlov3s/OPNsensePIAWireguard) |
 | pfSense | No | Sh | OpenVPN, PF | [fm407/PIA-NextGen-PortForwarding](https://github.com/fm407/PIA-NextGen-PortForwarding) |
 | Synology | Yes | Bash | Compatibility | [steff2632/manual-connections](https://github.com/steff2632/manual-connections) |
