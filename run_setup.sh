@@ -139,7 +139,7 @@ customLatency=0
 customLatency+=$latencyInput
 MAX_LATENCY=0.05
 numberCheck='^[0-9]+([.][0-9]+)?$'
-if [[ $customLatency != "" ]]; then
+if [[ $latencyInput != "" ]]; then
   if [[ $customLatency =~ $numberCheck ]]; then
     MAX_LATENCY=$customLatency
   else
