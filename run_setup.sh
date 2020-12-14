@@ -166,7 +166,16 @@ if echo ${selectServer:0:1} | grep -iq y; then
     i=0
     while read line; do
       i=$((i+1))
-      echo -e $i "\t: " $( awk 'NR == '$i' {print $1}' /opt/piavpn-manual/latencyList ) $( awk 'NR == '$i' {print $2}' /opt/piavpn-manual/latencyList ) '\t' $( awk 'NR == '$i' {print $3}' /opt/piavpn-manual/latencyList ) '\t' $( awk 'NR == '$i' {print $4}' /opt/piavpn-manual/latencyList ) $( awk 'NR == '$i' {print $5}' /opt/piavpn-manual/latencyList )
+      time=$( awk 'NR == '$i' {print $1}' /opt/piavpn-manual/latencyList )
+      id=$( awk 'NR == '$i' {print $2}' /opt/piavpn-manual/latencyList )
+      ip=$( awk 'NR == '$i' {print $3}' /opt/piavpn-manual/latencyList )
+      location1=$( awk 'NR == '$i' {print $4}' /opt/piavpn-manual/latencyList )
+      location2=$( awk 'NR == '$i' {print $5}' /opt/piavpn-manual/latencyList )
+      location3=$( awk 'NR == '$i' {print $6}' /opt/piavpn-manual/latencyList )
+      location4=$( awk 'NR == '$i' {print $7}' /opt/piavpn-manual/latencyList )
+      location=$location1" "$location2" "$location3" "$location4
+      printf " %2s : %-8s %-15s %17s" $i $time $ip $id
+      echo " - "$location
     done < /opt/piavpn-manual/latencyList
   
     # Receive input to specify the server to connect to manually
