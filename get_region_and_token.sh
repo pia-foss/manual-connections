@@ -151,7 +151,7 @@ so we will also use a meta service to get a new VPN token."
 echo "Trying to get a new token by authenticating with the meta service..."
 generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
   --connect-to "$bestServer_meta_hostname::$bestServer_meta_IP:" \
-  --cacert "ca.rsa.4096.crt" \
+  --cacert "$SCRIPTDIR/ca.rsa.4096.crt" \
   "https://$bestServer_meta_hostname/authv3/generateToken")
 echo "$generateTokenResponse"
 
@@ -159,7 +159,7 @@ if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo "Could not get a token. Please check your account credentials."
   echo
   echo "You can also try debugging by manually running the curl command:"
-  echo $ curl -vs -u \"$PIA_USER:$PIA_PASS\" --cacert ca.rsa.4096.crt \
+  echo $ curl -vs -u \"$PIA_USER:$PIA_PASS\" --cacert \"$SCRIPTDIR/ca.rsa.4096.crt\" \
     --connect-to \"$bestServer_meta_hostname::$bestServer_meta_IP:\" \
     https://$bestServer_meta_hostname/authv3/generateToken
   exit 1
