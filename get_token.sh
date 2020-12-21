@@ -63,12 +63,8 @@ generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
 if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
   echo
   echo
-  echo -e ${RED}"Could not authenticate with the login credentials provided : "
+  echo -e "${RED}Could not authenticate with the login credentials provided!${NC}"
   echo
-  echo "Username : "$PIA_USER
-  echo -ne "Password : "
-  mask_password "*" ${#PIA_PASS}
-  echo -e ${NC}
   exit
 fi
   
