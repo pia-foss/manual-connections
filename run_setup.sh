@@ -170,6 +170,8 @@ while :; do
   
   if [[ -z "$latencyInput" ]]; then
     break
+  elif [[ $latencyInput = 0 ]]; then
+    echo -e ${RED}Latency input must not be zero.${NC}
   elif ! [[ $customLatency =~ $floatCheck ]]; then
     echo -e ${RED}Latency input must be numeric.${NC}
   elif [[ $latencyInput =~ $intCheck ]]; then
