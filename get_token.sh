@@ -22,24 +22,16 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  package=$2
   if ! command -v $cmd &>/dev/null
   then
     echo "$cmd could not be found"
-    echo "Please install $package"
+    echo "Please install $cmd"
     exit 1
   fi
 }
 # Now we call the function to make sure we can use curl and jq.
-check_tool curl curl
-check_tool jq jq
-
-mask_password() {
- str=$1
- num=$2
- v=$(printf "%-${num}s" "$str")
- echo "${v// /*}"
-}
+check_tool curl
+check_tool jq
 
 # Define colors for output
 GREEN='\033[0;32m'
