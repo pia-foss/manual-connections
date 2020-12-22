@@ -22,22 +22,30 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  package=$2
   if ! command -v $cmd &>/dev/null
   then
     echo "$cmd could not be found"
-    echo "Please install $package"
+    echo "Please install $cmd"
     exit 1
   fi
 }
 # Now we call the function to make sure we can use curl and jq.
-check_tool curl curl
-check_tool jq jq
+check_tool curl
+check_tool jq
 
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
+fi
 
 mkdir -p /opt/piavpn-manual
 # Erase old latencyList file
@@ -78,19 +86,21 @@ printServerLatency() {
 export -f printServerLatency
 
 # If a server location or autoconnect isn't specified, set the variable to false/no.
-if [[ -z "$CONNECT_TO" ]]; then
-  CONNECT_TO=false
+if [[ -z "$PREFERRED_REGION" ]]; then
+  PREFERRED_REGION=none
 fi
 if [[ -z "$PIA_AUTOCONNECT" ]]; then
   PIA_AUTOCONNECT=no
 fi
-tokenLocation=/opt/piavpn-manual/token
 
 # Get all region data
 all_region_data=$(curl -s "$serverlist_url" | head -1)
 
+# Set the region the user has specified
+selectedRegion=$PREFERRED_REGION
+
 # If a server isn't being specified, auto-select the server with the lowest latency
-if [[ $CONNECT_TO = false ]]; then
+if [[ $selectedRegion = none ]]; then
   echo -n "Getting the server list... "
 
   # If the server list has less than 1000 characters, it means curl failed.
@@ -124,25 +134,22 @@ if [[ $CONNECT_TO = false ]]; then
   fi
   echo -e Testing regions that respond \
     faster than ${GREEN}$MAX_LATENCY${NC} seconds:
-  bestRegion="$(echo "$summarized_region_data" |
+  selectedRegion="$(echo "$summarized_region_data" |
     xargs -I{} bash -c 'printServerLatency {}' |
     sort | head -1 | awk '{ print $2 }')"
   echo
 
-  if [ -z "$bestRegion" ]; then
+  if [ -z "$selectedRegion" ]; then
     echo -e ${RED}No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
     echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
     echo $ MAX_LATENCY=1 ./get_region.sh
     exit 1
   fi
-else
-  # Set the region the user has specified
-  bestRegion=$CONNECT_TO
 fi
 
 # Get all data for the selected region
 regionData="$( echo $all_region_data |
-  jq --arg REGION_ID "$bestRegion" -r \
+  jq --arg REGION_ID "$selectedRegion" -r \
   '.regions[] | select(.id==$REGION_ID)')"
 
 bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
@@ -154,53 +161,56 @@ bestServer_OT_hostname="$(echo $regionData | jq -r '.servers.ovpntcp[0].cn')"
 bestServer_OU_IP="$(echo $regionData | jq -r '.servers.ovpnudp[0].ip')"
 bestServer_OU_hostname="$(echo $regionData | jq -r '.servers.ovpnudp[0].cn')"
 
-if [[ $CONNECT_TO != false ]]; then
-  echo -ne The selected region is ${GREEN}"$(echo $regionData | jq -r '.name')"${NC}
-  if echo $regionData | jq -r '.geo' | grep true > /dev/null; then
-    echo " (geolocated region)."
-  else
-    echo "."
-  fi
-  echo -e "
+
+echo -ne The selected region is ${GREEN}"$(echo $regionData | jq -r '.name')"${NC}
+if echo $regionData | jq -r '.geo' | grep true > /dev/null; then
+  echo " (geolocated region)."
+else
+  echo "."
+fi
+echo -e "
 The script found the best servers from the region you selected.
 When connecting to an IP (no matter which protocol), please verify
 the SSL/TLS certificate actually contains the hostname so that you
 are sure you are connecting to a secure server, validated by the
 PIA authority. Please find below the list of best IPs and matching
 hostnames for each protocol:
-${GREEN}Meta Services: $bestServer_meta_IP // $bestServer_meta_hostname
-WireGuard: $bestServer_WG_IP // $bestServer_WG_hostname
-OpenVPN TCP: $bestServer_OT_IP // $bestServer_OT_hostname
-OpenVPN UDP: $bestServer_OU_IP // $bestServer_OU_hostname
+${GREEN}Meta Services $bestServer_meta_IP\t-     $bestServer_meta_hostname
+WireGuard     $bestServer_WG_IP\t-     $bestServer_WG_hostname
+OpenVPN TCP   $bestServer_OT_IP\t-     $bestServer_OT_hostname
+OpenVPN UDP   $bestServer_OU_IP\t-     $bestServer_OU_hostname
 ${NC}"
-
-  # The script will check for an authentication token, and use it if present
-  # If no token exists, the script will check for login credentials to generate one
-  if test -f "$tokenLocation"; then
-    echo "Using existing token.
-    "
-  else
-    if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
-      echo -e ${RED}If you want this script to automatically get an authentication
-      echo token, please add the variables PIA_USER and PIA_PASS. Example:
-      echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh
-      exit 0
-    else
-      echo -n "Checking login credentials... "
-      echo PIA_USER=$PIA_USER PIA_PASS=$PIA_PASS ./get_token
-    fi
-  fi
-fi
-token=$(<$tokenLocation)
 
 # If the script is called without specifying PIA_AUTOCONNECT, or if it is
 # set to "no" the script will generate a list of servers, with neccessary
 # connection details at /opt/piavpn-manual/latencyList
 if [[ $PIA_AUTOCONNECT == no ]]; then
-  echo -e "${GREEN}A list of servers and connection details, ordered by latency can be 
-found in at : /opt/piavpn-manual/latencyList${NC}
+  echo -e "A list of servers and connection details, ordered by latency can be 
+found in at : ${GREEN}/opt/piavpn-manual/latencyList${NC}
 "
   exit 0
+fi
+
+# The script will check for an authentication token, and use it if present
+# If no token exists, the script will check for login credentials to generate one
+if [[ -z "$TOKEN_EXPIRATION" ]] || [[ $(date +"%c") > $TOKEN_EXPIRATION ]]; then
+  if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
+    echo -e ${RED}If you want this script to automatically get an authentication
+    echo token, please add the variables PIA_USER and PIA_PASS. Example:
+    echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh
+    exit 0
+  else
+    echo -n "Checking login credentials... "
+    ./get_token.sh
+    PIA_TOKEN=$( awk 'NR == 1' /opt/piavpn-manual/token )
+    TOKEN_EXPIRATION=$( awk 'NR == 2' /opt/piavpn-manual/token )
+    export PIA_TOKEN TOKEN_EXPIRATION
+    rm -f/opt/piavpn-manual/token
+  fi
+else
+  echo -ne "Using existing token ${GREEN}$PIA_TOKEN${NC}, "
+  echo -e "due to expire at ${RED}$TOKEN_EXPIRATION${NC}.
+  "
 fi
 
 # Connect with WireGuard and clear authentication token file and latencyList
@@ -208,13 +218,13 @@ if [[ $PIA_AUTOCONNECT == wireguard ]]; then
   echo The ./get_region.sh script got started with
   echo -e ${GREEN}PIA_AUTOCONNECT=wireguard${NC}, so we will automatically connect to WireGuard,
   echo by running this command:
-  echo -e $ ${GREEN}PIA_TOKEN=$token \\
+  echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
   echo WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
   echo -e PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh${NC}
   echo
-  PIA_PF=$PIA_PF PIA_TOKEN=$token WG_SERVER_IP=$bestServer_WG_IP \
+  PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN WG_SERVER_IP=$bestServer_WG_IP \
     WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
-  rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
+  rm -f /opt/piavpn-manual/latencyList
   exit 0
 fi
 
@@ -229,17 +239,17 @@ if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
   echo The ./get_region.sh script got started with
   echo -e ${GREEN}PIA_AUTOCONNECT=$PIA_AUTOCONNECT${NC}, so we will automatically
   echo connect to OpenVPN, by running this command:
-  echo -e $ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN=$token \\
+  echo -e $ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \\
   echo   OVPN_SERVER_IP=$serverIP \\
   echo   OVPN_HOSTNAME=$serverHostname \\
   echo   CONNECTION_SETTINGS=$PIA_AUTOCONNECT \\
   echo -e ./connect_to_openvpn_with_token.sh${NC}
   echo
-  PIA_PF=$PIA_PF PIA_TOKEN=$token \
+  PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \
     OVPN_SERVER_IP=$serverIP \
     OVPN_HOSTNAME=$serverHostname \
     CONNECTION_SETTINGS=$PIA_AUTOCONNECT \
     ./connect_to_openvpn_with_token.sh
-  rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
+  rm -f /opt/piavpn-manual/latencyList
   exit 0
 fi
