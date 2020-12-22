@@ -22,23 +22,31 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  package=$2
   if ! command -v $cmd &>/dev/null
   then
     echo "$cmd could not be found"
-    echo "Please install $package"
+    echo "Please install $cmd"
     exit 1
   fi
 }
 # Now we call the function to make sure we can use wg-quick, curl and jq.
-check_tool wg-quick wireguard-tools
-check_tool curl curl
-check_tool jq jq
+check_tool wg-quick
+check_tool curl
+check_tool jq
 
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
+fi
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
@@ -91,7 +99,6 @@ wireguard_json="$(curl -s -G \
   --data-urlencode "pubkey=$pubKey" \
   "https://${WG_HOSTNAME}:1337/addKey" )"
 export wireguard_json
-echo "$wireguard_json"
 
 # Check if the API returned OK and stop this script if it didn't.
 if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
@@ -104,7 +111,7 @@ fi
 # these scripts. Feel free to fork the project and test it out.
 echo
 echo Trying to disable a PIA WG connection in case it exists...
-wg-quick down pia && echo Disconnected!
+wg-quick down pia && echo -e "${GREEN}\nPIA WG connection disabled!${NC}"
 echo
 
 # Create the WireGuard config based on the JSON received from the API
@@ -159,10 +166,10 @@ if [ "$PIA_PF" != true ]; then
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$WG_SERVER_IP \
     PF_HOSTNAME=$WG_HOSTNAME \
-    ./port_forwarding.sh
+    ./port_forwarding.sh${NC}
   echo
-  echo -e ${RED}The location used must be port forwarding enabled, or this will fail.
-  echo -e Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  echo The location used must be port forwarding enabled, or this will fail.
+  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
   exit 1
 fi
 
