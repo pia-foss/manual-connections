@@ -34,10 +34,19 @@ check_tool curl
 check_tool jq
 check_tool openvpn
 
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
+fi
 
 # Check if manual PIA OpenVPN connection is already initialized.
 # Multi-hop is out of the scope of this repo, but you should be able to
@@ -230,10 +239,10 @@ if [ "$PIA_PF" != true ]; then
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$gateway_ip \
     PF_HOSTNAME=$OVPN_HOSTNAME \
-    ./port_forwarding.sh
+    ./port_forwarding.sh${NC}
   echo
-  echo -e ${RED}The location used must be port forwarding enabled, or this will fail.
-  echo -e Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  echo The location used must be port forwarding enabled, or this will fail.
+  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
   exit 1
 fi
 
