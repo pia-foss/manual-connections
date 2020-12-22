@@ -29,14 +29,29 @@ function check_tool() {
     exit 1
   fi
 }
+
+# This function creates a timestamp, to use for setting $TOKEN_EXPIRATION
+function timeout_timestamp() {
+  date +"%c" --date='1 day' # Timestamp 24 hours
+}
+
 # Now we call the function to make sure we can use curl and jq.
 check_tool curl
 check_tool jq
 
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
+fi
 
 mkdir -p /opt/piavpn-manual
 
@@ -63,8 +78,10 @@ fi
 echo -e ${GREEN}OK!
 echo
 token=$(echo "$generateTokenResponse" | jq -r '.token')
+tokenExpiration=$(timeout_timestamp)
 echo -e PIA_TOKEN=$token${NC}
 echo $token > /opt/piavpn-manual/token || exit 1
+echo $tokenExpiration >> /opt/piavpn-manual/token
 echo 
-echo This token will expire in 24 hours.
+echo This token will expire in 24 hours, on $tokenExpiration.
 echo
