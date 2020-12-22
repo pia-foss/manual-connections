@@ -20,10 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
+fi
 
 # Variables to use for validating input
 intCheck='^[0-9]+$'
@@ -84,14 +93,18 @@ while :; do
   # Confirm MAX_LATENCY allowance, then confirm credentials and generate token
   ./get_token.sh
 
+  tokenLocation="/opt/piavpn-manual/token"
   # If the script failed to generate an authentication token, the script will exit early.
-  tokenLocation=/opt/piavpn-manual/token
   if [ ! -f "$tokenLocation" ]; then
     read -p "Do you want to try again ([N]o/[y]es): " tryAgain
     if ! echo ${tryAgain:0:1} | grep -iq y; then
       exit 1
     fi
   else
+    PIA_TOKEN=$( awk 'NR == 1' /opt/piavpn-manual/token )
+    TOKEN_EXPIRATION=$( awk 'NR == 2' /opt/piavpn-manual/token )
+    export PIA_TOKEN TOKEN_EXPIRATION
+    rm -f /opt/piavpn-manual/token
     break
   fi
 done
@@ -194,13 +207,13 @@ read selectServer
 echo
 
 # Call the region script with input to create an ordered list based upon latency
-# When $CONNECT_TO is set to false, get_region.sh will generate a list of servers
+# When $PREFERRED_REGION is set to none, get_region.sh will generate a list of servers
 # that meet the latency requirements speciied by $MAX_LATENCY.
 # When $PIA_AUTOCONNECT is set to no, get_region.sh will sort that list of servers
 # to allow for numeric selection, or an easy manual review of options.
 if echo ${selectServer:0:1} | grep -iq y; then
-  CONNECT_TO="false"
-  export CONNECT_TO
+  PREFERRED_REGION="none"
+  export PREFERRED_REGION
   PIA_AUTOCONNECT="no"
   export PIA_AUTOCONNECT
   ./get_region.sh
@@ -236,15 +249,15 @@ if echo ${selectServer:0:1} | grep -iq y; then
         elif [[ $serverSelection -gt $i ]]; then
           echo -e "${RED}You must enter a number between 1 and $i.${NC}"
         else
-          CONNECT_TO=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
+          PREFERRED_REGION=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
           echo
-          echo -e ${GREEN}CONNECT_TO=$CONNECT_TO${NC}
+          echo -e ${GREEN}PREFERRED_REGION=$PREFERRED_REGION${NC}
           break
         fi
     done
   
     # Write the serverID for use when connecting, and display the serverName for user confirmation
-    export CONNECT_TO
+    export PREFERRED_REGION
     echo
   else
     exit 1
