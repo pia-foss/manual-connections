@@ -19,6 +19,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# This function allows you to check if the required tools have been installed.
+function check_tool() {
+  cmd=$1
+  if ! command -v $cmd &>/dev/null
+  then
+    echo "$cmd could not be found"
+    echo "Please install $cmd"
+    exit 1
+  fi
+}
+# Now we call the function to make sure we can use wg-quick, curl and jq.
+check_tool curl
+check_tool jq
+
 # Check if the mandatory environment variables are set.
 if [[ ! $PF_GATEWAY || ! $PIA_TOKEN || ! $PF_HOSTNAME ]]; then
   echo This script requires 3 env vars:
@@ -33,10 +47,19 @@ if [[ ! $PF_GATEWAY || ! $PIA_TOKEN || ! $PF_HOSTNAME ]]; then
 exit 1
 fi
 
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
+fi
 
 # The port forwarding system has required two variables:
 # PAYLOAD: contains the token, the port and the expiration date
@@ -75,7 +98,7 @@ export payload_and_signature
 # Check if the payload and the signature are OK.
 # If they are not OK, just stop the script.
 if [ "$(echo "$payload_and_signature" | jq -r '.status')" != "OK" ]; then
-  echo "The payload_and_signature variable does not contain an OK status."
+  echo -e "${RED}The payload_and_signature variable does not contain an OK status.${NC}"
   exit 1
 fi
 echo -e "${GREEN}OK!${NC}"
@@ -96,8 +119,8 @@ port="$(echo "$payload" | base64 -d | jq -r '.port')"
 expires_at="$(echo "$payload" | base64 -d | jq -r '.expires_at')"
 
 echo -ne "
-Signature : ${GREEN}$signature${NC}
-Payload   : ${GREEN}$payload${NC}
+Signature ${GREEN}$signature${NC}
+Payload   ${GREEN}$payload${NC}
 
 --> The port is ${GREEN}$port${NC} and it will expire on ${RED}$expires_at${NC}. <--
 
@@ -123,9 +146,9 @@ while true; do
       echo -e "${RED}The API did not return OK when trying to bind port... Exiting."
       exit 1
     fi
-    echo -e Forwarded port'\t': ${GREEN}$port${NC}
-    echo -e Refreshed on'\t': ${GREEN}$(date)${NC}
-    echo -e Expires on'\t': ${RED}$(date --date="$expires_at")${NC}
+    echo -e Forwarded port'\t'${GREEN}$port${NC}
+    echo -e Refreshed on'\t'${GREEN}$(date)${NC}
+    echo -e Expires on'\t'${RED}$(date --date="$expires_at")${NC}
 
     # sleep 15 minutes
     sleep 900
