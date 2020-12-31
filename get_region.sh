@@ -107,7 +107,7 @@ if [[ $selectedRegion = none ]]; then
   if [[ ${#all_region_data} -lt 1000 ]]; then
     echo -e "${RED}Could not get correct region data. To debug this, run:"
     echo "$ curl -v $serverlist_url"
-    echo "If it works, you will get a huge JSON as a response."
+    echo -e "If it works, you will get a huge JSON as a response.${NC}"
     exit 1
   fi
   # Notify the user that we got the server list.
@@ -142,7 +142,7 @@ if [[ $selectedRegion = none ]]; then
   if [ -z "$selectedRegion" ]; then
     echo -e ${RED}No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
     echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
-    echo $ MAX_LATENCY=1 ./get_region.sh
+    echo -e $ MAX_LATENCY=1 ./get_region.sh${NC}
     exit 1
   fi
 fi
@@ -197,7 +197,7 @@ if [[ -z "$TOKEN_EXPIRATION" ]] || [[ $(date +"%c") > $TOKEN_EXPIRATION ]]; then
   if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
     echo -e ${RED}If you want this script to automatically get an authentication
     echo token, please add the variables PIA_USER and PIA_PASS. Example:
-    echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh
+    echo -e $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh${NC}
     exit 0
   else
     echo -n "Checking login credentials... "
