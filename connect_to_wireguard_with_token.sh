@@ -75,7 +75,7 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
   echo An easy solution is to just run get_region_and_token.sh
   echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
-  echo https://github.com/pia-foss/manual-connections
+  echo -e https://github.com/pia-foss/manual-connections${NC}
   exit 1
 fi
 
@@ -102,7 +102,7 @@ export wireguard_json
 
 # Check if the API returned OK and stop this script if it didn't.
 if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
-  >&2 echo -e "${RED}Server did not return OK. Stopping now."
+  >&2 echo -e "${RED}Server did not return OK. Stopping now.${NC}"
   exit 1
 fi
 
