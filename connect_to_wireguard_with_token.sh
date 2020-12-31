@@ -75,7 +75,7 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
   echo An easy solution is to just run get_region_and_token.sh
   echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
-  echo https://github.com/pia-foss/manual-connections
+  echo https://github.com/pia-foss/manual-connections/tree/v2.0.0
   exit 1
 fi
 
