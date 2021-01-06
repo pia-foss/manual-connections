@@ -38,7 +38,7 @@ echo
 export PIA_USER
 
 echo -n "PIA password: "
-read -s PIA_PASS
+read -rs PIA_PASS
 echo
 
 if [ -z "$PIA_PASS" ]; then
