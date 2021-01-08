@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Copyright (C) 2020 Private Internet Access, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -49,43 +48,52 @@ rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
 
 # Retry login if no token is generated
 while :; do
-  # Confirm PIA_USER input
-  echo
-  while :; do
-    read -p "PIA username (p#######): " PIA_USER
-    unPrefix=$( echo ${PIA_USER:0:1} )
-    unSuffix=$( echo ${PIA_USER:1} )
-  
-    if [[ -z "$PIA_USER" ]]; then
-      echo -e "${RED}You must provide input.${NC}"
-    elif [[ ${#PIA_USER} != 8 ]]; then
-      echo -e "${RED}A PIA username is always 8 characters long.${NC}"
-    elif [[ $unPrefix != "P" ]] && [[ $unPrefix != "p" ]]; then
-      echo -e "${RED}A PIA username must start with \"p\".${NC}"
-    elif ! [[ $unSuffix =~ $intCheck ]]; then
-      echo -e "${RED}Username formatting is always p#######!${NC}"
-    else
-      echo
-      echo -e ${GREEN}PIA_USER=$PIA_USER${NC}
-      echo
-      break
-    fi
-  done
+    while :; do
+      # Check for in-line definition of $PIA_USER
+      if [[ ! $PIA_USER || $PIA_USER = "" ]]; then
+        echo
+        read -p "PIA username (p#######): " PIA_USER
+      fi
+      
+      # Confirm format of PIA_USER input
+      unPrefix=$( echo ${PIA_USER:0:1} )
+      unSuffix=$( echo ${PIA_USER:1} )
+      if [[ -z "$PIA_USER" ]]; then
+        echo -e "${RED}You must provide input.${NC}"
+      elif [[ ${#PIA_USER} != 8 ]]; then
+        echo -e "${RED}A PIA username is always 8 characters long.${NC}"
+      elif [[ $unPrefix != "P" ]] && [[ $unPrefix != "p" ]]; then
+        echo -e "${RED}A PIA username must start with \"p\".${NC}"
+      elif ! [[ $unSuffix =~ $intCheck ]]; then
+        echo -e "${RED}Username formatting is always p#######!${NC}"
+      else
+        echo -e "\n${GREEN}PIA_USER=$PIA_USER${NC}"
+        break
+      fi
+      PIA_USER=""
+    done
   export PIA_USER
-
-  # Confirm PIA_PASS input
+ 
   while :; do
-    read -sp "PIA password: " PIA_PASS
+    # Check for in-line definition of $PIA_PASS
+    if [[ ! $PIA_PASS || $PIA_PASS = "" ]]; then
+      echo
+      echo -n "PIA password: "
+      read -rs PIA_PASS
+      echo
+    fi
   
+    # Confirm format of PIA_PASS input
     if [[ -z "$PIA_PASS" ]]; then
       echo -e "\n${RED}You must provide input.${NC}"
     elif [[ ${#PIA_PASS} -lt 8 ]]; then
       echo -e "\n${RED}A PIA password is always a minimum of 8 characters long.${NC}"
     else
-      echo
+      echo -e "\n${GREEN}PIA_PASS input received.${NC}"
       echo
       break
     fi
+    PIA_PASS=""
   done
   export PIA_PASS
 
@@ -100,6 +108,8 @@ while :; do
     if ! echo ${tryAgain:0:1} | grep -iq y; then
       exit 1
     fi
+    PIA_USER=""
+    PIA_PASS=""
   else
     PIA_TOKEN=$( awk 'NR == 1' /opt/piavpn-manual/token )
     TOKEN_EXPIRATION=$( awk 'NR == 2' /opt/piavpn-manual/token )
@@ -111,53 +121,37 @@ done
 
 # This section asks for connection preferences that are
 # relevant to manual server selection
-echo -n "Do you want a forwarding port assigned ([N]o/[y]es): "
-read portForwarding
-echo
-
-PIA_PF="false"
-if echo ${portForwarding:0:1} | grep -iq y; then
-  PIA_PF="true"
+# Check for in-line definition of PIA_PF
+if [[ ! $PIA_PF || $PIA_PF = "" ]]; then
+  echo -n "Do you want a forwarding port assigned ([N]o/[y]es): "
+  read portForwarding
+  echo
+  if echo ${portForwarding:0:1} | grep -iq y; then
+    PIA_PF="true"
+  fi
+fi
+if [[ $PIA_PF != "true" ]]; then
+ PIA_PF="false"
 fi
 export PIA_PF
 echo -e ${GREEN}PIA_PF=$PIA_PF${NC}
 echo
 
-# Check for the required presence of resolvconf for setting DNS on wireguard connections.
-setDNS="yes"
-if ! command -v resolvconf &>/dev/null && [ "$PIA_AUTOCONNECT" == wireguard ]; then
-  echo -e ${RED}The resolvconf package could not be found.
-  echo This script can not set DNS for you and you will
-  echo -e need to invoke DNS protection some other way.${NC}
-  echo
-  setDNS="no"
-fi
-
-if [ "$setDNS" != no ]; then
-  echo Using third party DNS could allow DNS monitoring.
-  echo -n "Do you want to force PIA DNS ([Y]es/[n]o): "
-  read setDNS
+if [[ ! $disable_IPv6 || $disable_IPv6 = "" ]]; then
+  echo "Having active IPv6 connections might compromise security by allowing"
+  echo "split tunnel connections that run outside the VPN tunnel."
+  echo -n "Do you want to disable IPv6? (Y/n): "
+  read disable_IPv6
   echo
 fi
-
-PIA_DNS="true"
-if echo ${setDNS:0:1} | grep -iq n; then
-  PIA_DNS="false"
-fi
-export PIA_DNS
-echo -e ${GREEN}PIA_DNS=$PIA_DNS"
-${NC}"
-
-echo "Having active IPv6 connections might compromise security by allowing"
-echo "split tunnel connections that run outside the VPN tunnel."
-echo -n "Do you want to disable IPv6? (Y/n): "
-read disable_IPv6
-echo
 
 if echo ${disable_IPv6:0:1} | grep -iq n; then
   echo -e ${RED}"IPv6 settings have not been altered.
   "${NC}
 else
+  echo -e "The variable ${GREEN}disable_IPv6=$disable_IPv6${NC}, does not start with 'n' for 'no'.
+${GREEN}Defaulting to YES.${NC}
+"
   sysctl -w net.ipv6.conf.all.disable_ipv6=1
   sysctl -w net.ipv6.conf.default.disable_ipv6=1
   echo
@@ -167,20 +161,27 @@ else
   echo -e ${NC}
 fi
 
-# Set this to the maximum allowed latency in seconds.
+# This sets the maximum allowed latency in seconds.
 # All servers that respond slower than this will be ignored.
-echo -n "With no input, the maximum allowed latency will be set to 0.05s (50ms).
+if [[ ! $MAX_LATENCY || $MAX_LATENCY = "" ]]; then
+  echo -n "With no input, the maximum allowed latency will be set to 0.05s (50ms).
 If your connection has high latency, you may need to increase this value.
 For example, you can try 0.2 for 200ms allowed latency.
 "
+else
+  latencyInput=$MAX_LATENCY
+fi
 
 # Assure that input is numeric and properly formatted.
 MAX_LATENCY=0.05 # default
 while :; do
+  if [[ ! $latencyInput || $latencyInput = "" ]]; then
+    read -p "Custom latency (no input required for 50ms): " latencyInput
+    echo
+  fi
   customLatency=0
-  read -p "Custom latency (no input required for 50ms): " latencyInput
   customLatency+=$latencyInput
-  
+    
   if [[ -z "$latencyInput" ]]; then
     break
   elif [[ $latencyInput = 0 ]]; then
@@ -194,10 +195,10 @@ while :; do
     MAX_LATENCY=$customLatency
     break
   fi
+  latencyInput=""
 done
 export MAX_LATENCY
-echo -e "
-${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
+echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
 "
 
 # Prompt the user to specify a server or auto-connect to the lowest latency
@@ -297,6 +298,35 @@ if echo ${connection_method:0:1} | grep -iq o; then
 fi
 export PIA_AUTOCONNECT
 echo -e ${GREEN}PIA_AUTOCONNECT=$PIA_AUTOCONNECT"
+${NC}"
+
+# Check for the required presence of resolvconf for setting DNS on wireguard connections.
+setDNS="yes"
+if ! command -v resolvconf &>/dev/null && [ "$PIA_AUTOCONNECT" == wireguard ]; then
+  echo -e ${RED}The resolvconf package could not be found.
+  echo This script can not set DNS for you and you will
+  echo -e need to invoke DNS protection some other way.${NC}
+  echo
+  setDNS="no"
+fi
+
+if [[ ! $PIA_DNS || $PIA_DNS = "" ]]; then
+  if [ "$setDNS" != no ]; then
+    echo Using third party DNS could allow DNS monitoring.
+    echo -n "Do you want to force PIA DNS ([Y]es/[n]o): "
+    read setDNS
+    echo
+    PIA_DNS="true"
+    if echo ${setDNS:0:1} | grep -iq n; then
+      PIA_DNS="false"
+    fi
+  fi
+elif [[ $PIA_DNS != "true" || $setDNS = "no" ]];then
+  PIA_DNS="false"
+fi
+
+export PIA_DNS
+echo -e ${GREEN}PIA_DNS=$PIA_DNS"
 ${NC}"
 
 ./get_region.sh
