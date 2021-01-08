@@ -39,7 +39,7 @@ floatCheck='^[0-9]+([.][0-9]+)?$'
 
 # Only allow script to run as
 if [ "$(whoami)" != "root" ]; then
-  echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'"
+  echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'${NC}"
   exit 1
 fi
 
