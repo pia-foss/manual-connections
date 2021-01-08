@@ -121,7 +121,7 @@ if [[ ! $OVPN_SERVER_IP ||
   echo An easy solution is to just run get_region_and_token.sh
   echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
-  echo https://github.com/pia-foss/manual-connections
+  echo -e https://github.com/pia-foss/manual-connections ${NC}
   exit 1
 fi
 
@@ -215,7 +215,7 @@ gateway_ip="$( cat /opt/piavpn-manual/route_info )"
 
 # Report and exit if connection was not initialized within 10 seconds.
 if [ "$connected" != true ]; then
-  echo -e "${RED}The VPN connection was not established within 10 seconds."
+  echo -e "${RED}The VPN connection was not established within 10 seconds.${NC}"
   kill $ovpn_pid
   exit 1
 fi
