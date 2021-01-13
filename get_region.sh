@@ -33,6 +33,36 @@ function check_tool() {
 check_tool curl
 check_tool jq
 
+# If the server list has less than 1000 characters, it means curl failed.
+function check_all_region_data() {
+  echo
+  echo -n "Getting the server list... "
+
+  if [[ ${#all_region_data} -lt 1000 ]]; then
+    echo -e "${RED}Could not get correct region data. To debug this, run:"
+    echo "$ curl -v $serverlist_url"
+    echo -e "If it works, you will get a huge JSON as a response.${NC}"
+    exit 1
+  fi
+  
+  # Notify the user that we got the server list.
+  echo -e "${GREEN}OK!${NC}
+  "
+}
+
+# Get all data for the selected region
+# Exit with code 1 if the REGION_ID provided is invalid
+function get_selected_region_data() {
+  regionData="$( echo $all_region_data |
+  jq --arg REGION_ID "$selectedRegion" -r \
+  '.regions[] | select(.id==$REGION_ID)')"
+  if [[ ! $regionData ]]; then
+    echo -e "${RED}The REGION_ID $selectedRegion is not valid.${NC}
+    "
+    exit 1
+  fi
+}
+
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
@@ -101,18 +131,7 @@ selectedRegion=$PREFERRED_REGION
 
 # If a server isn't being specified, auto-select the server with the lowest latency
 if [[ $selectedRegion = none ]]; then
-  echo -n "Getting the server list... "
-
-  # If the server list has less than 1000 characters, it means curl failed.
-  if [[ ${#all_region_data} -lt 1000 ]]; then
-    echo -e "${RED}Could not get correct region data. To debug this, run:"
-    echo "$ curl -v $serverlist_url"
-    echo -e "If it works, you will get a huge JSON as a response.${NC}"
-    exit 1
-  fi
-  # Notify the user that we got the server list.
-  echo -e "${GREEN}OK!${NC}
-  "
+  check_region_data
 
   # Making sure this variable doesn't contain some strange string
   if [ "$PIA_PF" != true ]; then
@@ -145,12 +164,11 @@ if [[ $selectedRegion = none ]]; then
     echo -e $ MAX_LATENCY=1 ./get_region.sh${NC}
     exit 1
   fi
+else
+  check_all_region_data
 fi
 
-# Get all data for the selected region
-regionData="$( echo $all_region_data |
-  jq --arg REGION_ID "$selectedRegion" -r \
-  '.regions[] | select(.id==$REGION_ID)')"
+get_selected_region_data
 
 bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
 bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
