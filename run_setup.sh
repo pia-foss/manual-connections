@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Copyright (C) 2020 Private Internet Access, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -161,140 +162,157 @@ ${GREEN}Defaulting to YES.${NC}
   echo -e ${NC}
 fi
 
-# This sets the maximum allowed latency in seconds.
-# All servers that respond slower than this will be ignored.
-if [[ ! $MAX_LATENCY || $MAX_LATENCY = "" ]]; then
-  echo -n "With no input, the maximum allowed latency will be set to 0.05s (50ms).
+# Prompt the user to specify a server or auto-connect to the lowest latency
+while :; do
+  if [[ ! $PREFERRED_REGION || $PREFERRED_REGION = "" ]]; then
+    # Prompt the user to specify a server or auto-connect to the lowest latency
+    echo -n "Do you want to manually select a server, instead of auto-connecting to the
+server with the lowest latency ([N]o/[y]es): "
+    read selectServer
+    echo
+
+    # Call the region script with input to create an ordered list based upon latency
+    # When $PREFERRED_REGION is set to none, get_region.sh will generate a list of servers
+    # that meet the latency requirements speciied by $MAX_LATENCY.
+    # When $PIA_AUTOCONNECT is set to no, get_region.sh will sort that list of servers
+    # to allow for numeric selection, or an easy manual review of options.
+    if echo ${selectServer:0:1} | grep -iq y; then
+      # This sets the maximum allowed latency in seconds.
+      # All servers that respond slower than this will be ignored.
+      if [[ ! $MAX_LATENCY || $MAX_LATENCY = "" ]]; then
+        echo -n "With no input, the maximum allowed latency will be set to 0.05s (50ms).
 If your connection has high latency, you may need to increase this value.
 For example, you can try 0.2 for 200ms allowed latency.
 "
-else
-  latencyInput=$MAX_LATENCY
-fi
+      else
+        latencyInput=$MAX_LATENCY
+      fi
 
-# Assure that input is numeric and properly formatted.
-MAX_LATENCY=0.05 # default
-while :; do
-  if [[ ! $latencyInput || $latencyInput = "" ]]; then
-    read -p "Custom latency (no input required for 50ms): " latencyInput
-    echo
-  fi
-  customLatency=0
-  customLatency+=$latencyInput
-    
-  if [[ -z "$latencyInput" ]]; then
-    break
-  elif [[ $latencyInput = 0 ]]; then
-    echo -e ${RED}Latency input must not be zero.${NC}
-  elif ! [[ $customLatency =~ $floatCheck ]]; then
-    echo -e ${RED}Latency input must be numeric.${NC}
-  elif [[ $latencyInput =~ $intCheck ]]; then
-    MAX_LATENCY=$latencyInput
-    break
-  else
-    MAX_LATENCY=$customLatency
-    break
-  fi
-  latencyInput=""
-done
-export MAX_LATENCY
-echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
-"
-
-# Prompt the user to specify a server or auto-connect to the lowest latency
-echo -n "Do you want to manually select a server, instead of auto-connecting to the
-server with the lowest latency ([N]o/[y]es): "
-read selectServer
-echo
-
-# Call the region script with input to create an ordered list based upon latency
-# When $PREFERRED_REGION is set to none, get_region.sh will generate a list of servers
-# that meet the latency requirements speciied by $MAX_LATENCY.
-# When $PIA_AUTOCONNECT is set to no, get_region.sh will sort that list of servers
-# to allow for numeric selection, or an easy manual review of options.
-if echo ${selectServer:0:1} | grep -iq y; then
-  PREFERRED_REGION="none"
-  export PREFERRED_REGION
-  PIA_AUTOCONNECT="no"
-  export PIA_AUTOCONNECT
-  ./get_region.sh
-  
-  if [ -s /opt/piavpn-manual/latencyList ]; then
-    # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
-    echo -e "Orderd list of servers with latency less than ${GREEN}$MAX_LATENCY${NC} seconds:"
-    i=0
-    while read line; do
-      i=$((i+1))
-      time=$( awk 'NR == '$i' {print $1}' /opt/piavpn-manual/latencyList )
-      id=$( awk 'NR == '$i' {print $2}' /opt/piavpn-manual/latencyList )
-      ip=$( awk 'NR == '$i' {print $3}' /opt/piavpn-manual/latencyList )
-      location1=$( awk 'NR == '$i' {print $4}' /opt/piavpn-manual/latencyList )
-      location2=$( awk 'NR == '$i' {print $5}' /opt/piavpn-manual/latencyList )
-      location3=$( awk 'NR == '$i' {print $6}' /opt/piavpn-manual/latencyList )
-      location4=$( awk 'NR == '$i' {print $7}' /opt/piavpn-manual/latencyList )
-      location=$location1" "$location2" "$location3" "$location4
-      printf "%3s : %-8s %-15s %17s" $i $time $ip $id
-      echo " - "$location
-    done < /opt/piavpn-manual/latencyList
-    echo
-  
-    # Receive input to specify the server to connect to manually
-    while :; do 
-      read -p "Input the number of the server you want to connect to ([1]-[$i]) : "  serverSelection
-        if [[ -z "$serverSelection" ]]; then
-          echo -e "${RED}You must provide input.${NC}"
-        elif ! [[ $serverSelection =~ $intCheck ]]; then
-          echo -e "${RED}You must enter a number.${NC}"
-        elif [[ $serverSelection -lt 1 ]]; then
-          echo -e "${RED}You must enter a number greater than 1.${NC}"
-        elif [[ $serverSelection -gt $i ]]; then
-          echo -e "${RED}You must enter a number between 1 and $i.${NC}"
-        else
-          PREFERRED_REGION=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
+      # Assure that input is numeric and properly formatted.
+      MAX_LATENCY=0.05 # default
+      while :; do
+        if [[ ! $latencyInput || $latencyInput = "" ]]; then
+          read -p "Custom latency (no input required for 50ms): " latencyInput
           echo
-          echo -e ${GREEN}PREFERRED_REGION=$PREFERRED_REGION${NC}
+        fi
+        customLatency=0
+        customLatency+=$latencyInput
+    
+        if [[ -z "$latencyInput" ]]; then
+          break
+        elif [[ $latencyInput = 0 ]]; then
+          echo -e ${RED}Latency input must not be zero.${NC}
+        elif ! [[ $customLatency =~ $floatCheck ]]; then
+          echo -e ${RED}Latency input must be numeric.${NC}
+        elif [[ $latencyInput =~ $intCheck ]]; then
+          MAX_LATENCY=$latencyInput
+          break
+        else
+          MAX_LATENCY=$customLatency
           break
         fi
-    done
+        latencyInput=""
+      done
+      export MAX_LATENCY
+      echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
+"
+      PREFERRED_REGION="none"
+      export PREFERRED_REGION
+      PIA_AUTOCONNECT="no"
+      export PIA_AUTOCONNECT
+      ./get_region.sh
+      
+      if [ -s /opt/piavpn-manual/latencyList ]; then
+        # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
+        echo -e "Orderd list of servers with latency less than ${GREEN}$MAX_LATENCY${NC} seconds:"
+        i=0
+        while read line; do
+          i=$((i+1))
+          time=$( awk 'NR == '$i' {print $1}' /opt/piavpn-manual/latencyList )
+          id=$( awk 'NR == '$i' {print $2}' /opt/piavpn-manual/latencyList )
+          ip=$( awk 'NR == '$i' {print $3}' /opt/piavpn-manual/latencyList )
+          location1=$( awk 'NR == '$i' {print $4}' /opt/piavpn-manual/latencyList )
+          location2=$( awk 'NR == '$i' {print $5}' /opt/piavpn-manual/latencyList )
+          location3=$( awk 'NR == '$i' {print $6}' /opt/piavpn-manual/latencyList )
+          location4=$( awk 'NR == '$i' {print $7}' /opt/piavpn-manual/latencyList )
+          location=$location1" "$location2" "$location3" "$location4
+          printf "%3s : %-8s %-15s %17s" $i $time $ip $id
+          echo " - "$location
+        done < /opt/piavpn-manual/latencyList
+        echo
+      
+        # Receive input to specify the server to connect to manually
+        while :; do 
+          read -p "Input the number of the server you want to connect to ([1]-[$i]) : "  serverSelection
+            if [[ -z "$serverSelection" ]]; then
+              echo -e "${RED}You must provide input.${NC}"
+            elif ! [[ $serverSelection =~ $intCheck ]]; then
+              echo -e "${RED}You must enter a number.${NC}"
+            elif [[ $serverSelection -lt 1 ]]; then
+              echo -e "${RED}You must enter a number greater than 1.${NC}"
+            elif [[ $serverSelection -gt $i ]]; then
+              echo -e "${RED}You must enter a number between 1 and $i.${NC}"
+            else
+              PREFERRED_REGION=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
+              echo
+              echo -e ${GREEN}PREFERRED_REGION=$PREFERRED_REGION${NC}
+              break
+            fi
+        done
   
-    # Write the serverID for use when connecting, and display the serverName for user confirmation
-    export PREFERRED_REGION
-    echo
+        # Write the serverID for use when connecting, and display the serverName for user confirmation
+        export PREFERRED_REGION
+        echo
+        break
+      else
+        exit 1
+      fi
+    else
+      echo -e ${GREEN}You will auto-connect to the server with the lowest latency.${NC}
+      echo
+      break
+    fi
   else
-    exit 1
+    # Validate in-line declaration of PREFERRED_REGION; if invalid remove input to initiate prompts
+    echo Region input is : $PREFERRED_REGION
+    export PREFERRED_REGION
+    ./get_region.sh
+    if [[ $? != 1 ]]; then
+      break
+    fi
+    PREFERRED_REGION=""
   fi
-else
-  echo -e ${GREEN}You will auto-connect to the server with the lowest latency.${NC}
-  echo
-fi
+done
 
 # This section asks for user connection preferences
-echo -n "Connection method ([W]ireguard/[o]penvpn): "
-read connection_method
-echo
-
-PIA_AUTOCONNECT="wireguard"
-if echo ${connection_method:0:1} | grep -iq o; then
-  echo -n "Connection method ([U]dp/[t]cp): "
-  read protocolInput
+if [[ ! $PIA_AUTOCONNECT || $PIA_AUTOCONNECT != "wireguard" || $PIA_AUTOCONNECT != "openvpn_udp_standard" || $PIA_AUTOCONNECT != "openvpn_udp_strong" || $PIA_AUTOCONNECT != "openvpn_tcp_standard" || $PIA_AUTOCONNECT != "openvpn_tcp_strong" ]]; then
+  echo -n "Connection method ([W]ireguard/[o]penvpn): "
+  read connection_method
   echo
 
-  protocol="udp"
-  if echo ${protocolInput:0:1} | grep -iq t; then
-    protocol="tcp"
+  PIA_AUTOCONNECT="wireguard"
+  if echo ${connection_method:0:1} | grep -iq o; then
+    echo -n "Connection method ([U]dp/[t]cp): "
+    read protocolInput
+    echo
+
+    protocol="udp"
+    if echo ${protocolInput:0:1} | grep -iq t; then
+      protocol="tcp"
+    fi
+
+    echo "Higher levels of encryption trade performance for security. "
+    echo -n "Do you want to use strong encryption ([N]o/[y]es): "
+    read strongEncryption
+    echo
+
+    encryption="standard"
+    if echo ${strongEncryption:0:1} | grep -iq y; then
+      encryption="strong"
+    fi
+
+    PIA_AUTOCONNECT="openvpn_${protocol}_${encryption}"
   fi
-
-  echo "Higher levels of encryption trade performance for security. "
-  echo -n "Do you want to use strong encryption ([N]o/[y]es): "
-  read strongEncryption
-  echo
-
-  encryption="standard"
-  if echo ${strongEncryption:0:1} | grep -iq y; then
-    encryption="strong"
-  fi
-
-  PIA_AUTOCONNECT="openvpn_${protocol}_${encryption}"
 fi
 export PIA_AUTOCONNECT
 echo -e ${GREEN}PIA_AUTOCONNECT=$PIA_AUTOCONNECT"
