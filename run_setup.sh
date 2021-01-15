@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Copyright (C) 2020 Private Internet Access, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -151,7 +150,7 @@ if echo ${disable_IPv6:0:1} | grep -iq n; then
   "${NC}
 else
   echo -e "The variable ${GREEN}disable_IPv6=$disable_IPv6${NC}, does not start with 'n' for 'no'.
-${GREEN}Defaulting to YES.${NC}
+${GREEN}Defaulting to yes.${NC}
 "
   sysctl -w net.ipv6.conf.all.disable_ipv6=1
   sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -162,19 +161,52 @@ ${GREEN}Defaulting to YES.${NC}
   echo -e ${NC}
 fi
 
+# Input validation and check for conflicting declartions of AUTOCONNECT and PREFERRED_REGION
+# If both variables are set, AUTOCONNECT has superiority and PREFERRED_REGION is ignored
+if [[ ! $AUTOCONNECT ]]; then
+  echo AUTOCONNECT was not declared.
+  echo
+elif echo ${AUTOCONNECT:0:1} | grep -iq f; then
+  if [[ $AUTOCONNECT != "false" ]]; then
+    echo -e "The variable ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}, starts with 'f' for 'false'."
+    AUTOCONNECT="false"
+    echo -e "Updated ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}"
+    echo
+  fi
+  selectServer="yes"
+else
+  if [[ $AUTOCONNECT != "true" ]]; then
+    echo -e "The variable ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}, does not start with 'f' for 'false'."
+    AUTOCONNECT="true"
+    echo -e "Updated ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}"
+    echo
+  fi
+  if [[ ! $PREFERRED_REGION ]]; then
+    echo
+  else
+    echo
+    echo AUTOCONNECT supercedes in-line definitions of PREFERRED_REGION.
+    echo -e "${RED}PREFERRED_REGION=$PREFERRED_REGION will be ignored.${NC}
+    "
+    PREFERRED_REGION=""
+  fi
+fi
+
 # Prompt the user to specify a server or auto-connect to the lowest latency
 while :; do
   if [[ ! $PREFERRED_REGION || $PREFERRED_REGION = "" ]]; then
-    # Prompt the user to specify a server or auto-connect to the lowest latency
-    echo -n "Do you want to manually select a server, instead of auto-connecting to the
+    # If autoconnect is not set, prompt the user to specify a server or auto-connect to the lowest latency
+    if [[ $selectServer != "yes" ]]; then
+      echo -n "Do you want to manually select a server, instead of auto-connecting to the
 server with the lowest latency ([N]o/[y]es): "
-    read selectServer
-    echo
+      read selectServer
+      echo
+    fi
 
     # Call the region script with input to create an ordered list based upon latency
     # When $PREFERRED_REGION is set to none, get_region.sh will generate a list of servers
     # that meet the latency requirements speciied by $MAX_LATENCY.
-    # When $PIA_AUTOCONNECT is set to no, get_region.sh will sort that list of servers
+    # When $VPN_TYPE is set to no, get_region.sh will sort that list of servers
     # to allow for numeric selection, or an easy manual review of options.
     if echo ${selectServer:0:1} | grep -iq y; then
       # This sets the maximum allowed latency in seconds.
@@ -214,12 +246,12 @@ For example, you can try 0.2 for 200ms allowed latency.
         latencyInput=""
       done
       export MAX_LATENCY
-      echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}
-"
+      echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}"
+      
       PREFERRED_REGION="none"
       export PREFERRED_REGION
-      PIA_AUTOCONNECT="no"
-      export PIA_AUTOCONNECT
+      VPN_TYPE="no"
+      export VPN_TYPE
       ./get_region.sh
       
       if [ -s /opt/piavpn-manual/latencyList ]; then
@@ -285,12 +317,12 @@ For example, you can try 0.2 for 200ms allowed latency.
 done
 
 # This section asks for user connection preferences
-if [[ ! $PIA_AUTOCONNECT || $PIA_AUTOCONNECT != "wireguard" || $PIA_AUTOCONNECT != "openvpn_udp_standard" || $PIA_AUTOCONNECT != "openvpn_udp_strong" || $PIA_AUTOCONNECT != "openvpn_tcp_standard" || $PIA_AUTOCONNECT != "openvpn_tcp_strong" ]]; then
+if [[ ! $VPN_TYPE || $VPN_TYPE != "wireguard" || $VPN_TYPE != "openvpn_udp_standard" || $VPN_TYPE != "openvpn_udp_strong" || $VPN_TYPE != "openvpn_tcp_standard" || $VPN_TYPE != "openvpn_tcp_strong" ]]; then
   echo -n "Connection method ([W]ireguard/[o]penvpn): "
   read connection_method
   echo
 
-  PIA_AUTOCONNECT="wireguard"
+  VPN_TYPE="wireguard"
   if echo ${connection_method:0:1} | grep -iq o; then
     echo -n "Connection method ([U]dp/[t]cp): "
     read protocolInput
@@ -311,16 +343,16 @@ if [[ ! $PIA_AUTOCONNECT || $PIA_AUTOCONNECT != "wireguard" || $PIA_AUTOCONNECT 
       encryption="strong"
     fi
 
-    PIA_AUTOCONNECT="openvpn_${protocol}_${encryption}"
+    VPN_TYPE="openvpn_${protocol}_${encryption}"
   fi
 fi
-export PIA_AUTOCONNECT
-echo -e ${GREEN}PIA_AUTOCONNECT=$PIA_AUTOCONNECT"
+export VPN_TYPE
+echo -e ${GREEN}VPN_TYPE=$VPN_TYPE"
 ${NC}"
 
 # Check for the required presence of resolvconf for setting DNS on wireguard connections.
 setDNS="yes"
-if ! command -v resolvconf &>/dev/null && [ "$PIA_AUTOCONNECT" == wireguard ]; then
+if ! command -v resolvconf &>/dev/null && [ "$VPN_TYPE" == wireguard ]; then
   echo -e ${RED}The resolvconf package could not be found.
   echo This script can not set DNS for you and you will
   echo -e need to invoke DNS protection some other way.${NC}
