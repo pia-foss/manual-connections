@@ -119,8 +119,8 @@ export -f printServerLatency
 if [[ -z "$PREFERRED_REGION" ]]; then
   PREFERRED_REGION=none
 fi
-if [[ -z "$PIA_AUTOCONNECT" ]]; then
-  PIA_AUTOCONNECT=no
+if [[ -z "$VPN_TYPE" ]]; then
+  VPN_TYPE=no
 fi
 
 # Get all region data
@@ -131,7 +131,7 @@ selectedRegion=$PREFERRED_REGION
 
 # If a server isn't being specified, auto-select the server with the lowest latency
 if [[ $selectedRegion = none ]]; then
-  check_region_data
+  check_all_region_data
 
   # Making sure this variable doesn't contain some strange string
   if [ "$PIA_PF" != true ]; then
@@ -199,10 +199,10 @@ OpenVPN TCP   $bestServer_OT_IP\t-     $bestServer_OT_hostname
 OpenVPN UDP   $bestServer_OU_IP\t-     $bestServer_OU_hostname
 ${NC}"
 
-# If the script is called without specifying PIA_AUTOCONNECT, or if it is
+# If the script is called without specifying VPN_TYPE, or if it is
 # set to "no" the script will generate a list of servers, with neccessary
 # connection details at /opt/piavpn-manual/latencyList
-if [[ $PIA_AUTOCONNECT == no ]]; then
+if [[ $VPN_TYPE == no ]]; then
   echo -e "A list of servers and connection details, ordered by latency can be 
 found in at : ${GREEN}/opt/piavpn-manual/latencyList${NC}
 "
@@ -232,9 +232,9 @@ else
 fi
 
 # Connect with WireGuard and clear authentication token file and latencyList
-if [[ $PIA_AUTOCONNECT == wireguard ]]; then
+if [[ $VPN_TYPE == wireguard ]]; then
   echo The ./get_region.sh script got started with
-  echo -e ${GREEN}PIA_AUTOCONNECT=wireguard${NC}, so we will automatically connect to WireGuard,
+  echo -e ${GREEN}VPN_TYPE=wireguard${NC}, so we will automatically connect to WireGuard,
   echo by running this command:
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
   echo WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
@@ -247,26 +247,26 @@ if [[ $PIA_AUTOCONNECT == wireguard ]]; then
 fi
 
 # Connect with OpenVPN and clear authentication token file and latencyList
-if [[ $PIA_AUTOCONNECT == openvpn* ]]; then
+if [[ $VPN_TYPE == openvpn* ]]; then
   serverIP=$bestServer_OU_IP
   serverHostname=$bestServer_OU_hostname
-  if [[ $PIA_AUTOCONNECT == *tcp* ]]; then
+  if [[ $VPN_TYPE == *tcp* ]]; then
     serverIP=$bestServer_OT_IP
     serverHostname=$bestServer_OT_hostname
   fi
   echo The ./get_region.sh script got started with
-  echo -e ${GREEN}PIA_AUTOCONNECT=$PIA_AUTOCONNECT${NC}, so we will automatically
+  echo -e ${GREEN}VPN_TYPE=$VPN_TYPE${NC}, so we will automatically
   echo connect to OpenVPN, by running this command:
   echo -e $ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \\
   echo   OVPN_SERVER_IP=$serverIP \\
   echo   OVPN_HOSTNAME=$serverHostname \\
-  echo   CONNECTION_SETTINGS=$PIA_AUTOCONNECT \\
+  echo   CONNECTION_SETTINGS=$VPN_TYPE \\
   echo -e ./connect_to_openvpn_with_token.sh${NC}
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \
     OVPN_SERVER_IP=$serverIP \
     OVPN_HOSTNAME=$serverHostname \
-    CONNECTION_SETTINGS=$PIA_AUTOCONNECT \
+    CONNECTION_SETTINGS=$VPN_TYPE \
     ./connect_to_openvpn_with_token.sh
   rm -f /opt/piavpn-manual/latencyList
   exit 0
