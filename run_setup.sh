@@ -209,7 +209,7 @@ server with the lowest latency ([N]o/[y]es): "
     # Call the region script with input to create an ordered list based upon latency
     # When $PREFERRED_REGION is set to none, get_region.sh will generate a list of servers
     # that meet the latency requirements speciied by $MAX_LATENCY.
-    # When $VPN_TYPE is set to no, get_region.sh will sort that list of servers
+    # When $VPN_PROTOCOL is set to no, get_region.sh will sort that list of servers
     # to allow for numeric selection, or an easy manual review of options.
     if echo ${selectServer:0:1} | grep -iq y; then
       # This sets the maximum allowed latency in seconds.
@@ -253,8 +253,8 @@ For example, you can try 0.2 for 200ms allowed latency.
       
       PREFERRED_REGION="none"
       export PREFERRED_REGION
-      VPN_TYPE="no"
-      export VPN_TYPE
+      VPN_PROTOCOL="no"
+      export VPN_PROTOCOL
       ./get_region.sh
       
       if [ -s /opt/piavpn-manual/latencyList ]; then
@@ -319,43 +319,53 @@ For example, you can try 0.2 for 200ms allowed latency.
   fi
 done
 
-# This section asks for user connection preferences
-if [[ ! $VPN_TYPE && $VPN_TYPE != "wireguard" && $VPN_TYPE != "openvpn_udp_standard" && $VPN_TYPE != "openvpn_udp_strong" && $VPN_TYPE != "openvpn_tcp_standard" && $VPN_TYPE != "openvpn_tcp_strong" ]]; then
-  echo -n "Connection method ([W]ireguard/[o]penvpn): "
-  read connection_method
-  echo
-
-  VPN_TYPE="wireguard"
-  if echo ${connection_method:0:1} | grep -iq o; then
-    echo -n "Connection method ([U]dp/[t]cp): "
-    read protocolInput
-    echo
-
-    protocol="udp"
-    if echo ${protocolInput:0:1} | grep -iq t; then
-      protocol="tcp"
-    fi
-
-    echo "Higher levels of encryption trade performance for security. "
-    echo -n "Do you want to use strong encryption ([N]o/[y]es): "
-    read strongEncryption
-    echo
-
-    encryption="standard"
-    if echo ${strongEncryption:0:1} | grep -iq y; then
-      encryption="strong"
-    fi
-
-    VPN_TYPE="openvpn_${protocol}_${encryption}"
-  fi
+if [[ ! $VPN_PROTOCOL ]]; then
+  VPN_PROTOCOL="none"
 fi
-export VPN_TYPE
-echo -e ${GREEN}VPN_TYPE=$VPN_TYPE"
+# This section asks for user connection preferences
+case $VPN_PROTOCOL in
+  openvpn)
+    VPN_PROTOCOL="openvpn_udp_standard"
+    ;;
+  wireguard | openvpn_udp_standard | openvpn_udp_strong | openvpn_tcp_standard | openvpn_tcp_strong)
+    ;;
+  none | *)
+    echo -n "Connection method ([W]ireguard/[o]penvpn): "
+    read connection_method
+    echo
+  
+    VPN_PROTOCOL="wireguard"
+    if echo ${connection_method:0:1} | grep -iq o; then
+      echo -n "Connection method ([U]dp/[t]cp): "
+      read protocolInput
+      echo
+
+      protocol="udp"
+      if echo ${protocolInput:0:1} | grep -iq t; then
+        protocol="tcp"
+      fi
+
+      echo "Higher levels of encryption trade performance for security. "
+      echo -n "Do you want to use strong encryption ([N]o/[y]es): "
+      read strongEncryption
+      echo
+
+      encryption="standard"
+      if echo ${strongEncryption:0:1} | grep -iq y; then
+        encryption="strong"
+      fi
+
+      VPN_PROTOCOL="openvpn_${protocol}_${encryption}"
+    fi
+    ;;
+esac
+export VPN_PROTOCOL
+echo -e ${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL"
 ${NC}"
 
 # Check for the required presence of resolvconf for setting DNS on wireguard connections.
 setDNS="yes"
-if ! command -v resolvconf &>/dev/null && [ "$VPN_TYPE" == wireguard ]; then
+if ! command -v resolvconf &>/dev/null && [ "$VPN_PROTOCOL" == wireguard ]; then
   echo -e ${RED}The resolvconf package could not be found.
   echo This script can not set DNS for you and you will
   echo -e need to invoke DNS protection some other way.${NC}
@@ -379,7 +389,6 @@ elif [[ $PIA_DNS != "true" || $setDNS = "no" ]];then
 fi
 
 export PIA_DNS
-echo -e ${GREEN}PIA_DNS=$PIA_DNS"
-${NC}"
+echo -e "${GREEN}PIA_DNS=$PIA_DNS${NC}"
 
 ./get_region.sh
