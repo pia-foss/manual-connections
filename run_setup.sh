@@ -166,6 +166,7 @@ fi
 if [[ ! $AUTOCONNECT ]]; then
   echo AUTOCONNECT was not declared.
   echo
+  selectServer="ask"
 elif echo ${AUTOCONNECT:0:1} | grep -iq f; then
   if [[ $AUTOCONNECT != "false" ]]; then
     echo -e "The variable ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}, starts with 'f' for 'false'."
@@ -182,6 +183,7 @@ else
     echo
   fi
   if [[ ! $PREFERRED_REGION ]]; then
+    echo -e "${GREEN}AUTOCONNECT=true${NC}"
     echo
   else
     echo
@@ -190,13 +192,14 @@ else
     "
     PREFERRED_REGION=""
   fi
+  selectServer="no"
 fi
 
 # Prompt the user to specify a server or auto-connect to the lowest latency
 while :; do
   if [[ ! $PREFERRED_REGION || $PREFERRED_REGION = "" ]]; then
     # If autoconnect is not set, prompt the user to specify a server or auto-connect to the lowest latency
-    if [[ $selectServer != "yes" ]]; then
+    if [[ $selectServer = "ask" ]]; then
       echo -n "Do you want to manually select a server, instead of auto-connecting to the
 server with the lowest latency ([N]o/[y]es): "
       read selectServer
@@ -317,7 +320,7 @@ For example, you can try 0.2 for 200ms allowed latency.
 done
 
 # This section asks for user connection preferences
-if [[ ! $VPN_TYPE || $VPN_TYPE != "wireguard" || $VPN_TYPE != "openvpn_udp_standard" || $VPN_TYPE != "openvpn_udp_strong" || $VPN_TYPE != "openvpn_tcp_standard" || $VPN_TYPE != "openvpn_tcp_strong" ]]; then
+if [[ ! $VPN_TYPE && $VPN_TYPE != "wireguard" && $VPN_TYPE != "openvpn_udp_standard" && $VPN_TYPE != "openvpn_udp_strong" && $VPN_TYPE != "openvpn_tcp_standard" && $VPN_TYPE != "openvpn_tcp_strong" ]]; then
   echo -n "Connection method ([W]ireguard/[o]penvpn): "
   read connection_method
   echo
