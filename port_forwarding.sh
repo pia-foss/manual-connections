@@ -19,6 +19,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# This function allows you to check if the required tools have been installed.
+function check_tool() {
+  cmd=$1
+  if ! command -v $cmd &>/dev/null
+  then
+    echo "$cmd could not be found"
+    echo "Please install $cmd"
+    exit 1
+  fi
+}
+# Now we call the function to make sure we can use wg-quick, curl and jq.
+check_tool curl
+check_tool jq
 
 # Check if the mandatory environment variables are set.
 if [[ ! $PF_GATEWAY || ! $PIA_TOKEN || ! $PF_HOSTNAME ]]; then
@@ -32,6 +45,20 @@ if [[ ! $PF_GATEWAY || ! $PIA_TOKEN || ! $PF_HOSTNAME ]]; then
   echo also a token. Detailed information can be found here:
   echo https://github.com/pia-foss/manual-connections
 exit 1
+fi
+
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
 fi
 
 # The port forwarding system has required two variables:
@@ -55,7 +82,8 @@ fi
 # save the payload_and_signature received from your previous request
 # in the env var PAYLOAD_AND_SIGNATURE, and that will be used instead.
 if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
-  echo "Getting new signature..."
+  echo
+  echo -n "Getting new signature... "
   payload_and_signature="$(curl -s -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
     --cacert "ca.rsa.4096.crt" \
@@ -63,17 +91,17 @@ if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
     "https://${PF_HOSTNAME}:19999/getSignature")"
 else
   payload_and_signature="$PAYLOAD_AND_SIGNATURE"
-  echo "Using the following payload_and_signature from the env var:"
+  echo -n "Checking the payload_and_signature from the env var... "
 fi
-echo "$payload_and_signature"
 export payload_and_signature
 
 # Check if the payload and the signature are OK.
 # If they are not OK, just stop the script.
 if [ "$(echo "$payload_and_signature" | jq -r '.status')" != "OK" ]; then
-  echo "The payload_and_signature variable does not contain an OK status."
+  echo -e "${RED}The payload_and_signature variable does not contain an OK status.${NC}"
   exit 1
 fi
+echo -e "${GREEN}OK!${NC}"
 
 # We need to get the signature out of the previous response.
 # The signature will allow the us to bind the port on the server.
@@ -90,12 +118,13 @@ port="$(echo "$payload" | base64 -d | jq -r '.port')"
 # 2 months is not enough for your setup, please open a ticket.
 expires_at="$(echo "$payload" | base64 -d | jq -r '.expires_at')"
 
-# Display some information on the screen for the user.
-echo "The signature is OK.
+echo -ne "
+Signature ${GREEN}$signature${NC}
+Payload   ${GREEN}$payload${NC}
 
---> The port is $port and it will expire on $expires_at. <--
+--> The port is ${GREEN}$port${NC} and it will expire on ${RED}$expires_at${NC}. <--
 
-Trying to bind the port..."
+Trying to bind the port... "
 
 # Now we have all required data to create a request to bind the port.
 # We will repeat this request every 15 minutes, in order to keep the port
@@ -108,17 +137,18 @@ while true; do
     --data-urlencode "payload=${payload}" \
     --data-urlencode "signature=${signature}" \
     "https://${PF_HOSTNAME}:19999/bindPort")"
-    echo "$bind_port_response"
+    echo -e "${GREEN}OK!${NC}"
 
     # If port did not bind, just exit the script.
     # This script will exit in 2 months, since the port will expire.
     export bind_port_response
     if [ "$(echo "$bind_port_response" | jq -r '.status')" != "OK" ]; then
-      echo "The API did not return OK when trying to bind port. Exiting."
+      echo -e "${RED}The API did not return OK when trying to bind port... Exiting."
       exit 1
     fi
-    echo Port $port refreshed on $(date). \
-      This port will expire on $(date --date="$expires_at")
+    echo -e Forwarded port'\t'${GREEN}$port${NC}
+    echo -e Refreshed on'\t'${GREEN}$(date)${NC}
+    echo -e Expires on'\t'${RED}$(date --date="$expires_at")${NC}
 
     # sleep 15 minutes
     sleep 900

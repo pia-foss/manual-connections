@@ -22,18 +22,31 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  package=$2
   if ! command -v $cmd &>/dev/null
   then
     echo "$cmd could not be found"
-    echo "Please install $package"
+    echo "Please install $cmd"
     exit 1
   fi
 }
 # Now we call the function to make sure we can use wg-quick, curl and jq.
-check_tool wg-quick wireguard-tools
-check_tool curl curl
-check_tool jq jq
+check_tool wg-quick
+check_tool curl
+check_tool jq
+
+# Check if terminal allows output, if yes, define colors for output
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+  else
+    GREEN=''
+    RED=''
+    NC='' # No Color
+  fi
+fi
 
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
@@ -50,7 +63,7 @@ fi
 
 # Check if the mandatory environment variables are set.
 if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
-  echo This script requires 3 env vars:
+  echo -e ${RED}This script requires 3 env vars:
   echo WG_SERVER_IP - IP that you want to connect to
   echo WG_HOSTNAME  - name of the server, required for ssl
   echo PIA_TOKEN    - your authentication token
@@ -62,7 +75,7 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
   echo An easy solution is to just run get_region_and_token.sh
   echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
-  echo https://github.com/pia-foss/manual-connections
+  echo -e https://github.com/pia-foss/manual-connections${NC}
   exit 1
 fi
 
@@ -86,11 +99,10 @@ wireguard_json="$(curl -s -G \
   --data-urlencode "pubkey=$pubKey" \
   "https://${WG_HOSTNAME}:1337/addKey" )"
 export wireguard_json
-echo "$wireguard_json"
 
 # Check if the API returned OK and stop this script if it didn't.
 if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
-  >&2 echo "Server did not return OK. Stopping now."
+  >&2 echo -e "${RED}Server did not return OK. Stopping now.${NC}"
   exit 1
 fi
 
@@ -99,7 +111,7 @@ fi
 # these scripts. Feel free to fork the project and test it out.
 echo
 echo Trying to disable a PIA WG connection in case it exists...
-wg-quick down pia && echo Disconnected!
+wg-quick down pia && echo -e "${GREEN}\nPIA WG connection disabled!${NC}"
 echo
 
 # Create the WireGuard config based on the JSON received from the API
@@ -108,15 +120,16 @@ echo
 # This uses a PersistentKeepalive of 25 seconds to keep the NAT active
 # on firewalls. You can remove that line if your network does not
 # require it.
-echo -n "Trying to write /etc/wireguard/pia.conf... "
-mkdir -p /etc/wireguard
 if [ "$PIA_DNS" == true ]; then
   dnsServer="$(echo "$wireguard_json" | jq -r '.dns_servers[0]')"
   echo Trying to set up DNS to $dnsServer. In case you do not have resolvconf,
   echo this operation will fail and you will not get a VPN. If you have issues,
   echo start this script without PIA_DNS.
+  echo
   dnsSettingForVPN="DNS = $dnsServer"
 fi
+echo -n "Trying to write /etc/wireguard/pia.conf..."
+mkdir -p /etc/wireguard
 echo "
 [Interface]
 Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
@@ -128,7 +141,7 @@ PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
 " > /etc/wireguard/pia.conf || exit 1
-echo OK!
+echo -e ${GREEN}OK!${NC}
 
 # Start the WireGuard interface.
 # If something failed, stop this script.
@@ -137,41 +150,46 @@ echo OK!
 echo
 echo Trying to create the wireguard interface...
 wg-quick up pia || exit 1
-echo "The WireGuard interface got created.
+echo
+echo -e "${GREEN}The WireGuard interface got created.${NC}
+
 At this point, internet should work via VPN.
 
---> to disconnect the VPN, run:
-$ wg-quick down pia"
+To disconnect the VPN, run:
+
+--> ${GREEN}wg-quick down pia${NC} <--
+"
 
 # This section will stop the script if PIA_PF is not set to "true".
 if [ "$PIA_PF" != true ]; then
+  echo If you want to also enable port forwarding, you can start the script:
+  echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
+    PF_GATEWAY=$WG_SERVER_IP \
+    PF_HOSTNAME=$WG_HOSTNAME \
+    ./port_forwarding.sh${NC}
   echo
-  echo If you want to also enable port forwarding, please start the script
-  echo with the env var PIA_PF=true. Example:
-  echo $ WG_SERVER_IP=10.0.0.3 WG_HOSTNAME=piaserver401 \
-    PIA_TOKEN=\"\$token\" PIA_PF=true \
-    ./connect_to_wireguard_with_token.sh
-  exit
+  echo The location used must be port forwarding enabled, or this will fail.
+  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  exit 1
 fi
 
-echo -n "
-This script got started with PIA_PF=true. We will allow WireGuard to fully
-initialize and after that we will try to enable PF by running the following
-command:
-$ PIA_TOKEN=$PIA_TOKEN \\
-  PF_GATEWAY=\"$(echo "$wireguard_json" | jq -r '.server_vip')\" \\
-  PF_HOSTNAME=\"$WG_HOSTNAME\" \\
-  ./port_forwarding.sh
-  
-Starting PF in "
+echo -ne "This script got started with ${GREEN}PIA_PF=true${NC}.
+
+Starting port forwarding in "
 for i in {5..1}; do
-  echo -n "$i... "
+  echo -n "$i..."
   sleep 1
 done
 echo
 echo
 
+echo -e "Starting procedure to enable port forwarding by running the following command:
+$ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
+  PF_GATEWAY=$WG_SERVER_IP \\
+  PF_HOSTNAME=$WG_HOSTNAME \\
+  ./port_forwarding.sh${NC}"
+
 PIA_TOKEN=$PIA_TOKEN \
-  PF_GATEWAY="$(echo "$wireguard_json" | jq -r '.server_vip')" \
-  PF_HOSTNAME="$WG_HOSTNAME" \
+  PF_GATEWAY=$WG_SERVER_IP \
+  PF_HOSTNAME=$WG_HOSTNAME \
   ./port_forwarding.sh
