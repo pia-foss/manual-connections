@@ -19,6 +19,7 @@ The scripts were written so that they are easy to read and to modify. The code a
 - [PIA Port Forwarding](#pia-port-forwarding)
 - [Automated setup](#automated-setup)
 - [Manual PF testing](#manual-pf-testing)
+- [Thanks](#thanks)
 - [License](#license)
 
 ## Dependencies
@@ -159,6 +160,10 @@ listening on any, link-type LINUX_SLL (Linux cooked v1), capture size 262144 byt
 ```
 
 If you run curl on the same machine (the one that is connected to the VPN), you will see the traffic in tcpdump anyway and the test won't prove anything. At the same time, the request will get firewall so you will not be able to access the port from the same machine. This can only be tested properly by running curl on another system.
+
+## Thanks
+
+A big special thanks to [faireOwl](https://github.com/faireOwl) for his contributions to this repo.
 
 ## License
 This project is licensed under the [MIT (Expat) license](https://choosealicense.com/licenses/mit/), which can be found [here](/LICENSE).
