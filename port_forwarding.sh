@@ -149,6 +149,7 @@ while true; do
     echo -e Forwarded port'\t'${GREEN}$port${NC}
     echo -e Refreshed on'\t'${GREEN}$(date)${NC}
     echo -e Expires on'\t'${RED}$(date --date="$expires_at")${NC}
+    echo -e "\n${GREEN}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${NC}\n"
 
     # sleep 15 minutes
     sleep 900
