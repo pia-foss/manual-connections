@@ -59,13 +59,13 @@ while :; do
       unPrefix=$( echo ${PIA_USER:0:1} )
       unSuffix=$( echo ${PIA_USER:1} )
       if [[ -z "$PIA_USER" ]]; then
-        echo -e "${RED}You must provide input.${NC}"
+        echo -e "\n${RED}You must provide input.${NC}"
       elif [[ ${#PIA_USER} != 8 ]]; then
-        echo -e "${RED}A PIA username is always 8 characters long.${NC}"
+        echo -e "\n${RED}A PIA username is always 8 characters long.${NC}"
       elif [[ $unPrefix != "P" ]] && [[ $unPrefix != "p" ]]; then
-        echo -e "${RED}A PIA username must start with \"p\".${NC}"
+        echo -e "\n${RED}A PIA username must start with \"p\".${NC}"
       elif ! [[ $unSuffix =~ $intCheck ]]; then
-        echo -e "${RED}Username formatting is always p#######!${NC}"
+        echo -e "\n${RED}Username formatting is always p#######!${NC}"
       else
         echo -e "\n${GREEN}PIA_USER=$PIA_USER${NC}"
         break
@@ -233,9 +233,9 @@ For example, you can try 0.2 for 200ms allowed latency.
         if [[ -z "$latencyInput" ]]; then
           break
         elif [[ $latencyInput = 0 ]]; then
-          echo -e ${RED}Latency input must not be zero.${NC}
+          echo -e "${RED}Latency input must not be zero.${NC}\n"
         elif ! [[ $customLatency =~ $floatCheck ]]; then
-          echo -e ${RED}Latency input must be numeric.${NC}
+          echo -e "${RED}Latency input must be numeric.${NC}\n"
         elif [[ $latencyInput =~ $intCheck ]]; then
           MAX_LATENCY=$latencyInput
           break
@@ -277,13 +277,13 @@ For example, you can try 0.2 for 200ms allowed latency.
         while :; do 
           read -p "Input the number of the server you want to connect to ([1]-[$i]) : "  serverSelection
             if [[ -z "$serverSelection" ]]; then
-              echo -e "${RED}You must provide input.${NC}"
+              echo -e "\n${RED}You must provide input.${NC}\n"
             elif ! [[ $serverSelection =~ $intCheck ]]; then
-              echo -e "${RED}You must enter a number.${NC}"
+              echo -e "\n${RED}You must enter a number.${NC}\n"
             elif [[ $serverSelection -lt 1 ]]; then
-              echo -e "${RED}You must enter a number greater than 1.${NC}"
+              echo -e "\n${RED}You must enter a number greater than 1.${NC}\n"
             elif [[ $serverSelection -gt $i ]]; then
-              echo -e "${RED}You must enter a number between 1 and $i.${NC}"
+              echo -e "\n${RED}You must enter a number between 1 and $i.${NC}\n"
             else
               PREFERRED_REGION=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
               echo
