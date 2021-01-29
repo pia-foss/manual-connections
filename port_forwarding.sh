@@ -19,6 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# absolute path ot this file directory
+CURRENT_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
@@ -86,7 +89,7 @@ if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
   echo -n "Getting new signature... "
   payload_and_signature="$(curl -s -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
-    --cacert "ca.rsa.4096.crt" \
+    --cacert "$CURRENT_FILE_DIR/ca.rsa.4096.crt" \
     -G --data-urlencode "token=${PIA_TOKEN}" \
     "https://${PF_HOSTNAME}:19999/getSignature")"
 else
@@ -133,7 +136,7 @@ Trying to bind the port... "
 while true; do
   bind_port_response="$(curl -Gs -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
-    --cacert "ca.rsa.4096.crt" \
+    --cacert "$CURRENT_FILE_DIR/ca.rsa.4096.crt" \
     --data-urlencode "payload=${payload}" \
     --data-urlencode "signature=${signature}" \
     "https://${PF_HOSTNAME}:19999/bindPort")"
