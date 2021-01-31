@@ -160,6 +160,8 @@ while true; do
     export bind_port_response
     if [ "$(echo "$bind_port_response" | jq -r '.status')" != "OK" ]; then
       echo -e "${RED}The API did not return OK when trying to bind port... Exiting."
+      # remove stored port as it is now invalid
+      rm -f /opt/piavpn-manual/port
       exit 1
     fi
     echo -e Forwarded port'\t'${GREEN}$port${NC}
