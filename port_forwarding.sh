@@ -85,7 +85,7 @@ fi
 mkdir -p /opt/piavpn-manual
 
 # remove previous stored port before obtaining a new one
-rm -f /opt/piavpn-manual/port
+rm -f /opt/piavpn-manual/port_forwarding
 
 if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
   echo
