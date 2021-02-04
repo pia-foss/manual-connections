@@ -130,9 +130,9 @@ port="$(echo "$payload" | base64 -d | jq -r '.port')"
 expires_at="$(echo "$payload" | base64 -d | jq -r '.expires_at')"
 
 # store port
-echo $port > /opt/piavpn-manual/port || exit 1
+echo $port > /opt/piavpn-manual/port_forwarding || exit 1
 # store port expiration
-echo $expires_at >> /opt/piavpn-manual/port
+echo $expires_at >> /opt/piavpn-manual/port_forwarding
 
 echo -ne "
 Signature ${GREEN}$signature${NC}
@@ -161,7 +161,7 @@ while true; do
     if [ "$(echo "$bind_port_response" | jq -r '.status')" != "OK" ]; then
       echo -e "${RED}The API did not return OK when trying to bind port... Exiting."
       # remove stored port as it is now invalid
-      rm -f /opt/piavpn-manual/port
+      rm -f /opt/piavpn-manual/port_forwarding
       exit 1
     fi
     echo -e Forwarded port'\t'${GREEN}$port${NC}
