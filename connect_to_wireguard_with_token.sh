@@ -18,6 +18,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+parent_folder=$(dirname $(realpath $0))
 
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
@@ -94,7 +95,7 @@ export pubKey
 echo Trying to connect to the PIA WireGuard API on $WG_SERVER_IP...
 wireguard_json="$(curl -s -G \
   --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
-  --cacert "ca.rsa.4096.crt" \
+  --cacert "$parent_folder/ca.rsa.4096.crt" \
   --data-urlencode "pt=${PIA_TOKEN}" \
   --data-urlencode "pubkey=$pubKey" \
   "https://${WG_HOSTNAME}:1337/addKey" )"
@@ -166,10 +167,10 @@ if [ "$PIA_PF" != true ]; then
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$WG_SERVER_IP \
     PF_HOSTNAME=$WG_HOSTNAME \
-    ./port_forwarding.sh${NC}
+    $parent_folder/port_forwarding.sh${NC}
   echo
   echo The location used must be port forwarding enabled, or this will fail.
-  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  echo Calling the $parent_folder/get_region script with PIA_PF=true will provide a filtered list.
   exit 1
 fi
 
@@ -187,9 +188,9 @@ echo -e "Starting procedure to enable port forwarding by running the following c
 $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
   PF_GATEWAY=$WG_SERVER_IP \\
   PF_HOSTNAME=$WG_HOSTNAME \\
-  ./port_forwarding.sh${NC}"
+  $parent_folder/port_forwarding.sh${NC}"
 
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY=$WG_SERVER_IP \
   PF_HOSTNAME=$WG_HOSTNAME \
-  ./port_forwarding.sh
+  $parent_folder/port_forwarding.sh
