@@ -95,13 +95,7 @@ function fw_start ()
     sudo ufw allow out on $vpnname from any
     sudo ufw allow in on $vpnname from any
     sudo ufw allow 53
-    sudo ufw allow in from $localnet to any
-    sudo ufw allow out from any to $localnet
-    sudo ufw allow in on $netname from $localnet
-    sudo ufw allow out on $netname from $localnet
-    sudo ufw allow in on $netname to $localnet
-    sudo ufw allow out on $netname to $localnet
-    sudo ufw allow from 127.0.0.1
+    sudo ufw allow in on $netname from $localnet to $localnet 
     sudo ufw allow 22
     sudo ufw allow out $vpnport
     sudo ufw disable
