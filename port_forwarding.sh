@@ -49,7 +49,7 @@ fi
 
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
-  ncolors=$(tput colors)
+  ncolors=$(tput colors 2>/dev/null)
   if test -n "$ncolors" && test $ncolors -ge 8; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
@@ -150,6 +150,14 @@ while true; do
     echo -e Refreshed on'\t'${GREEN}$(date)${NC}
     echo -e Expires on'\t'${RED}$(date --date="$expires_at")${NC}
     echo -e "\n${GREEN}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${NC}\n"
+
+    if [[ $PF_SUCCESS_EXTERNAL_SCRIPT ]]; then
+      "$PF_SUCCESS_EXTERNAL_SCRIPT"
+    fi
+   
+    if [[ $PF_KEEPALIVE && "$PF_KEEPALIVE" != "1" ]]; then
+      exit 0
+    fi
 
     # sleep 15 minutes
     sleep 900
