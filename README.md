@@ -38,7 +38,7 @@ In order for the scripts to work (probably even if you do a manual setup), you w
  * This repo is really fresh at this moment, so please take into consideration the fact that you will probably be one of the first users that use the scripts.
  * Though we support research of open source technologies, we can not provide official support for all FOSS platforms, as there are simply too many platforms (which is a good thing). That is why we link 3rd Party repos in this README. We can not guarantee the quality of the code in the 3rd Party Repos, so use them only if you understand the risks.
 
-## Confirmed distributions
+## Confirmed Distributions
 
 The functionality of the scripts within this repository has been tested and confirmed on the following operating systems and GNU/Linux distributions:
  * Arch
@@ -72,7 +72,7 @@ The PIA Port Forwarding service (a.k.a. PF) allows you run services on your own 
 
 This service can be used only AFTER establishing a VPN connection.
 
-## Automated setup
+## Automated Setup
 
 In order to help you use VPN services and PF on any device, we have prepared a few bash scripts that should help you through the process of setting everything up. The scripts also contain a lot of comments, just in case you require detailed information regarding how the technology works. The functionality is controlled via environment variables, so that you have an easy time automating your setup.
 
@@ -98,7 +98,7 @@ Here is a list of scripts you could find useful:
  * [Connect to OpenVPN](connect_to_openvpn_with_token.sh): This script allows you to connect to the VPN server via OpenVPN.
  * [Enable Port Forwarding](port_forwarding.sh): Enables you to add Port Forwarding to an existing VPN connection. Adding the environment variable `PIA_PF=true` to any of the previous scripts will also trigger this script.
 
-## Manual PF tesing
+## Manual PF Testing
 
 To use port forwarding on the NextGen network, first of all establish a connection with your favorite protocol. After this, you will need to find the private IP of the gateway you are connected to. In case you are WireGuard, the gateway will be part of the JSON response you get from the server, as you can see in the [bash script](https://github.com/pia-foss/manual-connections/blob/master/wireguard_and_pf.sh#L119). In case you are using OpenVPN, you can find the gateway by checking the routing table with `ip route s t all`.
 
@@ -137,7 +137,7 @@ bash-5.0#
 
 Call __/bindPort__ every 15 minutes, or the port will be deleted!
 
-### Testing your new PF
+### Testing Your New PF
 
 To test that it works, you can tcpdump on the port you received:
 
