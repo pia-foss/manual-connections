@@ -61,6 +61,9 @@ if test -t 1; then
   fi
 fi
 
+# Set script filepath as usable varaible.
+parent_directory=$(dirname $(realpath $0))
+
 # The port forwarding system has required two variables:
 # PAYLOAD: contains the token, the port and the expiration date
 # SIGNATURE: certifies the payload originates from the PIA network.
@@ -86,7 +89,7 @@ if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
   echo -n "Getting new signature... "
   payload_and_signature="$(curl -s -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
-    --cacert "ca.rsa.4096.crt" \
+    --cacert "$parent_directory/ca.rsa.4096.crt" \
     -G --data-urlencode "token=${PIA_TOKEN}" \
     "https://${PF_HOSTNAME}:19999/getSignature")"
 else
@@ -133,7 +136,7 @@ Trying to bind the port... "
 while true; do
   bind_port_response="$(curl -Gs -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
-    --cacert "ca.rsa.4096.crt" \
+    --cacert "$parent_directory/ca.rsa.4096.crt" \
     --data-urlencode "payload=${payload}" \
     --data-urlencode "signature=${signature}" \
     "https://${PF_HOSTNAME}:19999/bindPort")"
