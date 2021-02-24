@@ -53,6 +53,9 @@ if test -t 1; then
   fi
 fi
 
+# Set script filepath as usable varaible.
+parent_directory=$(dirname $(realpath $0))
+
 # Only allow script to run as
 if [ "$(whoami)" != "root" ]; then
   echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'${NC}"
@@ -64,7 +67,7 @@ mkdir -p /opt/piavpn-manual
 if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
   echo If you want this script to automatically get a token from the Meta
   echo service, please add the variables PIA_USER and PIA_PASS. Example:
-  echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_token.sh
+  echo $ PIA_USER=p0123456 PIA_PASS=xxx $parent_directory/get_token.sh
   exit 1
 fi
 

@@ -48,6 +48,9 @@ if test -t 1; then
   fi
 fi
 
+# Set script filepath as usable varaible.
+parent_directory=$(dirname $(realpath $0))
+
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
 # IPv6 can also be disabled via kernel commandline param, so we must
@@ -94,7 +97,7 @@ export pubKey
 echo Trying to connect to the PIA WireGuard API on $WG_SERVER_IP...
 wireguard_json="$(curl -s -G \
   --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
-  --cacert "ca.rsa.4096.crt" \
+  --cacert "$parent_directory/ca.rsa.4096.crt" \
   --data-urlencode "pt=${PIA_TOKEN}" \
   --data-urlencode "pubkey=$pubKey" \
   "https://${WG_HOSTNAME}:1337/addKey" )"
@@ -166,10 +169,10 @@ if [ "$PIA_PF" != true ]; then
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$WG_SERVER_IP \
     PF_HOSTNAME=$WG_HOSTNAME \
-    ./port_forwarding.sh${NC}
+    $parent_directory/port_forwarding.sh${NC}
   echo
   echo The location used must be port forwarding enabled, or this will fail.
-  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  echo Calling the $parent_directory/get_region script with PIA_PF=true will provide a filtered list.
   exit 1
 fi
 
@@ -187,9 +190,9 @@ echo -e "Starting procedure to enable port forwarding by running the following c
 $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
   PF_GATEWAY=$WG_SERVER_IP \\
   PF_HOSTNAME=$WG_HOSTNAME \\
-  ./port_forwarding.sh${NC}"
+  $parent_directory/port_forwarding.sh${NC}"
 
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY=$WG_SERVER_IP \
   PF_HOSTNAME=$WG_HOSTNAME \
-  ./port_forwarding.sh
+  $parent_directory/port_forwarding.sh
