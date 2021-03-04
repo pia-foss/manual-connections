@@ -34,6 +34,11 @@ check_tool wg-quick
 check_tool curl
 check_tool jq
 
+declare -a sedE_escape='][)(}{/\"\".^$+*&'\'\'
+function sedsan() {
+	sed -E 's~(['"${sedE_escape@E}"'])~\\\1~g' <<< "$1"	## No need to quote assignment.
+}
+
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
@@ -128,20 +133,56 @@ if [ "$PIA_DNS" == true ]; then
   echo
   dnsSettingForVPN="DNS = $dnsServer"
 fi
-echo -n "Trying to write /etc/wireguard/pia.conf..."
-mkdir -p /etc/wireguard
-echo "
-[Interface]
-Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
-PrivateKey = $privKey
-$dnsSettingForVPN
-[Peer]
-PersistentKeepalive = 25
-PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
-AllowedIPs = 0.0.0.0/0
-Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
-" > /etc/wireguard/pia.conf || exit 1
-echo -e ${GREEN}OK!${NC}
+declare confDir=/etc/wireguard
+mkdir -p "$confDir" || exit 1
+declare confFile="$confDir/pia.conf"
+echo -n "Trying to write $confFile..."
+declare updateFailed=
+if [[ -f "$confFile" ]]; then
+	newAddress="$(jq -r '.peer_ip' <<< "$wireguard_json")"
+	sed -nE -i '/^(\s*[Aa]ddress\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newAddress")"'/p}' "$confFile" || {	## Update value.
+		sed -i -E 's/^(\s*\[Interface\].*)$/\1\nAddress = '"$(sedsan "$newAddress")/" "$confFile" || updateFailed='Address'	## Insert key/value entry.
+	}
+
+	sed -nE -i '/^(\s*[Pp]rivate[Kk]ey\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$privKey")"'/p}' "$confFile" || {
+		sed -i -E 's/^(\s*)([Aa]ddress\s*=.*)$/\1\2\n\1PrivateKey = '"$(sedsan "$privKey")/" "$confFile" || updateFailed='PrivateKey'
+	}
+
+	newPublicKey="$(jq -r '.server_key' <<< "$wireguard_json")"
+	sed -nE -i '/^(\s*[Pp]ublic[Kk]ey\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newPublicKey")"'/p}' "$confFile" || {
+		sed -i -E 's/^(\s*\[Peer\].*)$/\1\nPublicKey = '"$(sedsan "$newPublicKey")/" "$confFile" || updateFailed='PublicKey'
+	}
+
+	newEndPoint="${WG_SERVER_IP}:$(jq -r '.server_port' <<< "$wireguard_json")"
+	sed -nE -i '/^(\s*[Ee]nd[Pp]oint\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newEndPoint")"'/p}' "$confFile" || {
+		sed -i -E 's/^(\s*)([Pp]ublic[Kk]ey\s*=.*)$/\1\2\n\1EndPoint = '"$(sedsan "$newEndPoint")/" "$confFile" || updateFailed='EndPoint'
+	}
+
+	if [[ "$dnsSettingForVPN" ]]; then
+		newDNS="$(cut -d= -f2 <<< "$dnsSettingForVPN" | tr -d ' \t')"
+		sed -nE -i '/^(\s*[Dd][Nn][Ss]\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newDNS")"'/p}' "$confFile" || {
+			sed -i -E 's/^(\s*)([Pp]rivate[Kk]ey)(\s*=\s*)(.*)$/\1\2\3\4\n\1DNS\3'"$(sedsan "$newDNS")/" "$confFile" || updateFailed='DNS'
+		}
+	fi
+else
+	echo "
+	[Interface]
+	Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
+	PrivateKey = $privKey
+	$dnsSettingForVPN
+	[Peer]
+	PersistentKeepalive = 25
+	PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
+	AllowedIPs = 0.0.0.0/0
+	Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
+	" > /etc/wireguard/pia.conf || exit 1
+fi
+if [[ "$updateFailed" ]]; then
+	echo -e "\nFailed to update wireguard config ($updateFailed). Deleting it and re-running this script should work."
+	exit 1
+else
+	echo -e ${GREEN}OK!${NC}
+fi
 
 # Start the WireGuard interface.
 # If something failed, stop this script.
