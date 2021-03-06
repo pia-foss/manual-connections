@@ -195,9 +195,9 @@ if [[ -f "$confFile" ]]; then
 		done
 	fi
 
-	for bad in newAddress privKey newPublicKey newEndPoint dnsServer; do
-		if [[ "${!bad}" ]]; then
-			echo -e "\nFailed to update wireguard config ($bad). Deleting it and re-running this script should work."
+	for still in newAddress privKey newPublicKey newEndPoint dnsServer; do
+		if [[ "${!still}" ]]; then
+			echo -e "\nFailed to update wireguard config ($still). Deleting it and re-running this script should work."
 			exit 1
 		fi
 	done
