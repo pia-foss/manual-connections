@@ -142,31 +142,36 @@ if [[ -f "$confFile" ]]; then
 	newEndPoint="${WG_SERVER_IP}:$(jq -r '.server_port' <<< "$wireguard_json")"
 	## newDNS
 
+	declare -A match=(
+		[Address]='^[[:space:]]*[Aa]ddress[[:space:]]*$'
+		[PrivateKey]='^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$'
+		[PublicKey]='^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$'
+		[EndPoint]='^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$'
+		[DNS]='^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$'
+	)
+	declare -A before=(
+		[Address]='^[[:space:]]*\[Interface\]'
+		[PrivateKey]="${match[Address]%$}="
+		[PublicKey]='^[[:space:]]*\[Peer\]'
+		[EndPoint]="${match[PublicKey]%$}="
+		[DNS]="${match[PrivateKey]%$}="
+	)
+
 	while read -r line; do
 		if [[ "$line" = *=* ]]; then
 			keyKeeper="${line%%=*}"
 			## Note: this only preserves the first instance of each key entry in the config file.
-			if [[ "$newAddress" && "$keyKeeper" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*$ ]]; then
-				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
-				newFile+=("${keyKeeper}=${spaceSaver}$newAddress")
-				newAddress=
-			elif [[ "$newPrivateKey" && "$keyKeeper" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$ ]]; then
-				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
-				newFile+=("${keyKeeper}=${spaceSaver}$newPrivateKey")
-				newPrivateKey=
-			elif [[ "$newPublicKey" && "$keyKeeper" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$ ]]; then
-				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
-				newFile+=("${keyKeeper}=${spaceSaver}$newPublicKey")
-				newPublicKey=
-			elif [[ "$newEndPoint" && "$keyKeeper" =~ ^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$ ]]; then
-				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
-				newFile+=("${keyKeeper}=${spaceSaver}$newEndPoint")
-				newEndPoint=
-			elif [[ "$newDNS" && "$keyKeeper" =~ ^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$ ]]; then
-				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
-				newFile+=("${keyKeeper}=${spaceSaver}$newDNS")
-				newDNS=
-			else newFile+=("$line")
+			for update in newAddress newPrivateKey newPublicKey newEndPoint newDNS; do
+				if [[ ${!update} && $keyKeeper =~ ${match[${update#new}]} ]]; then
+					spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
+					newFile+=("${keyKeeper}=${spaceSaver}${!update}")
+					unset "$update"
+					line=
+					break
+				fi
+			done
+			if [[ $line ]]; then
+				newFile+=("$line")
 			fi
 		else newFile+=("$line")
 		fi
@@ -174,16 +179,9 @@ if [[ -f "$confFile" ]]; then
 
 	for still in newAddress newPrivateKey newPublicKey newEndPoint newDNS; do
 		if [[ "${!still}" ]]; then
-			case $still in
-				newAddress) after='^[[:space:]]*\[Interface\]' ;;
-				newPrivateKey) after='^[[:space:]]*[Aa]ddress[[:space:]]*=' ;;
-				newPublicKey) after='^[[:space:]]*\[Peer\]' ;;
-				newEndPoint) after='^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*=' ;;
-				newDNS) after='^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*=' ;;
-			esac
 			linebuf=
 			for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
-				if [[ $linebuf =~ $after ]]; then
+				if [[ $linebuf =~ ${before[${still#new}]} ]]; then
 					newFile=("${newFile[@]:0:$line}" "${still#new}${spaceSaver}=${spaceSaver}${!still}" "${newFile[@]:$line}")
 					unset "$still"
 					break
@@ -196,11 +194,6 @@ if [[ -f "$confFile" ]]; then
 			exit 1
 		fi
 	done
-
-	printf "%s\n" "${newFile[@]}" > "$confFile" || {
-		echo -e "${RED}FAILED.{NC}\n\tFailed writing to wireguard config."
-		exit 1
-	}
 else
 	echo "
 	[Interface]
