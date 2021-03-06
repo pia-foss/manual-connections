@@ -80,9 +80,9 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
 fi
 
 # Create ephemeral wireguard keys, that we don't need to save to disk.
-privKey="$(wg genkey)"
-export privKey
-pubKey="$( echo "$privKey" | wg pubkey)"
+newPrivateKey="$(wg genkey)"
+export newPrivateKey
+pubKey="$( echo "$newPrivateKey" | wg pubkey)"
 export pubKey
 
 # Authenticate via the PIA WireGuard RESTful API.
@@ -121,12 +121,12 @@ echo
 # on firewalls. You can remove that line if your network does not
 # require it.
 if [ "$PIA_DNS" == true ]; then
-  dnsServer="$(echo "$wireguard_json" | jq -r '.dns_servers[0]')"
-  echo Trying to set up DNS to $dnsServer. In case you do not have resolvconf,
+  newDNS="$(echo "$wireguard_json" | jq -r '.dns_servers[0]')"
+  echo Trying to set up DNS to $newDNS. In case you do not have resolvconf,
   echo this operation will fail and you will not get a VPN. If you have issues,
   echo start this script without PIA_DNS.
   echo
-  dnsSettingForVPN="DNS = $dnsServer"
+  dnsSettingForVPN="DNS = $newDNS"
 fi
 declare confDir=/etc/wireguard
 mkdir -p "$confDir" || exit 1
@@ -137,10 +137,10 @@ if [[ -f "$confFile" ]]; then
 	## keyKeeper=
 	## linebuf=
 	newAddress="$(jq -r '.peer_ip' <<< "$wireguard_json")"
-	## privKey
+	## newPrivateKey
 	newPublicKey="$(jq -r '.server_key' <<< "$wireguard_json")"
 	newEndPoint="${WG_SERVER_IP}:$(jq -r '.server_port' <<< "$wireguard_json")"
-	## dnsServer
+	## newDNS
 
 	while read -r line; do
 		if [[ "$line" = *=* ]]; then
@@ -150,10 +150,10 @@ if [[ -f "$confFile" ]]; then
 				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
 				newFile+=("${keyKeeper}=${spaceSaver}$newAddress")
 				newAddress=
-			elif [[ "$privKey" && "$keyKeeper" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$ ]]; then
+			elif [[ "$newPrivateKey" && "$keyKeeper" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$ ]]; then
 				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
-				newFile+=("${keyKeeper}=${spaceSaver}$privKey")
-				privKey=
+				newFile+=("${keyKeeper}=${spaceSaver}$newPrivateKey")
+				newPrivateKey=
 			elif [[ "$newPublicKey" && "$keyKeeper" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$ ]]; then
 				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
 				newFile+=("${keyKeeper}=${spaceSaver}$newPublicKey")
@@ -162,40 +162,40 @@ if [[ -f "$confFile" ]]; then
 				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
 				newFile+=("${keyKeeper}=${spaceSaver}$newEndPoint")
 				newEndPoint=
-			elif [[ "$dnsServer" && "$keyKeeper" =~ ^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$ ]]; then
+			elif [[ "$newDNS" && "$keyKeeper" =~ ^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$ ]]; then
 				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
-				newFile+=("${keyKeeper}=${spaceSaver}$dnsServer")
-				dnsServer=
+				newFile+=("${keyKeeper}=${spaceSaver}$newDNS")
+				newDNS=
 			else newFile+=("$line")
 			fi
 		else newFile+=("$line")
 		fi
 	done < "$confFile"
 
-	if [[ "$newAddress" || "$privKey" || "$newPublicKey" || "$newEndPoint" || "$dnsServer" ]]; then
+	if [[ "$newAddress" || "$newPrivateKey" || "$newPublicKey" || "$newEndPoint" || "$newDNS" ]]; then
 		## Note: this infers pre and post delim spacing based on last read pair in file.
 		for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
 			if [[ "$newAddress" && "$linebuf" =~ ^[[:space:]]*\[Interface\] ]]; then
 				newFile=("${newFile[@]:0:$line}" "Address${spaceSaver}=${spaceSaver}$newAddress" "${newFile[@]:$line}")
 				newAddress=
-			elif [[ "$privKey" && "$linebuf" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "PrivateKey${spaceSaver}=${spaceSaver}$privKey" "${newFile[@]:$line}")
-				privKey=
+			elif [[ "$newPrivateKey" && "$linebuf" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*= ]]; then
+				newFile=("${newFile[@]:0:$line}" "PrivateKey${spaceSaver}=${spaceSaver}$newPrivateKey" "${newFile[@]:$line}")
+				newPrivateKey=
 			elif [[ "$newPublicKey" && "$linebuf" =~ ^[[:space:]]*\[Peer\] ]]; then
 				newFile=("${newFile[@]:0:$line}" "PublicKey${spaceSaver}=${spaceSaver}$newPublicKey" "${newFile[@]:$line}")
 				newPublicKey=
 			elif [[ "$newEndPoint" && "$linebuf" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*= ]]; then
 				newFile=("${newFile[@]:0:$line}" "EndPoint${spaceSaver}=${spaceSaver}$newEndPoint" "${newFile[@]:$line}")
 				newEndPoint=
-			elif [[ "$dnsServer" && "$linebuf" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "DNS${spaceSaver}=${spaceSaver}$dnsServer" "${newFile[@]:$line}")
-				dnsServer=
+			elif [[ "$newDNS" && "$linebuf" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*= ]]; then
+				newFile=("${newFile[@]:0:$line}" "DNS${spaceSaver}=${spaceSaver}$newDNS" "${newFile[@]:$line}")
+				newDNS=
 			fi
 			linebuf="${newFile[$line]}"
 		done
 	fi
 
-	for still in newAddress privKey newPublicKey newEndPoint dnsServer; do
+	for still in newAddress newPrivateKey newPublicKey newEndPoint newDNS; do
 		if [[ "${!still}" ]]; then
 			echo -e "\nFailed to update wireguard config ($still). Deleting it and re-running this script should work."
 			exit 1
@@ -210,7 +210,7 @@ else
 	echo "
 	[Interface]
 	Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
-	PrivateKey = $privKey
+	PrivateKey = $newPrivateKey
 	$dnsSettingForVPN
 	[Peer]
 	PersistentKeepalive = 25
