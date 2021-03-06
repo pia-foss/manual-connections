@@ -142,27 +142,28 @@ if [[ -f "$confFile" ]]; then
 	newEndPoint="${WG_SERVER_IP}:$(jq -r '.server_port' <<< "$wireguard_json")"
 	## newDNS
 
+	declare -a new=(newAddress newPrivateKey newPublicKey newEndPoint newDNS)
 	declare -A match=(
-		[Address]='^[[:space:]]*[Aa]ddress[[:space:]]*$'
-		[PrivateKey]='^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$'
-		[PublicKey]='^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$'
-		[EndPoint]='^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$'
-		[DNS]='^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$'
+		[newAddress]='^[[:space:]]*[Aa]ddress[[:space:]]*$'
+		[newPrivateKey]='^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$'
+		[newPublicKey]='^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$'
+		[newEndPoint]='^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$'
+		[newDNS]='^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$'
 	)
 	declare -A before=(
-		[Address]='^[[:space:]]*\[Interface\]'
-		[PrivateKey]="${match[Address]%$}="
-		[PublicKey]='^[[:space:]]*\[Peer\]'
-		[EndPoint]="${match[PublicKey]%$}="
-		[DNS]="${match[PrivateKey]%$}="
+		[newAddress]='^[[:space:]]*\[Interface\]'
+		[newPrivateKey]="${match[newAddress]%$}="
+		[newPublicKey]='^[[:space:]]*\[Peer\]'
+		[newEndPoint]="${match[newPublicKey]%$}="
+		[newDNS]="${match[newPrivateKey]%$}="
 	)
 
 	while read -r line; do
 		if [[ "$line" = *=* ]]; then
 			keyKeeper="${line%%=*}"
 			## Note: this only preserves the first instance of each key entry in the config file.
-			for update in newAddress newPrivateKey newPublicKey newEndPoint newDNS; do
-				if [[ ${!update} && $keyKeeper =~ ${match[${update#new}]} ]]; then
+			for update in "${!match[@]}"; do
+				if [[ ${!update} && $keyKeeper =~ ${match[$update]} ]]; then
 					spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
 					newFile+=("${keyKeeper}=${spaceSaver}${!update}")
 					unset "$update"
@@ -177,11 +178,11 @@ if [[ -f "$confFile" ]]; then
 		fi
 	done < "$confFile"
 
-	for still in newAddress newPrivateKey newPublicKey newEndPoint newDNS; do
+	for still in "${new[@]}"; do
 		if [[ "${!still}" ]]; then
 			linebuf=
 			for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
-				if [[ $linebuf =~ ${before[${still#new}]} ]]; then
+				if [[ $linebuf =~ ${before[$still]} ]]; then
 					newFile=("${newFile[@]:0:$line}" "${still#new}${spaceSaver}=${spaceSaver}${!still}" "${newFile[@]:$line}")
 					unset "$still"
 					break
