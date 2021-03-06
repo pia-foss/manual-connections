@@ -34,11 +34,6 @@ check_tool wg-quick
 check_tool curl
 check_tool jq
 
-declare -a sedE_escape='][)(}{/\"\".^$+*&'\'\'
-function sedsan() {
-	sed -E 's~(['"${sedE_escape@E}"'])~\\\1~g' <<< "$1"	## No need to quote assignment.
-}
-
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
@@ -137,33 +132,74 @@ declare confDir=/etc/wireguard
 mkdir -p "$confDir" || exit 1
 declare confFile="$confDir/pia.conf"
 echo -n "Trying to write $confFile..."
-declare updateFailed=
 if [[ -f "$confFile" ]]; then
+	declare -a newFile=()
+	## keyKeeper=
+	## linebuf=
 	newAddress="$(jq -r '.peer_ip' <<< "$wireguard_json")"
-	sed -nE -i '/^(\s*[Aa]ddress\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newAddress")"'/p}' "$confFile" || {	## Update value.
-		sed -i -E 's/^(\s*\[Interface\].*)$/\1\nAddress = '"$(sedsan "$newAddress")/" "$confFile" || updateFailed='Address'	## Insert key/value entry.
-	}
-
-	sed -nE -i '/^(\s*[Pp]rivate[Kk]ey\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$privKey")"'/p}' "$confFile" || {
-		sed -i -E 's/^(\s*)([Aa]ddress\s*=.*)$/\1\2\n\1PrivateKey = '"$(sedsan "$privKey")/" "$confFile" || updateFailed='PrivateKey'
-	}
-
+	## privKey
 	newPublicKey="$(jq -r '.server_key' <<< "$wireguard_json")"
-	sed -nE -i '/^(\s*[Pp]ublic[Kk]ey\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newPublicKey")"'/p}' "$confFile" || {
-		sed -i -E 's/^(\s*\[Peer\].*)$/\1\nPublicKey = '"$(sedsan "$newPublicKey")/" "$confFile" || updateFailed='PublicKey'
-	}
-
 	newEndPoint="${WG_SERVER_IP}:$(jq -r '.server_port' <<< "$wireguard_json")"
-	sed -nE -i '/^(\s*[Ee]nd[Pp]oint\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newEndPoint")"'/p}' "$confFile" || {
-		sed -i -E 's/^(\s*)([Pp]ublic[Kk]ey\s*=.*)$/\1\2\n\1EndPoint = '"$(sedsan "$newEndPoint")/" "$confFile" || updateFailed='EndPoint'
-	}
+	## dnsServer
 
-	if [[ "$dnsSettingForVPN" ]]; then
-		newDNS="$(cut -d= -f2 <<< "$dnsSettingForVPN" | tr -d ' \t')"
-		sed -nE -i '/^(\s*[Dd][Nn][Ss]\s*=\s*).*$/ b sub; p; ${g;/^.+$/!q1}; b; :sub {h;s//\1'"$(sedsan "$newDNS")"'/p}' "$confFile" || {
-			sed -i -E 's/^(\s*)([Pp]rivate[Kk]ey)(\s*=\s*)(.*)$/\1\2\3\4\n\1DNS\3'"$(sedsan "$newDNS")/" "$confFile" || updateFailed='DNS'
-		}
+	while read -r line; do
+		if [[ "$line" = *=* ]]; then
+			keyKeeper=$(cut -d= -f1 <<< "$line")	## Does not preserve whitespace after '='.
+			## Note: this assumes no duplicate key entries in the file.
+			if [[ "$keyKeeper" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*$ ]]; then
+				newFile+=("${keyKeeper}= $newAddress")
+				newAddress=
+			elif [[ "$keyKeeper" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$ ]]; then
+				newFile+=("${keyKeeper}= $privKey")
+				privKey=
+			elif [[ "$keyKeeper" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$ ]]; then
+				newFile+=("${keyKeeper}= $newPublicKey")
+				newPublicKey=
+			elif [[ "$keyKeeper" =~ ^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$ ]]; then
+				newFile+=("${keyKeeper}= $newEndPoint")
+				newEndPoint=
+			elif [[ "$dnsServer" && "$keyKeeper" =~ ^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$ ]]; then
+				newFile+=("${keyKeeper}= $dnsServer")
+				dnsServer=
+			else newFile+=("$line")
+			fi
+		else newFile+=("$line")
+		fi
+	done < "$confFile"
+
+	if [[ "$newAddress" || "$privKey" || "$newPublicKey" || "$newEndPoint" || "$dnsServer" ]]; then
+		for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
+			if [[ "$newAddress" && "$linebuf" =~ ^[[:space:]]*\[Interface\] ]]; then
+				newFile=("${newFile[@]:0:$line}" "Address = $newAddress" "${newFile[@]:$line}")
+				newAddress=
+			elif [[ "$privKey" && "$linebuf" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*= ]]; then
+				newFile=("${newFile[@]:0:$line}" "PrivateKey = $privKey" "${newFile[@]:$line}")
+				privKey=
+			elif [[ "$newPublicKey" && "$linebuf" =~ ^[[:space:]]*\[Peer\] ]]; then
+				newFile=("${newFile[@]:0:$line}" "PublicKey = $newPublicKey" "${newFile[@]:$line}")
+				newPublicKey=
+			elif [[ "$newEndPoint" && "$linebuf" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*= ]]; then
+				newFile=("${newFile[@]:0:$line}" "EndPoint = $newEndPoint" "${newFile[@]:$line}")
+				newEndPoint=
+			elif [[ "$dnsServer" && "$linebuf" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*= ]]; then
+				newFile=("${newFile[@]:0:$line}" "DNS = $dnsServer" "${newFile[@]:$line}")
+				dnsServer=
+			fi
+			linebuf="${newFile[$line]}"
+		done
 	fi
+
+	for bad in newAddress privKey newPublicKey newEndPoint dnsServer; do
+		if [[ "${!bad}" ]]; then
+			echo -e "\nFailed to update wireguard config ($bad). Deleting it and re-running this script should work."
+			exit 1
+		fi
+	done
+
+	printf "%s\n" "${newFile[@]}" > "$confFile" || {
+		echo -e "${RED}FAILED.{NC}\n\tFailed writing to wireguard config."
+		exit 1
+	}
 else
 	echo "
 	[Interface]
@@ -175,14 +211,9 @@ else
 	PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
 	AllowedIPs = 0.0.0.0/0
 	Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
-	" > /etc/wireguard/pia.conf || exit 1
+	" > "$confFile" || exit 1
 fi
-if [[ "$updateFailed" ]]; then
-	echo -e "\nFailed to update wireguard config ($updateFailed). Deleting it and re-running this script should work."
-	exit 1
-else
-	echo -e ${GREEN}OK!${NC}
-fi
+echo -e ${GREEN}OK!${NC}
 
 # Start the WireGuard interface.
 # If something failed, stop this script.
