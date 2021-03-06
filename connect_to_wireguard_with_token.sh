@@ -172,30 +172,25 @@ if [[ -f "$confFile" ]]; then
 		fi
 	done < "$confFile"
 
-	if [[ "$newAddress" || "$newPrivateKey" || "$newPublicKey" || "$newEndPoint" || "$newDNS" ]]; then
-		## Note: this infers pre and post delim spacing based on last read pair in file.
-		for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
-			if [[ "$newAddress" && "$linebuf" =~ ^[[:space:]]*\[Interface\] ]]; then
-				newFile=("${newFile[@]:0:$line}" "Address${spaceSaver}=${spaceSaver}$newAddress" "${newFile[@]:$line}")
-				newAddress=
-			elif [[ "$newPrivateKey" && "$linebuf" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "PrivateKey${spaceSaver}=${spaceSaver}$newPrivateKey" "${newFile[@]:$line}")
-				newPrivateKey=
-			elif [[ "$newPublicKey" && "$linebuf" =~ ^[[:space:]]*\[Peer\] ]]; then
-				newFile=("${newFile[@]:0:$line}" "PublicKey${spaceSaver}=${spaceSaver}$newPublicKey" "${newFile[@]:$line}")
-				newPublicKey=
-			elif [[ "$newEndPoint" && "$linebuf" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "EndPoint${spaceSaver}=${spaceSaver}$newEndPoint" "${newFile[@]:$line}")
-				newEndPoint=
-			elif [[ "$newDNS" && "$linebuf" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "DNS${spaceSaver}=${spaceSaver}$newDNS" "${newFile[@]:$line}")
-				newDNS=
-			fi
-			linebuf="${newFile[$line]}"
-		done
-	fi
-
 	for still in newAddress newPrivateKey newPublicKey newEndPoint newDNS; do
+		if [[ "${!still}" ]]; then
+			case $still in
+				newAddress) after='^[[:space:]]*\[Interface\]' ;;
+				newPrivateKey) after='^[[:space:]]*[Aa]ddress[[:space:]]*=' ;;
+				newPublicKey) after='^[[:space:]]*\[Peer\]' ;;
+				newEndPoint) after='^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*=' ;;
+				newDNS) after='^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*=' ;;
+			esac
+			linebuf=
+			for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
+				if [[ $linebuf =~ $after ]]; then
+					newFile=("${newFile[@]:0:$line}" "${still#new}${spaceSaver}=${spaceSaver}${!still}" "${newFile[@]:$line}")
+					unset "$still"
+					break
+				else linebuf="${newFile[$line]}"
+				fi
+			done
+		fi
 		if [[ "${!still}" ]]; then
 			echo -e "\nFailed to update wireguard config ($still). Deleting it and re-running this script should work."
 			exit 1
