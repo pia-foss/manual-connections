@@ -144,22 +144,27 @@ if [[ -f "$confFile" ]]; then
 
 	while read -r line; do
 		if [[ "$line" = *=* ]]; then
-			keyKeeper=$(cut -d= -f1 <<< "$line")	## Does not preserve whitespace after '='.
-			## Note: this assumes no duplicate key entries in the file.
-			if [[ "$keyKeeper" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*$ ]]; then
-				newFile+=("${keyKeeper}= $newAddress")
+			keyKeeper="${line%%=*}"
+			## Note: this only preserves the first instance of each key entry in the config file.
+			if [[ "$newAddress" && "$keyKeeper" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*$ ]]; then
+				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
+				newFile+=("${keyKeeper}=${spaceSaver}$newAddress")
 				newAddress=
-			elif [[ "$keyKeeper" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$ ]]; then
-				newFile+=("${keyKeeper}= $privKey")
+			elif [[ "$privKey" && "$keyKeeper" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$ ]]; then
+				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
+				newFile+=("${keyKeeper}=${spaceSaver}$privKey")
 				privKey=
-			elif [[ "$keyKeeper" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$ ]]; then
-				newFile+=("${keyKeeper}= $newPublicKey")
+			elif [[ "$newPublicKey" && "$keyKeeper" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$ ]]; then
+				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
+				newFile+=("${keyKeeper}=${spaceSaver}$newPublicKey")
 				newPublicKey=
-			elif [[ "$keyKeeper" =~ ^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$ ]]; then
-				newFile+=("${keyKeeper}= $newEndPoint")
+			elif [[ "$newEndPoint" && "$keyKeeper" =~ ^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$ ]]; then
+				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
+				newFile+=("${keyKeeper}=${spaceSaver}$newEndPoint")
 				newEndPoint=
 			elif [[ "$dnsServer" && "$keyKeeper" =~ ^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$ ]]; then
-				newFile+=("${keyKeeper}= $dnsServer")
+				spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
+				newFile+=("${keyKeeper}=${spaceSaver}$dnsServer")
 				dnsServer=
 			else newFile+=("$line")
 			fi
@@ -168,21 +173,22 @@ if [[ -f "$confFile" ]]; then
 	done < "$confFile"
 
 	if [[ "$newAddress" || "$privKey" || "$newPublicKey" || "$newEndPoint" || "$dnsServer" ]]; then
+		## Note: this infers pre and post delim spacing based on last read pair in file.
 		for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
 			if [[ "$newAddress" && "$linebuf" =~ ^[[:space:]]*\[Interface\] ]]; then
-				newFile=("${newFile[@]:0:$line}" "Address = $newAddress" "${newFile[@]:$line}")
+				newFile=("${newFile[@]:0:$line}" "Address${spaceSaver}=${spaceSaver}$newAddress" "${newFile[@]:$line}")
 				newAddress=
 			elif [[ "$privKey" && "$linebuf" =~ ^[[:space:]]*[Aa]ddress[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "PrivateKey = $privKey" "${newFile[@]:$line}")
+				newFile=("${newFile[@]:0:$line}" "PrivateKey${spaceSaver}=${spaceSaver}$privKey" "${newFile[@]:$line}")
 				privKey=
 			elif [[ "$newPublicKey" && "$linebuf" =~ ^[[:space:]]*\[Peer\] ]]; then
-				newFile=("${newFile[@]:0:$line}" "PublicKey = $newPublicKey" "${newFile[@]:$line}")
+				newFile=("${newFile[@]:0:$line}" "PublicKey${spaceSaver}=${spaceSaver}$newPublicKey" "${newFile[@]:$line}")
 				newPublicKey=
 			elif [[ "$newEndPoint" && "$linebuf" =~ ^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "EndPoint = $newEndPoint" "${newFile[@]:$line}")
+				newFile=("${newFile[@]:0:$line}" "EndPoint${spaceSaver}=${spaceSaver}$newEndPoint" "${newFile[@]:$line}")
 				newEndPoint=
 			elif [[ "$dnsServer" && "$linebuf" =~ ^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*= ]]; then
-				newFile=("${newFile[@]:0:$line}" "DNS = $dnsServer" "${newFile[@]:$line}")
+				newFile=("${newFile[@]:0:$line}" "DNS${spaceSaver}=${spaceSaver}$dnsServer" "${newFile[@]:$line}")
 				dnsServer=
 			fi
 			linebuf="${newFile[$line]}"
