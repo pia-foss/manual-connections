@@ -194,6 +194,11 @@ if [[ -f "$confFile" ]]; then
 			exit 1
 		fi
 	done
+
+	printf "%s\n" "${newFile[@]}" > "$confFile" || {
+		echo -e "${RED}FAILED.{NC}\n\tFailed writing to wireguard config."
+		exit 1
+	}
 else
 	echo "
 	[Interface]
