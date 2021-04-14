@@ -65,6 +65,7 @@ Some users have created their own repositories for manual connections, based on 
 | Synology | No | Python | PF | [stmty9/synology](https://github.com/stmty9/synology) |
 | TrueNAS | No | Bash | PF | [dak180/TrueNAS-Scripts](https://github.com/dak180/TrueNAS-Scripts/blob/master/pia-port-forward.sh) |
 | UFW | Yes | Bash | Firewall Rules | [iPherian/manual-connections](https://github.com/iPherian/manual-connections) |
+| Linux | No | Bash | WireGuard, PF | [triffid/pia-wg](https://github.com/triffid/pia-wg) |
 
 ## PIA Port Forwarding
 
