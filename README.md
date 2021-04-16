@@ -58,6 +58,7 @@ Some users have created their own repositories for manual connections, based on 
 |:-:|:-:|:-:|:-:|-|
 | FreeBSD | Yes | Bash | Compatibility | [glorious1/manual-connections](https://github.com/glorious1/manual-connections) |
 | Linux | No | Python | WireGuard, PF | [milahu/python-piavpn](https://github.com/milahu/python-piavpn) |
+| Linux | No | Bash | WireGuard, PF | [triffid/pia-wg](https://github.com/triffid/pia-wg) <br />can generate configs for routers and [WireGuard's android/iOS app](https://www.wireguard.com/install/#android-play-store-f-droid) |
 | OPNsense | No | Python | WireGuard, PF | [FingerlessGlov3s/OPNsensePIAWireguard](https://github.com/FingerlessGlov3s/OPNsensePIAWireguard) |
 | pfSense | No | Sh | OpenVPN, PF | [fm407/PIA-NextGen-PortForwarding](https://github.com/fm407/PIA-NextGen-PortForwarding) |
 | pfSense | No | Java/PHP | WireGuard, PF | [ddb_db/pfpiamgr](https://gitlab.com/ddb_db/pfpiamgr) |
@@ -65,7 +66,6 @@ Some users have created their own repositories for manual connections, based on 
 | Synology | No | Python | PF | [stmty9/synology](https://github.com/stmty9/synology) |
 | TrueNAS | No | Bash | PF | [dak180/TrueNAS-Scripts](https://github.com/dak180/TrueNAS-Scripts/blob/master/pia-port-forward.sh) |
 | UFW | Yes | Bash | Firewall Rules | [iPherian/manual-connections](https://github.com/iPherian/manual-connections) |
-| Linux | No | Bash | WireGuard, PF | [triffid/pia-wg](https://github.com/triffid/pia-wg) |
 
 ## PIA Port Forwarding
 
