@@ -80,9 +80,9 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
 fi
 
 # Create ephemeral wireguard keys, that we don't need to save to disk.
-privKey="$(wg genkey)"
-export privKey
-pubKey="$( echo "$privKey" | wg pubkey)"
+newPrivateKey="$(wg genkey)"
+export newPrivateKey
+pubKey="$( echo "$newPrivateKey" | wg pubkey)"
 export pubKey
 
 # Authenticate via the PIA WireGuard RESTful API.
@@ -121,26 +121,98 @@ echo
 # on firewalls. You can remove that line if your network does not
 # require it.
 if [ "$PIA_DNS" == true ]; then
-  dnsServer="$(echo "$wireguard_json" | jq -r '.dns_servers[0]')"
-  echo Trying to set up DNS to $dnsServer. In case you do not have resolvconf,
+  newDNS="$(echo "$wireguard_json" | jq -r '.dns_servers[0]')"
+  echo Trying to set up DNS to $newDNS. In case you do not have resolvconf,
   echo this operation will fail and you will not get a VPN. If you have issues,
   echo start this script without PIA_DNS.
   echo
-  dnsSettingForVPN="DNS = $dnsServer"
+  dnsSettingForVPN="DNS = $newDNS"
 fi
-echo -n "Trying to write /etc/wireguard/pia.conf..."
-mkdir -p /etc/wireguard
-echo "
-[Interface]
-Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
-PrivateKey = $privKey
-$dnsSettingForVPN
-[Peer]
-PersistentKeepalive = 25
-PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
-AllowedIPs = 0.0.0.0/0
-Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
-" > /etc/wireguard/pia.conf || exit 1
+declare confDir=/etc/wireguard
+mkdir -p "$confDir" || exit 1
+declare confFile="$confDir/pia.conf"
+echo -n "Trying to write $confFile..."
+if [[ -f "$confFile" ]]; then
+	declare -a newFile=()
+	## keyKeeper=
+	## linebuf=
+	newAddress="$(jq -r '.peer_ip' <<< "$wireguard_json")"
+	## newPrivateKey
+	newPublicKey="$(jq -r '.server_key' <<< "$wireguard_json")"
+	newEndPoint="${WG_SERVER_IP}:$(jq -r '.server_port' <<< "$wireguard_json")"
+	## newDNS
+
+	declare -a new=(newAddress newPrivateKey newPublicKey newEndPoint newDNS)
+	declare -A match=(
+		[newAddress]='^[[:space:]]*[Aa]ddress[[:space:]]*$'
+		[newPrivateKey]='^[[:space:]]*[Pp]rivate[Kk]ey[[:space:]]*$'
+		[newPublicKey]='^[[:space:]]*[Pp]ublic[Kk]ey[[:space:]]*$'
+		[newEndPoint]='^[[:space:]]*[Ee]nd[Pp]oint[[:space:]]*$'
+		[newDNS]='^[[:space:]]*[Dd][Nn][Ss][[:space:]]*$'
+	)
+	declare -A before=(
+		[newAddress]='^[[:space:]]*\[Interface\]'
+		[newPrivateKey]="${match[newAddress]%$}="
+		[newPublicKey]='^[[:space:]]*\[Peer\]'
+		[newEndPoint]="${match[newPublicKey]%$}="
+		[newDNS]="${match[newPrivateKey]%$}="
+	)
+
+	while read -r line; do
+		if [[ "$line" = *=* ]]; then
+			keyKeeper="${line%%=*}"
+			## Note: this only preserves the first instance of each key entry in the config file.
+			for update in "${!match[@]}"; do
+				if [[ ${!update} && $keyKeeper =~ ${match[$update]} ]]; then
+					spaceSaver="${line#*=}" && spaceSaver="${spaceSaver/[^[:space:]]*/}"
+					newFile+=("${keyKeeper}=${spaceSaver}${!update}")
+					unset "$update"
+					line=
+					break
+				fi
+			done
+			if [[ $line ]]; then
+				newFile+=("$line")
+			fi
+		else newFile+=("$line")
+		fi
+	done < "$confFile"
+
+	for still in "${new[@]}"; do
+		if [[ "${!still}" ]]; then
+			linebuf=
+			for ((line=0; line < ${#newFile[@]}; line++)); do	## Iterating through array skips blank lines.
+				if [[ $linebuf =~ ${before[$still]} ]]; then
+					newFile=("${newFile[@]:0:$line}" "${still#new}${spaceSaver}=${spaceSaver}${!still}" "${newFile[@]:$line}")
+					unset "$still"
+					break
+				else linebuf="${newFile[$line]}"
+				fi
+			done
+		fi
+		if [[ "${!still}" ]]; then
+			echo -e "\nFailed to update wireguard config ($still). Deleting it and re-running this script should work."
+			exit 1
+		fi
+	done
+
+	printf "%s\n" "${newFile[@]}" > "$confFile" || {
+		echo -e "${RED}FAILED.{NC}\n\tFailed writing to wireguard config."
+		exit 1
+	}
+else
+	echo "
+	[Interface]
+	Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
+	PrivateKey = $newPrivateKey
+	$dnsSettingForVPN
+	[Peer]
+	PersistentKeepalive = 25
+	PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
+	AllowedIPs = 0.0.0.0/0
+	Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
+	" > "$confFile" || exit 1
+fi
 echo -e ${GREEN}OK!${NC}
 
 # Start the WireGuard interface.
