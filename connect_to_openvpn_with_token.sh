@@ -29,12 +29,12 @@ function check_tool() {
     exit 1
   fi
 }
-# Now we call the function to make sure we can use wg-quick, curl and jq.
+# Call the check_tool() function to make sure we can use wg-quick, curl and jq.
 check_tool curl
 check_tool jq
 check_tool openvpn
 
-# Check if terminal allows output, if yes, define colors for output
+# Check if terminal allows output, if yes, define colors for output.
 if test -t 1; then
   ncolors=$(tput colors)
   if test -n "$ncolors" && test $ncolors -ge 8; then
@@ -47,6 +47,9 @@ if test -t 1; then
     NC='' # No Color
   fi
 fi
+
+# Set script filepath as usable varaible.
+parent_directory=$(dirname $(realpath $0))
 
 # Check if manual PIA OpenVPN connection is already initialized.
 # Multi-hop is out of the scope of this repo, but you should be able to
@@ -141,9 +144,10 @@ IFS=' '
 protocol="${connection_settings[1]}"
 encryption="${connection_settings[2]}"
 
-prefix_filepath="openvpn_config/standard.ovpn"
+openvpn_config_directory=$parent_directory/openvpn_config
+prefix_filepath="$openvpn_config_directory/standard.ovpn"
 if [[ $encryption == "strong" ]]; then
-  prefix_filepath="openvpn_config/strong.ovpn"
+  prefix_filepath="$openvpn_config_directory/strong.ovpn"
 fi
 
 if [[ $protocol == "udp" ]]; then
@@ -167,17 +171,17 @@ echo remote $OVPN_SERVER_IP $port $protocol >> /opt/piavpn-manual/pia.ovpn
 # Copy the up/down scripts to /opt/piavpn-manual/
 # based upon use of PIA DNS
 if [ "$PIA_DNS" != true ]; then
-  cp openvpn_config/openvpn_up.sh /opt/piavpn-manual/
-  cp openvpn_config/openvpn_down.sh /opt/piavpn-manual/
+  cp $openvpn_config_directory/openvpn_up.sh /opt/piavpn-manual/
+  cp $openvpn_config_directory/openvpn_down.sh /opt/piavpn-manual/
   echo -e ${RED}This configuration will not use PIA DNS.${NC}
   echo If you want to also enable PIA DNS, please start the script
   echo with the env var PIA_DNS=true. Example:
   echo $ OVPN_SERVER_IP=\"$OVPN_SERVER_IP\" OVPN_HOSTNAME=\"$OVPN_HOSTNAME\" \
     PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
-    PIA_PF=true PIA_DNS=true ./connect_to_openvpn_with_token.sh
+    PIA_PF=true PIA_DNS=true $parent_directory/connect_to_openvpn_with_token.sh
 else
-  cp openvpn_config/openvpn_up_dnsoverwrite.sh /opt/piavpn-manual/openvpn_up.sh
-  cp openvpn_config/openvpn_down_dnsoverwrite.sh /opt/piavpn-manual/openvpn_down.sh
+  cp $openvpn_config_directory/openvpn_up_dnsoverwrite.sh /opt/piavpn-manual/openvpn_up.sh
+  cp $openvpn_config_directory/openvpn_down_dnsoverwrite.sh /opt/piavpn-manual/openvpn_down.sh
 fi
 
 # Start the OpenVPN interface.
@@ -239,10 +243,10 @@ if [ "$PIA_PF" != true ]; then
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$gateway_ip \
     PF_HOSTNAME=$OVPN_HOSTNAME \
-    ./port_forwarding.sh${NC}
+    $parent_directory/port_forwarding.sh${NC}
   echo
   echo The location used must be port forwarding enabled, or this will fail.
-  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  echo Calling the $parent_directory/get_region script with PIA_PF=true will provide a filtered list.
   exit 1
 fi
 
@@ -260,9 +264,9 @@ echo -e "Starting procedure to enable port forwarding by running the following c
 $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
   PF_GATEWAY=$gateway_ip \\
   PF_HOSTNAME=$OVPN_HOSTNAME \\
-  ./port_forwarding.sh${NC}"
+  $parent_directory./port_forwarding.sh${NC}"
 
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY=$gateway_ip \
   PF_HOSTNAME=$OVPN_HOSTNAME \
-  ./port_forwarding.sh
+  $parent_directory/port_forwarding.sh
