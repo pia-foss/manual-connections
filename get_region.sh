@@ -65,7 +65,7 @@ function get_selected_region_data() {
 
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
-  ncolors=$(tput colors)
+  ncolors=$(tput colors 2>/dev/null)
   if test -n "$ncolors" && test $ncolors -ge 8; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
