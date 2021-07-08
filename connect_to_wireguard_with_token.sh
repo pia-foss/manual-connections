@@ -19,6 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# absolute path ot this file directory
+CURRENT_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
@@ -94,7 +97,7 @@ export pubKey
 echo Trying to connect to the PIA WireGuard API on $WG_SERVER_IP...
 wireguard_json="$(curl -s -G \
   --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
-  --cacert "ca.rsa.4096.crt" \
+  --cacert "$CURRENT_FILE_DIR/ca.rsa.4096.crt" \
   --data-urlencode "pt=${PIA_TOKEN}" \
   --data-urlencode "pubkey=$pubKey" \
   "https://${WG_HOSTNAME}:1337/addKey" )"
