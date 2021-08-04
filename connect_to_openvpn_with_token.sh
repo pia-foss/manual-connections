@@ -22,7 +22,7 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
+  if ! command -v "$cmd" &>/dev/null
   then
     echo "$cmd could not be found"
     echo "Please install $cmd"
@@ -37,7 +37,7 @@ check_tool openvpn
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if test -n "$ncolors" && test "$ncolors" -ge 8; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -62,19 +62,19 @@ if [[ "$adapter_check" != *"$should_read"* ]]; then
     old_pid_name="$( ps -p "$old_pid" -o comm= )"
     if [[ $old_pid_name == 'openvpn' ]]; then
       echo
-      echo -e It seems likely that process ${RED}$old_pid${NC} is an OpenVPN connection
+      echo -e It seems likely that process ${RED}"$old_pid"${NC} is an OpenVPN connection
       echo that was established by using this script. Unless it is closed
       echo you would not be able to get a new connection.
       echo -ne "Do you want to run ${RED}$ kill $old_pid${NC} (Y/n): "
-      read close_connection
+      read -r close_connection
     fi
-    if echo ${close_connection:0:1} | grep -iq n ; then
+    if echo "${close_connection:0:1}" | grep -iq n ; then
       echo -e ${RED}Closing script. Resolve tun06 adapter conflict and run the script again.
       exit 1
     fi
     echo
     echo -e ${GREEN}Killing the existing OpenVPN process and waiting 5 seconds...${NC}
-    kill $old_pid
+    kill "$old_pid"
     echo
     for i in {5..1}; do
       echo -n "$i..."
@@ -129,8 +129,8 @@ fi
 echo -n "Trying to write /opt/piavpn-manual/pia.ovpn..."
 mkdir -p /opt/piavpn-manual
 rm -f /opt/piavpn-manual/credentials /opt/piavpn-manual/route_info
-echo ${PIA_TOKEN:0:62}"
-"${PIA_TOKEN:62} > /opt/piavpn-manual/credentials || exit 1
+echo "${PIA_TOKEN:0:62}""
+""${PIA_TOKEN:62}" > /opt/piavpn-manual/credentials || exit 1
 chmod 600 /opt/piavpn-manual/credentials
 echo -e "${GREEN}OK!${NC}"
 
@@ -162,7 +162,7 @@ fi
 
 # Create the OpenVPN config based on the settings specified
 cat $prefix_filepath > /opt/piavpn-manual/pia.ovpn || exit 1
-echo remote $OVPN_SERVER_IP $port $protocol >> /opt/piavpn-manual/pia.ovpn
+echo remote "$OVPN_SERVER_IP" $port "$protocol" >> /opt/piavpn-manual/pia.ovpn
 
 # Copy the up/down scripts to /opt/piavpn-manual/
 # based upon use of PIA DNS
@@ -172,8 +172,8 @@ if [ "$PIA_DNS" != true ]; then
   echo -e ${RED}This configuration will not use PIA DNS.${NC}
   echo If you want to also enable PIA DNS, please start the script
   echo with the env var PIA_DNS=true. Example:
-  echo $ OVPN_SERVER_IP=\"$OVPN_SERVER_IP\" OVPN_HOSTNAME=\"$OVPN_HOSTNAME\" \
-    PIA_TOKEN=\"$PIA_TOKEN\" CONNECTION_SETTINGS=\"$CONNECTION_SETTINGS\" \
+  echo $ OVPN_SERVER_IP=\""$OVPN_SERVER_IP"\" OVPN_HOSTNAME=\""$OVPN_HOSTNAME"\" \
+    PIA_TOKEN=\""$PIA_TOKEN"\" CONNECTION_SETTINGS=\""$CONNECTION_SETTINGS"\" \
     PIA_PF=true PIA_DNS=true ./connect_to_openvpn_with_token.sh
 else
   cp openvpn_config/openvpn_up_dnsoverwrite.sh /opt/piavpn-manual/openvpn_up.sh
@@ -201,7 +201,7 @@ Confirming OpenVPN connection state..."
 # Manually adjust the connection_wait_time if needed
 connection_wait_time=10
 confirmation="Initialization Sequence Complete"
-for (( timeout=0; timeout <=$connection_wait_time; timeout++ ))
+for (( timeout=0; timeout <= connection_wait_time; timeout++ ))
 do
   sleep 1
   if grep -q "$confirmation" /opt/piavpn-manual/debug_info; then
@@ -216,7 +216,7 @@ gateway_ip="$( cat /opt/piavpn-manual/route_info )"
 # Report and exit if connection was not initialized within 10 seconds.
 if [ "$connected" != true ]; then
   echo -e "${RED}The VPN connection was not established within 10 seconds.${NC}"
-  kill $ovpn_pid
+  kill "$ovpn_pid"
   exit 1
 fi
 
@@ -236,9 +236,9 @@ To disconnect the VPN, run:
 # This section will stop the script if PIA_PF is not set to "true".
 if [ "$PIA_PF" != true ]; then
   echo If you want to also enable port forwarding, you can start the script:
-  echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
-    PF_GATEWAY=$gateway_ip \
-    PF_HOSTNAME=$OVPN_HOSTNAME \
+  echo -e $ ${GREEN}PIA_TOKEN="$PIA_TOKEN" \
+    PF_GATEWAY="$gateway_ip" \
+    PF_HOSTNAME="$OVPN_HOSTNAME" \
     ./port_forwarding.sh${NC}
   echo
   echo The location used must be port forwarding enabled, or this will fail.

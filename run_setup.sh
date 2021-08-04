@@ -22,7 +22,7 @@
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if test -n "$ncolors" && test "$ncolors" -ge 8; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -52,12 +52,12 @@ while :; do
       # Check for in-line definition of $PIA_USER
       if [[ ! $PIA_USER || $PIA_USER = "" ]]; then
         echo
-        read -p "PIA username (p#######): " PIA_USER
+        read -rp "PIA username (p#######): " PIA_USER
       fi
       
       # Confirm format of PIA_USER input
-      unPrefix=$( echo ${PIA_USER:0:1} )
-      unSuffix=$( echo ${PIA_USER:1} )
+      unPrefix="${PIA_USER:0:1}"
+      unSuffix="${PIA_USER:1}"
       if [[ -z "$PIA_USER" ]]; then
         echo -e "\n${RED}You must provide input.${NC}"
       elif [[ ${#PIA_USER} != 8 ]]; then
@@ -103,8 +103,8 @@ while :; do
   tokenLocation="/opt/piavpn-manual/token"
   # If the script failed to generate an authentication token, the script will exit early.
   if [ ! -f "$tokenLocation" ]; then
-    read -p "Do you want to try again ([N]o/[y]es): " tryAgain
-    if ! echo ${tryAgain:0:1} | grep -iq y; then
+    read -pr "Do you want to try again ([N]o/[y]es): " tryAgain
+    if ! echo "${tryAgain:0:1}" | grep -iq y; then
       exit 1
     fi
     PIA_USER=""
@@ -120,9 +120,9 @@ done
 # Check for in-line definition of PIA_PF and prompt for input
 if [[ ! $PIA_PF || $PIA_PF = "" ]]; then
   echo -n "Do you want a forwarding port assigned ([N]o/[y]es): "
-  read portForwarding
+  read -r portForwarding
   echo
-  if echo ${portForwarding:0:1} | grep -iq y; then
+  if echo "${portForwarding:0:1}" | grep -iq y; then
     PIA_PF="true"
   fi
 fi
@@ -138,11 +138,11 @@ if [[ ! $DISABLE_IPV6 || $DISABLE_IPV6 = "" ]]; then
   echo "Having active IPv6 connections might compromise security by allowing"
   echo "split tunnel connections that run outside the VPN tunnel."
   echo -n "Do you want to disable IPv6? (Y/n): "
-  read DISABLE_IPV6
+  read -r DISABLE_IPV6
   echo
 fi
 
-if echo ${DISABLE_IPV6:0:1} | grep -iq n; then
+if echo "${DISABLE_IPV6:0:1}" | grep -iq n; then
   echo -e ${RED}"IPv6 settings have not been altered.
   "${NC}
 else
@@ -164,7 +164,7 @@ if [[ ! $AUTOCONNECT ]]; then
   echo AUTOCONNECT was not declared.
   echo
   selectServer="ask"
-elif echo ${AUTOCONNECT:0:1} | grep -iq f; then
+elif echo "${AUTOCONNECT:0:1}" | grep -iq f; then
   if [[ $AUTOCONNECT != "false" ]]; then
     echo -e "The variable ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}, starts with 'f' for 'false'."
     AUTOCONNECT="false"
@@ -199,7 +199,7 @@ while :; do
     if [[ $selectServer = "ask" ]]; then
       echo -n "Do you want to manually select a server, instead of auto-connecting to the
 server with the lowest latency ([N]o/[y]es): "
-      read selectServer
+      read -r selectServer
       echo
     fi
 
@@ -208,7 +208,7 @@ server with the lowest latency ([N]o/[y]es): "
     # that meet the latency requirements speciied by $MAX_LATENCY.
     # When $VPN_PROTOCOL is set to no, get_region.sh will sort that list of servers
     # to allow for numeric selection, or an easy manual review of options.
-    if echo ${selectServer:0:1} | grep -iq y; then
+    if echo "${selectServer:0:1}" | grep -iq y; then
       # This sets the maximum allowed latency in seconds.
       # All servers that respond slower than this will be ignored.
       if [[ ! $MAX_LATENCY || $MAX_LATENCY = "" ]]; then
@@ -224,7 +224,7 @@ For example, you can try 0.2 for 200ms allowed latency.
       MAX_LATENCY=0.05 # default
       while :; do
         if [[ ! $latencyInput || $latencyInput = "" ]]; then
-          read -p "Custom latency (no input required for 50ms): " latencyInput
+          read -pr "Custom latency (no input required for 50ms): " latencyInput
           echo
         fi
         customLatency=0
@@ -258,7 +258,7 @@ For example, you can try 0.2 for 200ms allowed latency.
         # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
         echo -e "Orderd list of servers with latency less than ${GREEN}$MAX_LATENCY${NC} seconds:"
         i=0
-        while read line; do
+        while read -r line; do
           i=$((i+1))
           time=$( awk 'NR == '$i' {print $1}' /opt/piavpn-manual/latencyList )
           id=$( awk 'NR == '$i' {print $2}' /opt/piavpn-manual/latencyList )
@@ -267,15 +267,15 @@ For example, you can try 0.2 for 200ms allowed latency.
           location2=$( awk 'NR == '$i' {print $5}' /opt/piavpn-manual/latencyList )
           location3=$( awk 'NR == '$i' {print $6}' /opt/piavpn-manual/latencyList )
           location4=$( awk 'NR == '$i' {print $7}' /opt/piavpn-manual/latencyList )
-          location=$location1" "$location2" "$location3" "$location4
-          printf "%3s : %-8s %-15s %17s" $i $time $ip $id
-          echo " - "$location
+          location="$location1 $location2 $location3 $location4"
+          printf "%3s : %-8s %-15s %17s" $i "$time" "$ip" "$id"
+          echo " - $location"
         done < /opt/piavpn-manual/latencyList
         echo
       
         # Receive input to specify the server to connect to manually
         while :; do 
-          read -p "Input the number of the server you want to connect to ([1]-[$i]) : "  serverSelection
+          read -pr "Input the number of the server you want to connect to ([1]-[$i]) : "  serverSelection
             if [[ -z "$serverSelection" ]]; then
               echo -e "\n${RED}You must provide input.${NC}\n"
             elif ! [[ $serverSelection =~ $intCheck ]]; then
@@ -285,9 +285,9 @@ For example, you can try 0.2 for 200ms allowed latency.
             elif [[ $serverSelection -gt $i ]]; then
               echo -e "\n${RED}You must enter a number between 1 and $i.${NC}\n"
             else
-              PREFERRED_REGION=$( awk 'NR == '$serverSelection' {print $2}' /opt/piavpn-manual/latencyList )
+              PREFERRED_REGION=$( awk 'NR == '"$serverSelection"' {print $2}' /opt/piavpn-manual/latencyList )
               echo
-              echo -e ${GREEN}PREFERRED_REGION=$PREFERRED_REGION${NC}
+              echo -e ${GREEN}PREFERRED_REGION="$PREFERRED_REGION"${NC}
               break
             fi
         done
@@ -306,7 +306,7 @@ For example, you can try 0.2 for 200ms allowed latency.
     fi
   else
     # Validate in-line declaration of PREFERRED_REGION; if invalid remove input to initiate prompts
-    echo Region input is : $PREFERRED_REGION
+    echo Region input is : "$PREFERRED_REGION"
     export PREFERRED_REGION
     VPN_PROTOCOL=no ./get_region.sh
     if [[ $? != 1 ]]; then
@@ -328,27 +328,27 @@ case $VPN_PROTOCOL in
     ;;
   none | *)
     echo -n "Connection method ([W]ireguard/[o]penvpn): "
-    read connection_method
+    read -r connection_method
     echo
   
     VPN_PROTOCOL="wireguard"
-    if echo ${connection_method:0:1} | grep -iq o; then
+    if echo "${connection_method:0:1}" | grep -iq o; then
       echo -n "Connection method ([U]dp/[t]cp): "
-      read protocolInput
+      read -r protocolInput
       echo
 
       protocol="udp"
-      if echo ${protocolInput:0:1} | grep -iq t; then
+      if echo "${protocolInput:0:1}" | grep -iq t; then
         protocol="tcp"
       fi
 
       echo "Higher levels of encryption trade performance for security. "
       echo -n "Do you want to use strong encryption ([N]o/[y]es): "
-      read strongEncryption
+      read -r strongEncryption
       echo
 
       encryption="standard"
-      if echo ${strongEncryption:0:1} | grep -iq y; then
+      if echo "${strongEncryption:0:1}" | grep -iq y; then
         encryption="strong"
       fi
 
@@ -375,10 +375,10 @@ if [[ $setDNS = "yes" ]]; then
   if [[ ! $PIA_DNS || $PIA_DNS = "" ]]; then
     echo Using third party DNS could allow DNS monitoring.
     echo -n "Do you want to force PIA DNS ([Y]es/[n]o): "
-    read setDNS
+    read -r setDNS
     echo
     PIA_DNS="true"
-    if echo ${setDNS:0:1} | grep -iq n; then
+    if echo "${setDNS:0:1}" | grep -iq n; then
       PIA_DNS="false"
     fi
   fi

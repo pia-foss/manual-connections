@@ -22,7 +22,7 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
+  if ! command -v "$cmd" &>/dev/null
   then
     echo "$cmd could not be found"
     echo "Please install $cmd"
@@ -53,7 +53,7 @@ function check_all_region_data() {
 # Get all data for the selected region
 # Exit with code 1 if the REGION_ID provided is invalid
 function get_selected_region_data() {
-  regionData="$( echo $all_region_data |
+  regionData="$( echo "$all_region_data" |
   jq --arg REGION_ID "$selectedRegion" -r \
   '.regions[] | select(.id==$REGION_ID)')"
   if [[ ! $regionData ]]; then
@@ -66,7 +66,7 @@ function get_selected_region_data() {
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if test -n "$ncolors" && test "$ncolors" -ge 8; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -103,18 +103,18 @@ serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v6'
 printServerLatency() {
   serverIP="$1"
   regionID="$2"
-  regionName="$(echo ${@:3} |
+  regionName="$(echo "${@:3}" |
     sed 's/ false//' | sed 's/true/(geo)/')"
   time=$(LC_NUMERIC=en_US.utf8 curl -o /dev/null -s \
-    --connect-timeout $MAX_LATENCY \
+    --connect-timeout "$MAX_LATENCY" \
     --write-out "%{time_connect}" \
-    http://$serverIP:443)
+    http://"$serverIP":443)
   if [ $? -eq 0 ]; then
-    >&2 echo Got latency ${time}s for region: $regionName
-    echo $time $regionID $serverIP
+    >&2 echo Got latency "${time}"s for region: "$regionName"
+    echo "$time $regionID $serverIP"
     # Write a list of servers with acceptable latancy
     # to /opt/piavpn-manual/latencyList
-    echo -e $time $regionID'\t'$serverIP'\t'$regionName >> /opt/piavpn-manual/latencyList
+    echo -e "$time" "$regionID"'\t'"$serverIP"'\t'"$regionName" >> /opt/piavpn-manual/latencyList
   fi
   # Sort the latencyList, ordered by latency
   sort -no /opt/piavpn-manual/latencyList /opt/piavpn-manual/latencyList
@@ -150,23 +150,23 @@ if [[ $selectedRegion == "none" ]]; then
   if [[ $PIA_PF == "true" ]]; then
     echo Port Forwarding is enabled, non-PF servers excluded.
     echo
-    summarized_region_data="$( echo $all_region_data |
+    summarized_region_data="$( echo "$all_region_data" |
       jq -r '.regions[] | select(.port_forward==true) |
       .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
   else
-    summarized_region_data="$( echo $all_region_data |
+    summarized_region_data="$( echo "$all_region_data" |
     jq -r '.regions[] |
     .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
   fi
   echo -e Testing regions that respond \
-    faster than ${GREEN}$MAX_LATENCY${NC} seconds:
+    faster than ${GREEN}"$MAX_LATENCY"${NC} seconds:
   selectedRegion="$(echo "$summarized_region_data" |
     xargs -I{} bash -c 'printServerLatency {}' |
     sort | head -1 | awk '{ print $2 }')"
   echo
 
   if [ -z "$selectedRegion" ]; then
-    echo -e ${RED}No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
+    echo -e ${RED}No region responded within "${MAX_LATENCY}"s, consider using a higher timeout.
     echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
     echo -e $ MAX_LATENCY=1 ./get_region.sh${NC}
     exit 1
@@ -182,19 +182,19 @@ fi
 
 get_selected_region_data
 
-bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
-bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
-bestServer_WG_IP="$(echo $regionData | jq -r '.servers.wg[0].ip')"
-bestServer_WG_hostname="$(echo $regionData | jq -r '.servers.wg[0].cn')"
-bestServer_OT_IP="$(echo $regionData | jq -r '.servers.ovpntcp[0].ip')"
-bestServer_OT_hostname="$(echo $regionData | jq -r '.servers.ovpntcp[0].cn')"
-bestServer_OU_IP="$(echo $regionData | jq -r '.servers.ovpnudp[0].ip')"
-bestServer_OU_hostname="$(echo $regionData | jq -r '.servers.ovpnudp[0].cn')"
+bestServer_meta_IP="$(echo "$regionData" | jq -r '.servers.meta[0].ip')"
+bestServer_meta_hostname="$(echo "$regionData" | jq -r '.servers.meta[0].cn')"
+bestServer_WG_IP="$(echo "$regionData" | jq -r '.servers.wg[0].ip')"
+bestServer_WG_hostname="$(echo "$regionData" | jq -r '.servers.wg[0].cn')"
+bestServer_OT_IP="$(echo "$regionData" | jq -r '.servers.ovpntcp[0].ip')"
+bestServer_OT_hostname="$(echo "$regionData" | jq -r '.servers.ovpntcp[0].cn')"
+bestServer_OU_IP="$(echo "$regionData" | jq -r '.servers.ovpnudp[0].ip')"
+bestServer_OU_hostname="$(echo "$regionData" | jq -r '.servers.ovpnudp[0].cn')"
 
 
 if [[ $VPN_PROTOCOL == "no" ]]; then
-  echo -ne The $selectedOrLowestLatency region is ${GREEN}"$(echo $regionData | jq -r '.name')"${NC}
-  if echo $regionData | jq -r '.geo' | grep true > /dev/null; then
+  echo -ne The $selectedOrLowestLatency region is ${GREEN}"$(echo "$regionData" | jq -r '.name')"${NC}
+  if echo "$regionData" | jq -r '.geo' | grep true > /dev/null; then
     echo " (geolocated region)."
   else
     echo "."
@@ -236,8 +236,8 @@ if [[ $VPN_PROTOCOL == wireguard ]]; then
   echo The ./get_region.sh script got started with
   echo -e ${GREEN}VPN_PROTOCOL=wireguard${NC}, so we will automatically connect to WireGuard,
   echo by running this command:
-  echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
-  echo WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
+  echo -e $ ${GREEN}PIA_TOKEN="$PIA_TOKEN" \\
+  echo WG_SERVER_IP="$bestServer_WG_IP" WG_HOSTNAME="$bestServer_WG_hostname" \\
   echo -e PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh${NC}
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN WG_SERVER_IP=$bestServer_WG_IP \
@@ -257,9 +257,9 @@ if [[ $VPN_PROTOCOL == openvpn* ]]; then
   echo The ./get_region.sh script got started with
   echo -e ${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL${NC}, so we will automatically
   echo connect to OpenVPN, by running this command:
-  echo -e $ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \\
-  echo   OVPN_SERVER_IP=$serverIP \\
-  echo   OVPN_HOSTNAME=$serverHostname \\
+  echo -e $ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN="$PIA_TOKEN" \\
+  echo   OVPN_SERVER_IP="$serverIP" \\
+  echo   OVPN_HOSTNAME="$serverHostname" \\
   echo   CONNECTION_SETTINGS=$VPN_PROTOCOL \\
   echo -e ./connect_to_openvpn_with_token.sh${NC}
   echo
