@@ -22,7 +22,7 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
+  if ! command -v "$cmd" &>/dev/null
   then
     echo "$cmd could not be found"
     echo "Please install $cmd"
@@ -42,7 +42,7 @@ check_tool jq
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if test -n "$ncolors" && test "$ncolors" -ge 8; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -87,9 +87,9 @@ echo -e ${GREEN}OK!
 echo
 token=$(echo "$generateTokenResponse" | jq -r '.token')
 tokenExpiration=$(timeout_timestamp)
-echo -e PIA_TOKEN=$token${NC}
-echo $token > /opt/piavpn-manual/token || exit 1
-echo $tokenExpiration >> /opt/piavpn-manual/token
+echo -e PIA_TOKEN="$token"${NC}
+echo "$token" > /opt/piavpn-manual/token || exit 1
+echo "$tokenExpiration" >> /opt/piavpn-manual/token
 echo 
-echo This token will expire in 24 hours, on $tokenExpiration.
+echo This token will expire in 24 hours, on "$tokenExpiration".
 echo

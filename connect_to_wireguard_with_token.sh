@@ -22,7 +22,7 @@
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
+  if ! command -v "$cmd" &>/dev/null
   then
     echo "$cmd could not be found"
     echo "Please install $cmd"
@@ -37,7 +37,7 @@ check_tool jq
 # Check if terminal allows output, if yes, define colors for output
 if test -t 1; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if test -n "$ncolors" && test "$ncolors" -ge 8; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -91,7 +91,7 @@ export pubKey
 # In case you didn't clone the entire repo, get the certificate from:
 # https://github.com/pia-foss/manual-connections/blob/master/ca.rsa.4096.crt
 # In case you want to troubleshoot the script, replace -s with -v.
-echo Trying to connect to the PIA WireGuard API on $WG_SERVER_IP...
+echo Trying to connect to the PIA WireGuard API on "$WG_SERVER_IP"...
 wireguard_json="$(curl -s -G \
   --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
   --cacert "ca.rsa.4096.crt" \
@@ -122,9 +122,9 @@ echo
 # require it.
 if [ "$PIA_DNS" == true ]; then
   dnsServer="$(echo "$wireguard_json" | jq -r '.dns_servers[0]')"
-  echo Trying to set up DNS to $dnsServer. In case you do not have resolvconf,
-  echo this operation will fail and you will not get a VPN. If you have issues,
-  echo start this script without PIA_DNS.
+  echo "Trying to set up DNS to $dnsServer. In case you do not have resolvconf,"
+  echo "this operation will fail and you will not get a VPN. If you have issues,"
+  echo "start this script without PIA_DNS."
   echo
   dnsSettingForVPN="DNS = $dnsServer"
 fi
@@ -163,9 +163,9 @@ To disconnect the VPN, run:
 # This section will stop the script if PIA_PF is not set to "true".
 if [ "$PIA_PF" != true ]; then
   echo If you want to also enable port forwarding, you can start the script:
-  echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
-    PF_GATEWAY=$WG_SERVER_IP \
-    PF_HOSTNAME=$WG_HOSTNAME \
+  echo -e $ ${GREEN}PIA_TOKEN="$PIA_TOKEN" \
+    PF_GATEWAY="$WG_SERVER_IP" \
+    PF_HOSTNAME="$WG_HOSTNAME" \
     ./port_forwarding.sh${NC}
   echo
   echo The location used must be port forwarding enabled, or this will fail.
