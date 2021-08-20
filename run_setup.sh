@@ -37,8 +37,8 @@ fi
 intCheck='^[0-9]+$'
 floatCheck='^[0-9]+([.][0-9]+)?$'
 
-# Only allow script to run as
-if [ "$(whoami)" != "root" ]; then
+# Only allow script to run as root
+if (( EUID != 0 )); then
   echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'${NC}"
   exit 1
 fi
