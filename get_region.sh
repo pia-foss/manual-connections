@@ -20,10 +20,9 @@
 # SOFTWARE.
 
 # This function allows you to check if the required tools have been installed.
-function check_tool() {
+check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
-  then
+  if ! command -v "$cmd" &>/dev/null; then
     echo "$cmd could not be found"
     echo "Please install $cmd"
     exit 1
@@ -34,7 +33,7 @@ check_tool curl
 check_tool jq
 
 # If the server list has less than 1000 characters, it means curl failed.
-function check_all_region_data() {
+check_all_region_data() {
   echo
   echo -n "Getting the server list..."
 
@@ -44,7 +43,7 @@ function check_all_region_data() {
     echo -e "If it works, you will get a huge JSON as a response.${NC}"
     exit 1
   fi
-  
+
   # Notify the user that we got the server list.
   echo -e "${GREEN}OK!${NC}
   "
@@ -52,11 +51,11 @@ function check_all_region_data() {
 
 # Get all data for the selected region
 # Exit with code 1 if the REGION_ID provided is invalid
-function get_selected_region_data() {
+get_selected_region_data() {
   regionData="$( echo $all_region_data |
   jq --arg REGION_ID "$selectedRegion" -r \
   '.regions[] | select(.id==$REGION_ID)')"
-  if [[ ! $regionData ]]; then
+  if [[ -z $regionData ]]; then
     echo -e "${RED}The REGION_ID $selectedRegion is not valid.${NC}
     "
     exit 1
@@ -64,9 +63,9 @@ function get_selected_region_data() {
 }
 
 # Check if terminal allows output, if yes, define colors for output
-if test -t 1; then
+if [[ -t 1 ]]; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if [[ -n $ncolors && $ncolors -ge 8 ]]; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -101,15 +100,15 @@ serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v6'
 # It will print a human-readable message to stderr,
 # and it will print the variables to stdout
 printServerLatency() {
-  serverIP="$1"
-  regionID="$2"
+  serverIP=$1
+  regionID=$2
   regionName="$(echo ${@:3} |
     sed 's/ false//' | sed 's/true/(geo)/')"
   time=$(LC_NUMERIC=en_US.utf8 curl -o /dev/null -s \
     --connect-timeout $MAX_LATENCY \
     --write-out "%{time_connect}" \
     http://$serverIP:443)
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     >&2 echo Got latency ${time}s for region: $regionName
     echo $time $regionID $serverIP
     # Write a list of servers with acceptable latency
@@ -122,10 +121,10 @@ printServerLatency() {
 export -f printServerLatency
 
 # If a server location or autoconnect isn't specified, set the variable to false/no.
-if [[ -z "$PREFERRED_REGION" ]]; then
+if [[ -z $PREFERRED_REGION ]]; then
   PREFERRED_REGION=none
 fi
-if [[ -z "$VPN_PROTOCOL" ]]; then
+if [[ -z $VPN_PROTOCOL ]]; then
   VPN_PROTOCOL=no
 fi
 
@@ -141,7 +140,7 @@ if [[ $selectedRegion == "none" ]]; then
   check_all_region_data
 
   # Making sure this variable doesn't contain some strange string
-  if [ "$PIA_PF" != true ]; then
+  if [[ $PIA_PF != "true" ]]; then
     PIA_PF="false"
   fi
 
@@ -165,7 +164,7 @@ if [[ $selectedRegion == "none" ]]; then
     sort | head -1 | awk '{ print $2 }')"
   echo
 
-  if [ -z "$selectedRegion" ]; then
+  if [[ -z $selectedRegion ]]; then
     echo -e ${RED}No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
     echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
     echo -e $ MAX_LATENCY=1 ./get_region.sh${NC}
@@ -182,14 +181,14 @@ fi
 
 get_selected_region_data
 
-bestServer_meta_IP="$(echo $regionData | jq -r '.servers.meta[0].ip')"
-bestServer_meta_hostname="$(echo $regionData | jq -r '.servers.meta[0].cn')"
-bestServer_WG_IP="$(echo $regionData | jq -r '.servers.wg[0].ip')"
-bestServer_WG_hostname="$(echo $regionData | jq -r '.servers.wg[0].cn')"
-bestServer_OT_IP="$(echo $regionData | jq -r '.servers.ovpntcp[0].ip')"
-bestServer_OT_hostname="$(echo $regionData | jq -r '.servers.ovpntcp[0].cn')"
-bestServer_OU_IP="$(echo $regionData | jq -r '.servers.ovpnudp[0].ip')"
-bestServer_OU_hostname="$(echo $regionData | jq -r '.servers.ovpnudp[0].cn')"
+bestServer_meta_IP=$(echo $regionData | jq -r '.servers.meta[0].ip')
+bestServer_meta_hostname=$(echo $regionData | jq -r '.servers.meta[0].cn')
+bestServer_WG_IP=$(echo $regionData | jq -r '.servers.wg[0].ip')
+bestServer_WG_hostname=$(echo $regionData | jq -r '.servers.wg[0].cn')
+bestServer_OT_IP=$(echo $regionData | jq -r '.servers.ovpntcp[0].ip')
+bestServer_OT_hostname=$(echo $regionData | jq -r '.servers.ovpntcp[0].cn')
+bestServer_OU_IP=$(echo $regionData | jq -r '.servers.ovpnudp[0].ip')
+bestServer_OU_hostname=$(echo $regionData | jq -r '.servers.ovpnudp[0].cn')
 
 
 if [[ $VPN_PROTOCOL == "no" ]]; then
@@ -232,7 +231,7 @@ else
 fi
 
 # Connect with WireGuard and clear authentication token file and latencyList
-if [[ $VPN_PROTOCOL == wireguard ]]; then
+if [[ $VPN_PROTOCOL == "wireguard" ]]; then
   echo The ./get_region.sh script got started with
   echo -e ${GREEN}VPN_PROTOCOL=wireguard${NC}, so we will automatically connect to WireGuard,
   echo by running this command:

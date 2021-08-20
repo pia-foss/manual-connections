@@ -20,10 +20,9 @@
 # SOFTWARE.
 
 # This function allows you to check if the required tools have been installed.
-function check_tool() {
+check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
-  then
+  if ! command -v "$cmd" &>/dev/null; then
     echo "$cmd could not be found"
     echo "Please install $cmd"
     exit 1
@@ -35,9 +34,9 @@ check_tool curl
 check_tool jq
 
 # Check if terminal allows output, if yes, define colors for output
-if test -t 1; then
+if [[ -t 1 ]]; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if [[ -n $ncolors && $ncolors -ge 8 ]]; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -62,7 +61,9 @@ then
 fi
 
 # Check if the mandatory environment variables are set.
-if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
+if [[ -z $WG_SERVER_IP ||
+      -z $WG_HOSTNAME ||
+      -z $PIA_TOKEN ]]; then
   echo -e ${RED}This script requires 3 env vars:
   echo WG_SERVER_IP - IP that you want to connect to
   echo WG_HOSTNAME  - name of the server, required for ssl
@@ -80,9 +81,9 @@ if [[ ! $WG_SERVER_IP || ! $WG_HOSTNAME || ! $PIA_TOKEN ]]; then
 fi
 
 # Create ephemeral wireguard keys, that we don't need to save to disk.
-privKey="$(wg genkey)"
+privKey=$(wg genkey)
 export privKey
-pubKey="$( echo "$privKey" | wg pubkey)"
+pubKey=$( echo "$privKey" | wg pubkey)
 export pubKey
 
 # Authenticate via the PIA WireGuard RESTful API.
@@ -101,7 +102,7 @@ wireguard_json="$(curl -s -G \
 export wireguard_json
 
 # Check if the API returned OK and stop this script if it didn't.
-if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
+if [[ $(echo "$wireguard_json" | jq -r '.status') != "OK" ]]; then
   >&2 echo -e "${RED}Server did not return OK. Stopping now.${NC}"
   exit 1
 fi
@@ -120,8 +121,8 @@ echo
 # This uses a PersistentKeepalive of 25 seconds to keep the NAT active
 # on firewalls. You can remove that line if your network does not
 # require it.
-if [ "$PIA_DNS" == true ]; then
-  dnsServer="$(echo "$wireguard_json" | jq -r '.dns_servers[0]')"
+if [[ $PIA_DNS == "true" ]]; then
+  dnsServer=$(echo "$wireguard_json" | jq -r '.dns_servers[0]')
   echo Trying to set up DNS to $dnsServer. In case you do not have resolvconf,
   echo this operation will fail and you will not get a VPN. If you have issues,
   echo start this script without PIA_DNS.
@@ -161,7 +162,7 @@ To disconnect the VPN, run:
 "
 
 # This section will stop the script if PIA_PF is not set to "true".
-if [ "$PIA_PF" != true ]; then
+if [[ $PIA_PF != "true" ]]; then
   echo If you want to also enable port forwarding, you can start the script:
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$WG_SERVER_IP \

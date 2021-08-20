@@ -20,29 +20,27 @@
 # SOFTWARE.
 
 # This function allows you to check if the required tools have been installed.
-function check_tool() {
+check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
-  then
+  if ! command -v "$cmd" &>/dev/null; then
     echo "$cmd could not be found"
     echo "Please install $cmd"
     exit 1
   fi
 }
-
-# This function creates a timestamp, to use for setting $TOKEN_EXPIRATION
-function timeout_timestamp() {
-  date +"%c" --date='1 day' # Timestamp 24 hours
-}
-
 # Now we call the function to make sure we can use curl and jq.
 check_tool curl
 check_tool jq
 
+# This function creates a timestamp, to use for setting $TOKEN_EXPIRATION
+timeout_timestamp() {
+  date +"%c" --date='1 day' # Timestamp 24 hours
+}
+
 # Check if terminal allows output, if yes, define colors for output
-if test -t 1; then
+if [[ -t 1 ]]; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if [[ -n $ncolors && $ncolors -ge 8 ]]; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -61,7 +59,7 @@ fi
 
 mkdir -p /opt/piavpn-manual
 
-if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
+if [[ -z $PIA_USER || -z $PIA_PASS ]]; then
   echo If you want this script to automatically get a token from the Meta
   echo service, please add the variables PIA_USER and PIA_PASS. Example:
   echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_token.sh
@@ -75,14 +73,14 @@ echo -n "Checking login credentials..."
 generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
   "https://privateinternetaccess.com/gtoken/generateToken")
 
-if [ "$(echo "$generateTokenResponse" | jq -r '.status')" != "OK" ]; then
+if [[ $(echo "$generateTokenResponse" | jq -r '.status') != "OK" ]]; then
   echo
   echo
   echo -e "${RED}Could not authenticate with the login credentials provided!${NC}"
   echo
   exit
 fi
-  
+
 echo -e ${GREEN}OK!
 echo
 token=$(echo "$generateTokenResponse" | jq -r '.token')
@@ -90,6 +88,6 @@ tokenExpiration=$(timeout_timestamp)
 echo -e PIA_TOKEN=$token${NC}
 echo $token > /opt/piavpn-manual/token || exit 1
 echo $tokenExpiration >> /opt/piavpn-manual/token
-echo 
+echo
 echo This token will expire in 24 hours, on $tokenExpiration.
 echo

@@ -20,24 +20,23 @@
 # SOFTWARE.
 
 # This function allows you to check if the required tools have been installed.
-function check_tool() {
+check_tool() {
   cmd=$1
-  if ! command -v $cmd &>/dev/null
-  then
+  if ! command -v "$cmd" &>/dev/null; then
     echo "$cmd could not be found"
     echo "Please install $cmd"
     exit 1
   fi
 }
-# Now we call the function to make sure we can use wg-quick, curl and jq.
+# Now we call the function to make sure we can use openvpn, curl and jq.
+check_tool openvpn
 check_tool curl
 check_tool jq
-check_tool openvpn
 
 # Check if terminal allows output, if yes, define colors for output
-if test -t 1; then
+if [[ -t 1 ]]; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if [[ -n $ncolors && $ncolors -ge 8 ]]; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
@@ -51,30 +50,30 @@ fi
 # Check if manual PIA OpenVPN connection is already initialized.
 # Multi-hop is out of the scope of this repo, but you should be able to
 # get multi-hop running with both OpenVPN and WireGuard.
-adapter_check="$( ip a s tun06 2>&1 )"
+adapter_check=$( ip a s tun06 2>&1 )
 should_read="Device \"tun06\" does not exist"
 pid_filepath="/opt/piavpn-manual/pia_pid"
-if [[ "$adapter_check" != *"$should_read"* ]]; then
+if [[ $adapter_check != *"$should_read"* ]]; then
   echo -e ${RED}The tun06 adapter already exists, that interface is required
   echo -e for this configuration.${NC}
-  if [ -f "$pid_filepath" ]; then
-    old_pid="$( cat "$pid_filepath" )"
-    old_pid_name="$( ps -p "$old_pid" -o comm= )"
-    if [[ $old_pid_name == 'openvpn' ]]; then
+  if [[ -f $pid_filepath ]]; then
+    old_pid=$( cat "$pid_filepath" )
+    old_pid_name=$( ps -p "$old_pid" -o comm= )
+    if [[ $old_pid_name == "openvpn" ]]; then
       echo
       echo -e It seems likely that process ${RED}$old_pid${NC} is an OpenVPN connection
       echo that was established by using this script. Unless it is closed
       echo you would not be able to get a new connection.
       echo -ne "Do you want to run ${RED}$ kill $old_pid${NC} (Y/n): "
-      read close_connection
+      read -r close_connection
     fi
-    if echo ${close_connection:0:1} | grep -iq n ; then
+    if echo ${close_connection:0:1} | grep -iq n; then
       echo -e ${RED}Closing script. Resolve tun06 adapter conflict and run the script again.
       exit 1
     fi
     echo
     echo -e ${GREEN}Killing the existing OpenVPN process and waiting 5 seconds...${NC}
-    kill $old_pid
+    kill "$old_pid"
     echo
     for i in {5..1}; do
       echo -n "$i..."
@@ -98,11 +97,11 @@ then
   echo -e 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'${NC}
 fi
 
-#  Check if the mandatory environment variables are set.
-if [[ ! $OVPN_SERVER_IP ||
-  ! $OVPN_HOSTNAME ||
-  ! $PIA_TOKEN ||
-  ! $CONNECTION_SETTINGS ]]; then
+# Check if the mandatory environment variables are set.
+if [[ -z $OVPN_SERVER_IP ||
+      -z $OVPN_HOSTNAME ||
+      -z $PIA_TOKEN ||
+      -z $CONNECTION_SETTINGS ]]; then
   echo -e ${RED}'This script requires 4 env vars:'
   echo 'PIA_TOKEN           - the token used for authentication'
   echo 'OVPN_SERVER_IP      - IP that you want to connect to'
@@ -121,7 +120,7 @@ if [[ ! $OVPN_SERVER_IP ||
   echo An easy solution is to just run get_region_and_token.sh
   echo as it will guide you through getting the best server and
   echo also a token. Detailed information can be found here:
-  echo -e https://github.com/pia-foss/manual-connections ${NC}
+  echo -e https://github.com/pia-foss/manual-connections${NC}
   exit 1
 fi
 
@@ -138,8 +137,8 @@ echo -e "${GREEN}OK!${NC}"
 IFS='_'
 read -ra connection_settings <<< "$CONNECTION_SETTINGS"
 IFS=' '
-protocol="${connection_settings[1]}"
-encryption="${connection_settings[2]}"
+protocol=${connection_settings[1]}
+encryption=${connection_settings[2]}
 
 prefix_filepath="openvpn_config/standard.ovpn"
 if [[ $encryption == "strong" ]]; then
@@ -161,12 +160,12 @@ else
 fi
 
 # Create the OpenVPN config based on the settings specified
-cat $prefix_filepath > /opt/piavpn-manual/pia.ovpn || exit 1
+cat "$prefix_filepath" > /opt/piavpn-manual/pia.ovpn || exit 1
 echo remote $OVPN_SERVER_IP $port $protocol >> /opt/piavpn-manual/pia.ovpn
 
 # Copy the up/down scripts to /opt/piavpn-manual/
 # based upon use of PIA DNS
-if [ "$PIA_DNS" != true ]; then
+if [[ $PIA_DNS != "true" ]]; then
   cp openvpn_config/openvpn_up.sh /opt/piavpn-manual/
   cp openvpn_config/openvpn_down.sh /opt/piavpn-manual/
   echo -e ${RED}This configuration will not use PIA DNS.${NC}
@@ -201,8 +200,7 @@ Confirming OpenVPN connection state..."
 # Manually adjust the connection_wait_time if needed
 connection_wait_time=10
 confirmation="Initialization Sequence Complete"
-for (( timeout=0; timeout <=$connection_wait_time; timeout++ ))
-do
+for (( timeout=0; timeout <=$connection_wait_time; timeout++ )); do
   sleep 1
   if grep -q "$confirmation" /opt/piavpn-manual/debug_info; then
     connected=true
@@ -210,13 +208,13 @@ do
   fi
 done
 
-ovpn_pid="$( cat /opt/piavpn-manual/pia_pid )"
-gateway_ip="$( cat /opt/piavpn-manual/route_info )"
+ovpn_pid=$( cat /opt/piavpn-manual/pia_pid )
+gateway_ip=$( cat /opt/piavpn-manual/route_info )
 
 # Report and exit if connection was not initialized within 10 seconds.
-if [ "$connected" != true ]; then
+if [[ $connected != "true" ]]; then
   echo -e "${RED}The VPN connection was not established within 10 seconds.${NC}"
-  kill $ovpn_pid
+  kill "$ovpn_pid"
   exit 1
 fi
 
@@ -234,7 +232,7 @@ To disconnect the VPN, run:
 "
 
 # This section will stop the script if PIA_PF is not set to "true".
-if [ "$PIA_PF" != true ]; then
+if [[ $PIA_PF != "true" ]]; then
   echo If you want to also enable port forwarding, you can start the script:
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$gateway_ip \

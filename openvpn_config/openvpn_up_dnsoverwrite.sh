@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Write gateway IP for reference
-echo $route_vpn_gateway > /opt/piavpn-manual/route_info
+echo "$route_vpn_gateway" > /opt/piavpn-manual/route_info
 
 # Back up resolv.conf and create new one with PIA DNS
 cat /etc/resolv.conf > /opt/piavpn-manual/resolv_conf_backup
