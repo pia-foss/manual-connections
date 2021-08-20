@@ -158,7 +158,7 @@ ${GREEN}Defaulting to yes.${NC}
   echo -e ${NC}
 fi
 
-# Input validation and check for conflicting declartions of AUTOCONNECT and PREFERRED_REGION
+# Input validation and check for conflicting declarations of AUTOCONNECT and PREFERRED_REGION
 # If both variables are set, AUTOCONNECT has superiority and PREFERRED_REGION is ignored
 if [[ ! $AUTOCONNECT ]]; then
   echo AUTOCONNECT was not declared.
@@ -184,7 +184,7 @@ else
     echo
   else
     echo
-    echo AUTOCONNECT supercedes in-line definitions of PREFERRED_REGION.
+    echo AUTOCONNECT supersedes in-line definitions of PREFERRED_REGION.
     echo -e "${RED}PREFERRED_REGION=$PREFERRED_REGION will be ignored.${NC}
     "
     PREFERRED_REGION=""
@@ -205,7 +205,7 @@ server with the lowest latency ([N]o/[y]es): "
 
     # Call the region script with input to create an ordered list based upon latency
     # When $PREFERRED_REGION is set to none, get_region.sh will generate a list of servers
-    # that meet the latency requirements speciied by $MAX_LATENCY.
+    # that meet the latency requirements specified by $MAX_LATENCY.
     # When $VPN_PROTOCOL is set to no, get_region.sh will sort that list of servers
     # to allow for numeric selection, or an easy manual review of options.
     if echo "${selectServer:0:1}" | grep -iq y; then
@@ -256,7 +256,7 @@ For example, you can try 0.2 for 200ms allowed latency.
       
       if [ -s /opt/piavpn-manual/latencyList ]; then
         # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
-        echo -e "Orderd list of servers with latency less than ${GREEN}$MAX_LATENCY${NC} seconds:"
+        echo -e "Ordered list of servers with latency less than ${GREEN}$MAX_LATENCY${NC} seconds:"
         i=0
         while read -r line; do
           i=$((i+1))
