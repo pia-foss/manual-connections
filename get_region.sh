@@ -112,7 +112,7 @@ printServerLatency() {
   if [ $? -eq 0 ]; then
     >&2 echo Got latency ${time}s for region: $regionName
     echo $time $regionID $serverIP
-    # Write a list of servers with acceptable latancy
+    # Write a list of servers with acceptable latency
     # to /opt/piavpn-manual/latencyList
     echo -e $time $regionID'\t'$serverIP'\t'$regionName >> /opt/piavpn-manual/latencyList
   fi
@@ -171,7 +171,7 @@ if [[ $selectedRegion == "none" ]]; then
     echo -e $ MAX_LATENCY=1 ./get_region.sh${NC}
     exit 1
   else
-    echo -e "A list of servers and connection details, ordered by latency can be 
+    echo -e "A list of servers and connection details, ordered by latency can be
 found in at : ${GREEN}/opt/piavpn-manual/latencyList${NC}
 "
   fi

@@ -85,13 +85,13 @@ sudo VPN_PROTOCOL=wireguard DISABLE_IPV6="no" AUTOCONNECT=true PIA_PF=false PIA_
 ```
 
 Here is a list of scripts you could find useful:
- * [Prompt based connection](run_setup.sh): This script allows connections with a one-line call, or will prompt for any missing or invalid variables. Varaibles available for one-line calls include:
+ * [Prompt based connection](run_setup.sh): This script allows connections with a one-line call, or will prompt for any missing or invalid variables. Variables available for one-line calls include:
    * `PIA_USER` - your PIA username
    * `PIA_PASS` - your PIA password
    * `PIA_DNS` - true/false
    * `PIA_PF` - true/false
    * `MAX_LATENCY` - numeric value, in seconds
-   * `AUTOCONNECT` - true/false; this will test for and select the server with the lowest latency, it will overried PREFERRED_REGION
+   * `AUTOCONNECT` - true/false; this will test for and select the server with the lowest latency, it will override PREFERRED_REGION
    * `PREFERRED_REGION` - the region ID for a PIA server
    * `VPN_PROTOCOL` - wireguard or openvpn; openvpn will default to openvpn_udp_standard, but can also specify openvpn_tcp/udp_standad/strong
    * `DISABLE_IPV6` - yes/no
@@ -119,7 +119,7 @@ bash-5.0# curl -k "https://10.4.128.1:19999/getSignature?token=$TOKEN"
 
 The payload can be decoded with base64 to see your information:
 ```bash
-$ echo eyJ0b2tlbiI6Inh4eHh4eHh4eCIsInBvcnQiOjQ3MDQ3LCJjcmVhdGVkX2F0IjoiMjAyMC0wNC0zMFQyMjozMzo0NC4xMTQzNjk5MDZaIn0= | base64 -d | jq 
+$ echo eyJ0b2tlbiI6Inh4eHh4eHh4eCIsInBvcnQiOjQ3MDQ3LCJjcmVhdGVkX2F0IjoiMjAyMC0wNC0zMFQyMjozMzo0NC4xMTQzNjk5MDZaIn0= | base64 -d | jq
 {
   "token": "xxxxxxxxx",
   "port": 47047,
@@ -135,7 +135,7 @@ bash-5.0# curl -sGk --data-urlencode "payload=${payload}" --data-urlencode "sign
     "status": "OK",
     "message": "port scheduled for add"
 }
-bash-5.0# 
+bash-5.0#
 ```
 
 Call __/bindPort__ every 15 minutes, or the port will be deleted!
