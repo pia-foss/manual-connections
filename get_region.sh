@@ -214,8 +214,8 @@ fi
 
 # The script will check for an authentication token, and use it if present
 # If no token exists, the script will check for login credentials to generate one
-if [[ -z "$PIA_TOKEN" ]] || [[ $PIA_TOKEN == "" ]]; then
-  if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
+if [[ -z $PIA_TOKEN ]]; then
+  if [[ -z $PIA_USER || -z $PIA_PASS ]]; then
     echo -e ${RED}If you want this script to automatically get an authentication
     echo token, please add the variables PIA_USER and PIA_PASS. Example:
     echo -e $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh${NC}
