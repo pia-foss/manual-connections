@@ -50,7 +50,7 @@ rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
 while :; do
     while :; do
       # Check for in-line definition of $PIA_USER
-      if [[ ! $PIA_USER || $PIA_USER = "" ]]; then
+      if [[ -z $PIA_USER ]]; then
         echo
         read -r -p "PIA username (p#######): " PIA_USER
       fi
@@ -76,7 +76,7 @@ while :; do
 
   while :; do
     # Check for in-line definition of $PIA_PASS
-    if [[ ! $PIA_PASS || $PIA_PASS = "" ]]; then
+    if [[ -z $PIA_PASS ]]; then
       echo
       echo -n "PIA password: "
       read -r -s PIA_PASS
@@ -118,7 +118,7 @@ while :; do
 done
 
 # Check for in-line definition of PIA_PF and prompt for input
-if [[ ! $PIA_PF || $PIA_PF = "" ]]; then
+if [[ -z $PIA_PF ]]; then
   echo -n "Do you want a forwarding port assigned ([N]o/[y]es): "
   read -r portForwarding
   echo
@@ -134,7 +134,7 @@ echo -e ${GREEN}PIA_PF=$PIA_PF${NC}
 echo
 
 # Check for in-line definition of DISABLE_IPV6 and prompt for input
-if [[ ! $DISABLE_IPV6 || $DISABLE_IPV6 = "" ]]; then
+if [[ -z $DISABLE_IPV6 ]]; then
   echo "Having active IPv6 connections might compromise security by allowing"
   echo "split tunnel connections that run outside the VPN tunnel."
   echo -n "Do you want to disable IPv6? (Y/n): "
@@ -194,7 +194,7 @@ fi
 
 # Prompt the user to specify a server or auto-connect to the lowest latency
 while :; do
-  if [[ ! $PREFERRED_REGION || $PREFERRED_REGION = "" ]]; then
+  if [[ -z $PREFERRED_REGION ]]; then
     # If autoconnect is not set, prompt the user to specify a server or auto-connect to the lowest latency
     if [[ $selectServer == "ask" ]]; then
       echo -n "Do you want to manually select a server, instead of auto-connecting to the
@@ -211,7 +211,7 @@ server with the lowest latency ([N]o/[y]es): "
     if echo "${selectServer:0:1}" | grep -iq y; then
       # This sets the maximum allowed latency in seconds.
       # All servers that respond slower than this will be ignored.
-      if [[ ! $MAX_LATENCY || $MAX_LATENCY = "" ]]; then
+      if [[ -z $MAX_LATENCY ]]; then
         echo -n "With no input, the maximum allowed latency will be set to 0.05s (50ms).
 If your connection has high latency, you may need to increase this value.
 For example, you can try 0.2 for 200ms allowed latency.
@@ -223,8 +223,8 @@ For example, you can try 0.2 for 200ms allowed latency.
       # Assure that input is numeric and properly formatted.
       MAX_LATENCY=0.05 # default
       while :; do
-        if [[ ! $latencyInput || $latencyInput = "" ]]; then
-          read -pr "Custom latency (no input required for 50ms): " latencyInput
+        if [[ -z $latencyInput ]]; then
+          read -r -p "Custom latency (no input required for 50ms): " latencyInput
           echo
         fi
         customLatency=0
@@ -371,8 +371,8 @@ if ! command -v resolvconf &>/dev/null && [[ $VPN_PROTOCOL == "wireguard" ]]; th
 fi
 
 # Check for in-line definition of PIA_DNS and prompt for input
-if [[ $setDNS = "yes" ]]; then
-  if [[ ! $PIA_DNS || $PIA_DNS = "" ]]; then
+if [[ $setDNS == "yes" ]]; then
+  if [[ -z $PIA_DNS ]]; then
     echo Using third party DNS could allow DNS monitoring.
     echo -n "Do you want to force PIA DNS ([Y]es/[n]o): "
     read -r setDNS
