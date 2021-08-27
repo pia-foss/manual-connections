@@ -91,7 +91,7 @@ Here is a list of scripts you could find useful:
    * `PIA_DNS` - true/false
    * `PIA_PF` - true/false
    * `MAX_LATENCY` - numeric value, in seconds
-   * `AUTOCONNECT` - true/false; this will test for and select the server with the lowest latency, it will overried PREFERRED_REGION
+   * `AUTOCONNECT` - true/false; this will test for and select the server with the lowest latency, it will override PREFERRED_REGION
    * `PREFERRED_REGION` - the region ID for a PIA server
    * `VPN_PROTOCOL` - wireguard or openvpn; openvpn will default to openvpn_udp_standard, but can also specify openvpn_tcp/udp_standad/strong
    * `DISABLE_IPV6` - yes/no
