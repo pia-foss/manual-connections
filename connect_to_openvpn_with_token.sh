@@ -54,25 +54,25 @@ adapter_check=$( ip a s tun06 2>&1 )
 should_read="Device \"tun06\" does not exist"
 pid_filepath="/opt/piavpn-manual/pia_pid"
 if [[ $adapter_check != *"$should_read"* ]]; then
-  echo -e ${RED}The tun06 adapter already exists, that interface is required
-  echo -e for this configuration.${NC}
+  echo -e "${RED}The tun06 adapter already exists, that interface is required"
+  echo -e "for this configuration.${NC}"
   if [[ -f $pid_filepath ]]; then
     old_pid=$( cat "$pid_filepath" )
     old_pid_name=$( ps -p "$old_pid" -o comm= )
     if [[ $old_pid_name == "openvpn" ]]; then
       echo
-      echo -e It seems likely that process ${RED}"$old_pid"${NC} is an OpenVPN connection
-      echo that was established by using this script. Unless it is closed
-      echo you would not be able to get a new connection.
+      echo -e "It seems likely that process ${RED}$old_pid${NC} is an OpenVPN connection"
+      echo "that was established by using this script. Unless it is closed"
+      echo "you would not be able to get a new connection."
       echo -ne "Do you want to run ${RED}$ kill $old_pid${NC} (Y/n): "
       read -r close_connection
     fi
     if echo "${close_connection:0:1}" | grep -iq n; then
-      echo -e ${RED}Closing script. Resolve tun06 adapter conflict and run the script again.
+      echo -e "${RED}Closing script. Resolve tun06 adapter conflict and run the script again."
       exit 1
     fi
     echo
-    echo -e ${GREEN}Killing the existing OpenVPN process and waiting 5 seconds...${NC}
+    echo -e "${GREEN}Killing the existing OpenVPN process and waiting 5 seconds...${NC}"
     kill "$old_pid"
     echo
     for i in {5..1}; do
@@ -92,9 +92,9 @@ if [[ -f /proc/net/if_inet6 ]] &&
   [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ||
      $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]
 then
-  echo -e ${RED}'You should consider disabling IPv6 by running:'
-  echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
-  echo -e 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'${NC}
+  echo -e "${RED}You should consider disabling IPv6 by running:"
+  echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
+  echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${NC}"
 fi
 
 # Check if the mandatory environment variables are set.
@@ -102,25 +102,25 @@ if [[ -z $OVPN_SERVER_IP ||
       -z $OVPN_HOSTNAME ||
       -z $PIA_TOKEN ||
       -z $CONNECTION_SETTINGS ]]; then
-  echo -e ${RED}'This script requires 4 env vars:'
-  echo 'PIA_TOKEN           - the token used for authentication'
-  echo 'OVPN_SERVER_IP      - IP that you want to connect to'
-  echo 'OVPN_HOSTNAME       - name of the server, required for ssl'
-  echo 'CONNECTION_SETTINGS - the protocol and encryption specification'
-  echo '                    - available options for CONNECTION_SETTINGS are:'
-  echo '                        * openvpn_udp_standard'
-  echo '                        * openvpn_udp_strong'
-  echo '                        * openvpn_tcp_standard'
-  echo '                        * openvpn_tcp_strong'
+  echo -e "${RED}This script requires 4 env vars:"
+  echo "PIA_TOKEN           - the token used for authentication"
+  echo "OVPN_SERVER_IP      - IP that you want to connect to"
+  echo "OVPN_HOSTNAME       - name of the server, required for ssl"
+  echo "CONNECTION_SETTINGS - the protocol and encryption specification"
+  echo "                    - available options for CONNECTION_SETTINGS are:"
+  echo "                        * openvpn_udp_standard"
+  echo "                        * openvpn_udp_strong"
+  echo "                        * openvpn_tcp_standard"
+  echo "                        * openvpn_tcp_strong"
   echo
-  echo You can also specify optional env vars:
+  echo "You can also specify optional env vars:"
   echo "PIA_PF                - enable port forwarding"
   echo "PAYLOAD_AND_SIGNATURE - In case you already have a port."
   echo
-  echo An easy solution is to just run get_region_and_token.sh
-  echo as it will guide you through getting the best server and
-  echo also a token. Detailed information can be found here:
-  echo -e https://github.com/pia-foss/manual-connections${NC}
+  echo "An easy solution is to just run get_region_and_token.sh"
+  echo "as it will guide you through getting the best server and"
+  echo "also a token. Detailed information can be found here:"
+  echo -e "https://github.com/pia-foss/manual-connections${NC}"
   exit 1
 fi
 
@@ -128,8 +128,8 @@ fi
 echo -n "Trying to write /opt/piavpn-manual/pia.ovpn..."
 mkdir -p /opt/piavpn-manual
 rm -f /opt/piavpn-manual/credentials /opt/piavpn-manual/route_info
-echo "${PIA_TOKEN:0:62}""
-""${PIA_TOKEN:62}" > /opt/piavpn-manual/credentials || exit 1
+echo "${PIA_TOKEN:0:62}
+${PIA_TOKEN:62}" > /opt/piavpn-manual/credentials || exit 1
 chmod 600 /opt/piavpn-manual/credentials
 echo -e "${GREEN}OK!${NC}"
 
@@ -168,9 +168,9 @@ echo "remote $OVPN_SERVER_IP $port $protocol" >> /opt/piavpn-manual/pia.ovpn
 if [[ $PIA_DNS != "true" ]]; then
   cp openvpn_config/openvpn_up.sh /opt/piavpn-manual/
   cp openvpn_config/openvpn_down.sh /opt/piavpn-manual/
-  echo -e ${RED}This configuration will not use PIA DNS.${NC}
-  echo If you want to also enable PIA DNS, please start the script
-  echo with the env var PIA_DNS=true. Example:
+  echo -e "${RED}This configuration will not use PIA DNS.${NC}"
+  echo "If you want to also enable PIA DNS, please start the script"
+  echo "with the env var PIA_DNS=true. Example:"
   echo $ OVPN_SERVER_IP=\""$OVPN_SERVER_IP"\" OVPN_HOSTNAME=\""$OVPN_HOSTNAME"\" \
     PIA_TOKEN=\""$PIA_TOKEN"\" CONNECTION_SETTINGS=\""$CONNECTION_SETTINGS"\" \
     PIA_PF=true PIA_DNS=true ./connect_to_openvpn_with_token.sh
@@ -233,14 +233,14 @@ To disconnect the VPN, run:
 
 # This section will stop the script if PIA_PF is not set to "true".
 if [[ $PIA_PF != "true" ]]; then
-  echo If you want to also enable port forwarding, you can start the script:
-  echo -e $ ${GREEN}PIA_TOKEN="$PIA_TOKEN" \
-    PF_GATEWAY="$gateway_ip" \
-    PF_HOSTNAME="$OVPN_HOSTNAME" \
-    ./port_forwarding.sh${NC}
+  echo "If you want to also enable port forwarding, you can start the script:"
+  echo -e "$ ${GREEN}PIA_TOKEN=$PIA_TOKEN" \
+    "PF_GATEWAY=$gateway_ip" \
+    "PF_HOSTNAME=$OVPN_HOSTNAME" \
+    "./port_forwarding.sh${NC}"
   echo
-  echo The location used must be port forwarding enabled, or this will fail.
-  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  echo "The location used must be port forwarding enabled, or this will fail."
+  echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
   exit 1
 fi
 
