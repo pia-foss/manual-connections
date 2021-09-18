@@ -34,15 +34,15 @@ check_tool jq
 
 # Check if the mandatory environment variables are set.
 if [[ -z $PF_GATEWAY || -z $PIA_TOKEN || -z $PF_HOSTNAME ]]; then
-  echo This script requires 3 env vars:
-  echo PF_GATEWAY  - the IP of your gateway
-  echo PF_HOSTNAME - name of the host used for SSL/TLS certificate verification
-  echo PIA_TOKEN   - the token you use to connect to the vpn services
+  echo "This script requires 3 env vars:"
+  echo "PF_GATEWAY  - the IP of your gateway"
+  echo "PF_HOSTNAME - name of the host used for SSL/TLS certificate verification"
+  echo "PIA_TOKEN   - the token you use to connect to the vpn services"
   echo
-  echo An easy solution is to just run get_region_and_token.sh
-  echo as it will guide you through getting the best server and
-  echo also a token. Detailed information can be found here:
-  echo https://github.com/pia-foss/manual-connections
+  echo "An easy solution is to just run get_region_and_token.sh"
+  echo "as it will guide you through getting the best server and"
+  echo "also a token. Detailed information can be found here:"
+  echo "https://github.com/pia-foss/manual-connections"
 exit 1
 fi
 
@@ -142,12 +142,12 @@ while true; do
     # This script will exit in 2 months, since the port will expire.
     export bind_port_response
     if [[ $(echo "$bind_port_response" | jq -r '.status') != "OK" ]]; then
-      echo -e "${RED}The API did not return OK when trying to bind port... Exiting."
+      echo -e "${RED}The API did not return OK when trying to bind port... Exiting.${NC}"
       exit 1
     fi
-    echo -e Forwarded port'\t'${GREEN}"$port"${NC}
-    echo -e Refreshed on'\t'${GREEN}"$(date)"${NC}
-    echo -e Expires on'\t'${RED}"$(date --date="$expires_at")"${NC}
+    echo -e Forwarded port'\t'"${GREEN}$port${NC}"
+    echo -e Refreshed on'\t'"${GREEN}$(date)${NC}"
+    echo -e Expires on'\t'"${RED}$(date --date="$expires_at")${NC}"
     echo -e "\n${GREEN}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${NC}\n"
 
     # sleep 15 minutes

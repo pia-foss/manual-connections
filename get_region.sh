@@ -147,7 +147,7 @@ if [[ $selectedRegion == "none" ]]; then
   # Test one server from each region to get the closest region.
   # If port forwarding is enabled, filter out regions that don't support it.
   if [[ $PIA_PF == "true" ]]; then
-    echo Port Forwarding is enabled, non-PF servers excluded.
+    echo "Port Forwarding is enabled, non-PF servers excluded."
     echo
     summarized_region_data="$( echo "$all_region_data" |
       jq -r '.regions[] | select(.port_forward==true) |
@@ -158,7 +158,7 @@ if [[ $selectedRegion == "none" ]]; then
     .servers.meta[0].ip+" "+.id+" "+.name+" "+(.geo|tostring)' )"
   fi
   echo -e Testing regions that respond \
-    faster than ${GREEN}"$MAX_LATENCY"${NC} seconds:
+    faster than "${GREEN}$MAX_LATENCY${NC}" seconds:
   selectedRegion="$(echo "$summarized_region_data" |
     xargs -I{} bash -c 'printServerLatency {}' |
     sort | head -1 | awk '{ print $2 }')"
@@ -166,8 +166,8 @@ if [[ $selectedRegion == "none" ]]; then
 
   if [[ -z $selectedRegion ]]; then
     echo -e "${RED}No region responded within ${MAX_LATENCY}s, consider using a higher timeout."
-    echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
-    echo -e $ MAX_LATENCY=1 ./get_region.sh${NC}
+    echo "For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:"
+    echo -e "$ MAX_LATENCY=1 ./get_region.sh${NC}"
     exit 1
   else
     echo -e "A list of servers and connection details, ordered by latency can be
@@ -192,7 +192,7 @@ bestServer_OU_hostname=$(echo "$regionData" | jq -r '.servers.ovpnudp[0].cn')
 
 
 if [[ $VPN_PROTOCOL == "no" ]]; then
-  echo -ne The $selectedOrLowestLatency region is ${GREEN}"$(echo "$regionData" | jq -r '.name')"${NC}
+  echo -ne "The $selectedOrLowestLatency region is ${GREEN}$(echo "$regionData" | jq -r '.name')${NC}"
   if echo "$regionData" | jq -r '.geo' | grep true > /dev/null; then
     echo " (geolocated region)."
   else
@@ -216,9 +216,9 @@ fi
 # If no token exists, the script will check for login credentials to generate one
 if [[ -z $PIA_TOKEN ]]; then
   if [[ -z $PIA_USER || -z $PIA_PASS ]]; then
-    echo -e ${RED}If you want this script to automatically get an authentication
-    echo token, please add the variables PIA_USER and PIA_PASS. Example:
-    echo -e $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh${NC}
+    echo -e "${RED}If you want this script to automatically get an authentication"
+    echo "token, please add the variables PIA_USER and PIA_PASS. Example:"
+    echo -e "$ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh${NC}"
     exit 0
   fi
   ./get_token.sh
@@ -232,12 +232,12 @@ fi
 
 # Connect with WireGuard and clear authentication token file and latencyList
 if [[ $VPN_PROTOCOL == "wireguard" ]]; then
-  echo The ./get_region.sh script got started with
-  echo -e ${GREEN}VPN_PROTOCOL=wireguard${NC}, so we will automatically connect to WireGuard,
-  echo by running this command:
-  echo -e $ ${GREEN}PIA_TOKEN="$PIA_TOKEN" \\
-  echo WG_SERVER_IP="$bestServer_WG_IP" WG_HOSTNAME="$bestServer_WG_hostname" \\
-  echo -e PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh${NC}
+  echo "The ./get_region.sh script got started with"
+  echo -e "${GREEN}VPN_PROTOCOL=wireguard${NC}, so we will automatically connect to WireGuard,"
+  echo "by running this command:"
+  echo -e "$ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\"
+  echo "WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\"
+  echo -e "PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh${NC}"
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN WG_SERVER_IP=$bestServer_WG_IP \
     WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
@@ -253,14 +253,14 @@ if [[ $VPN_PROTOCOL == openvpn* ]]; then
     serverIP=$bestServer_OT_IP
     serverHostname=$bestServer_OT_hostname
   fi
-  echo The ./get_region.sh script got started with
-  echo -e ${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL${NC}, so we will automatically
-  echo connect to OpenVPN, by running this command:
-  echo -e $ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN="$PIA_TOKEN" \\
-  echo   OVPN_SERVER_IP="$serverIP" \\
-  echo   OVPN_HOSTNAME="$serverHostname" \\
-  echo   CONNECTION_SETTINGS=$VPN_PROTOCOL \\
-  echo -e ./connect_to_openvpn_with_token.sh${NC}
+  echo "The ./get_region.sh script got started with"
+  echo -e "${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL${NC}, so we will automatically"
+  echo "connect to OpenVPN, by running this command:"
+  echo -e "$ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \\"
+  echo "  OVPN_SERVER_IP=$serverIP \\"
+  echo "  OVPN_HOSTNAME=$serverHostname \\"
+  echo "  CONNECTION_SETTINGS=$VPN_PROTOCOL \\"
+  echo -e "  ./connect_to_openvpn_with_token.sh${NC}"
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \
     OVPN_SERVER_IP=$serverIP \

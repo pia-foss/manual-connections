@@ -60,9 +60,9 @@ fi
 mkdir -p /opt/piavpn-manual
 
 if [[ -z $PIA_USER || -z $PIA_PASS ]]; then
-  echo If you want this script to automatically get a token from the Meta
-  echo service, please add the variables PIA_USER and PIA_PASS. Example:
-  echo $ PIA_USER=p0123456 PIA_PASS=xxx ./get_token.sh
+  echo "If you want this script to automatically get a token from the Meta"
+  echo "service, please add the variables PIA_USER and PIA_PASS. Example:"
+  echo "$ PIA_USER=p0123456 PIA_PASS=xxx ./get_token.sh"
   exit 1
 fi
 
@@ -81,7 +81,7 @@ if [[ $(echo "$generateTokenResponse" | jq -r '.status') != "OK" ]]; then
   exit
 fi
 
-echo -e ${GREEN}OK!
+echo -e "${GREEN}OK!"
 echo
 token=$(echo "$generateTokenResponse" | jq -r '.token')
 tokenExpiration=$(timeout_timestamp)

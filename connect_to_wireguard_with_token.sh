@@ -55,28 +55,28 @@ if [[ -f /proc/net/if_inet6 ]] &&
   [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ||
      $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]
 then
-  echo 'You should consider disabling IPv6 by running:'
-  echo 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
-  echo 'sysctl -w net.ipv6.conf.default.disable_ipv6=1'
+  echo "You should consider disabling IPv6 by running:"
+  echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
+  echo "sysctl -w net.ipv6.conf.default.disable_ipv6=1"
 fi
 
 # Check if the mandatory environment variables are set.
 if [[ -z $WG_SERVER_IP ||
       -z $WG_HOSTNAME ||
       -z $PIA_TOKEN ]]; then
-  echo -e ${RED}This script requires 3 env vars:
-  echo WG_SERVER_IP - IP that you want to connect to
-  echo WG_HOSTNAME  - name of the server, required for ssl
-  echo PIA_TOKEN    - your authentication token
+  echo -e "${RED}This script requires 3 env vars:"
+  echo "WG_SERVER_IP - IP that you want to connect to"
+  echo "WG_HOSTNAME  - name of the server, required for ssl"
+  echo "PIA_TOKEN    - your authentication token"
   echo
-  echo You can also specify optional env vars:
+  echo "You can also specify optional env vars:"
   echo "PIA_PF                - enable port forwarding"
   echo "PAYLOAD_AND_SIGNATURE - In case you already have a port."
   echo
-  echo An easy solution is to just run get_region_and_token.sh
-  echo as it will guide you through getting the best server and
-  echo also a token. Detailed information can be found here:
-  echo -e https://github.com/pia-foss/manual-connections${NC}
+  echo "An easy solution is to just run get_region_and_token.sh"
+  echo "as it will guide you through getting the best server and"
+  echo "also a token. Detailed information can be found here:"
+  echo -e "https://github.com/pia-foss/manual-connections${NC}"
   exit 1
 fi
 
@@ -92,7 +92,7 @@ export pubKey
 # In case you didn't clone the entire repo, get the certificate from:
 # https://github.com/pia-foss/manual-connections/blob/master/ca.rsa.4096.crt
 # In case you want to troubleshoot the script, replace -s with -v.
-echo Trying to connect to the PIA WireGuard API on "$WG_SERVER_IP"...
+echo "Trying to connect to the PIA WireGuard API on $WG_SERVER_IP..."
 wireguard_json="$(curl -s -G \
   --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
   --cacert "ca.rsa.4096.crt" \
@@ -111,7 +111,7 @@ fi
 # get multi-hop running with both WireGuard and OpenVPN by playing with
 # these scripts. Feel free to fork the project and test it out.
 echo
-echo Trying to disable a PIA WG connection in case it exists...
+echo "Trying to disable a PIA WG connection in case it exists..."
 wg-quick down pia && echo -e "${GREEN}\nPIA WG connection disabled!${NC}"
 echo
 
@@ -142,14 +142,14 @@ PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
 " > /etc/wireguard/pia.conf || exit 1
-echo -e ${GREEN}OK!${NC}
+echo -e "${GREEN}OK!${NC}"
 
 # Start the WireGuard interface.
 # If something failed, stop this script.
 # If you get DNS errors because you miss some packages,
 # just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
 echo
-echo Trying to create the wireguard interface...
+echo "Trying to create the wireguard interface..."
 wg-quick up pia || exit 1
 echo
 echo -e "${GREEN}The WireGuard interface got created.${NC}
@@ -163,14 +163,14 @@ To disconnect the VPN, run:
 
 # This section will stop the script if PIA_PF is not set to "true".
 if [[ $PIA_PF != "true" ]]; then
-  echo If you want to also enable port forwarding, you can start the script:
-  echo -e $ ${GREEN}PIA_TOKEN="$PIA_TOKEN" \
-    PF_GATEWAY="$WG_SERVER_IP" \
-    PF_HOSTNAME="$WG_HOSTNAME" \
-    ./port_forwarding.sh${NC}
+  echo "If you want to also enable port forwarding, you can start the script:"
+  echo -e "$ ${GREEN}PIA_TOKEN=$PIA_TOKEN" \
+    "PF_GATEWAY=$WG_SERVER_IP" \
+    "PF_HOSTNAME=$WG_HOSTNAME" \
+    "./port_forwarding.sh${NC}"
   echo
-  echo The location used must be port forwarding enabled, or this will fail.
-  echo Calling the ./get_region script with PIA_PF=true will provide a filtered list.
+  echo "The location used must be port forwarding enabled, or this will fail."
+  echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
   exit 1
 fi
 

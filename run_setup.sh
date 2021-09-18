@@ -130,7 +130,7 @@ if [[ $PIA_PF != "true" ]]; then
  PIA_PF="false"
 fi
 export PIA_PF
-echo -e ${GREEN}PIA_PF=$PIA_PF${NC}
+echo -e "${GREEN}PIA_PF=$PIA_PF${NC}"
 echo
 
 # Check for in-line definition of DISABLE_IPV6 and prompt for input
@@ -143,8 +143,8 @@ if [[ -z $DISABLE_IPV6 ]]; then
 fi
 
 if echo "${DISABLE_IPV6:0:1}" | grep -iq n; then
-  echo -e ${RED}"IPv6 settings have not been altered.
-  "${NC}
+  echo -e "${RED}IPv6 settings have not been altered.
+  ${NC}"
 else
   echo -e "The variable ${GREEN}DISABLE_IPV6=$DISABLE_IPV6${NC}, does not start with 'n' for 'no'.
 ${GREEN}Defaulting to yes.${NC}
@@ -155,13 +155,13 @@ ${GREEN}Defaulting to yes.${NC}
   echo -e "${RED}IPv6 has been disabled${NC}, you can ${GREEN}enable it again with: "
   echo "sysctl -w net.ipv6.conf.all.disable_ipv6=0"
   echo "sysctl -w net.ipv6.conf.default.disable_ipv6=0"
-  echo -e ${NC}
+  echo -e "${NC}"
 fi
 
 # Input validation and check for conflicting declarations of AUTOCONNECT and PREFERRED_REGION
 # If both variables are set, AUTOCONNECT has superiority and PREFERRED_REGION is ignored
 if [[ -z $AUTOCONNECT ]]; then
-  echo AUTOCONNECT was not declared.
+  echo "AUTOCONNECT was not declared."
   echo
   selectServer="ask"
 elif echo "${AUTOCONNECT:0:1}" | grep -iq f; then
@@ -184,7 +184,7 @@ else
     echo
   else
     echo
-    echo AUTOCONNECT supersedes in-line definitions of PREFERRED_REGION.
+    echo "AUTOCONNECT supersedes in-line definitions of PREFERRED_REGION."
     echo -e "${RED}PREFERRED_REGION=$PREFERRED_REGION will be ignored.${NC}
     "
     PREFERRED_REGION=""
@@ -287,7 +287,7 @@ For example, you can try 0.2 for 200ms allowed latency.
             else
               PREFERRED_REGION=$( awk 'NR == '"$serverSelection"' {print $2}' /opt/piavpn-manual/latencyList )
               echo
-              echo -e ${GREEN}PREFERRED_REGION="$PREFERRED_REGION"${NC}
+              echo -e "${GREEN}PREFERRED_REGION=$PREFERRED_REGION${NC}"
               break
             fi
         done
@@ -300,13 +300,13 @@ For example, you can try 0.2 for 200ms allowed latency.
         exit 1
       fi
     else
-      echo -e ${GREEN}You will auto-connect to the server with the lowest latency.${NC}
+      echo -e "${GREEN}You will auto-connect to the server with the lowest latency.${NC}"
       echo
       break
     fi
   else
     # Validate in-line declaration of PREFERRED_REGION; if invalid remove input to initiate prompts
-    echo Region input is : "$PREFERRED_REGION"
+    echo "Region input is : $PREFERRED_REGION"
     export PREFERRED_REGION
     VPN_PROTOCOL=no ./get_region.sh
     if [[ $? != 1 ]]; then
@@ -357,15 +357,15 @@ case $VPN_PROTOCOL in
     ;;
 esac
 export VPN_PROTOCOL
-echo -e ${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL"
+echo -e "${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL
 ${NC}"
 
 # Check for the required presence of resolvconf for setting DNS on wireguard connections
 setDNS="yes"
 if ! command -v resolvconf &>/dev/null && [[ $VPN_PROTOCOL == "wireguard" ]]; then
-  echo -e ${RED}The resolvconf package could not be found.
-  echo This script can not set DNS for you and you will
-  echo -e need to invoke DNS protection some other way.${NC}
+  echo -e "${RED}The resolvconf package could not be found."
+  echo "This script can not set DNS for you and you will"
+  echo -e "need to invoke DNS protection some other way.${NC}"
   echo
   setDNS="no"
 fi
@@ -373,7 +373,7 @@ fi
 # Check for in-line definition of PIA_DNS and prompt for input
 if [[ $setDNS == "yes" ]]; then
   if [[ -z $PIA_DNS ]]; then
-    echo Using third party DNS could allow DNS monitoring.
+    echo "Using third party DNS could allow DNS monitoring."
     echo -n "Do you want to force PIA DNS ([Y]es/[n]o): "
     read -r setDNS
     echo
