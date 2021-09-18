@@ -55,9 +55,9 @@ if [[ -f /proc/net/if_inet6 ]] &&
   [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ||
      $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]
 then
-  echo "You should consider disabling IPv6 by running:"
+  echo -e "${RED}You should consider disabling IPv6 by running:"
   echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
-  echo "sysctl -w net.ipv6.conf.default.disable_ipv6=1"
+  echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${NC}"
 fi
 
 # Check if the mandatory environment variables are set.
