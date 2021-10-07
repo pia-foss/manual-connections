@@ -23,13 +23,13 @@
 if [[ -t 1 ]]; then
   ncolors=$(tput colors)
   if [[ -n $ncolors && $ncolors -ge 8 ]]; then
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    NC='\033[0m' # No Color
+    red=$(tput setaf 1) # ANSI red
+    green=$(tput setaf 2) # ANSI green
+    nc=$(tput sgr0) # No Color
   else
-    GREEN=''
-    RED=''
-    NC='' # No Color
+    red=''
+    green=''
+    nc='' # No Color
   fi
 fi
 
@@ -39,7 +39,7 @@ floatCheck='^[0-9]+([.][0-9]+)?$'
 
 # Only allow script to run as root
 if (( EUID != 0 )); then
-  echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'${NC}"
+  echo -e "${red}This script needs to be run as root. Try again with 'sudo $0'${nc}"
   exit 1
 fi
 
@@ -59,15 +59,15 @@ while :; do
       unPrefix=${PIA_USER:0:1}
       unSuffix=${PIA_USER:1}
       if [[ -z $PIA_USER ]]; then
-        echo -e "\n${RED}You must provide input.${NC}"
+        echo -e "\n${red}You must provide input.${nc}"
       elif [[ ${#PIA_USER} != 8 ]]; then
-        echo -e "\n${RED}A PIA username is always 8 characters long.${NC}"
+        echo -e "\n${red}A PIA username is always 8 characters long.${nc}"
       elif [[ $unPrefix != "P" ]] && [[ $unPrefix != "p" ]]; then
-        echo -e "\n${RED}A PIA username must start with \"p\".${NC}"
+        echo -e "\n${red}A PIA username must start with \"p\".${nc}"
       elif ! [[ $unSuffix =~ $intCheck ]]; then
-        echo -e "\n${RED}Username formatting is always p#######!${NC}"
+        echo -e "\n${red}Username formatting is always p#######!${nc}"
       else
-        echo -e "\n${GREEN}PIA_USER=$PIA_USER${NC}"
+        echo -e "\n${green}PIA_USER=$PIA_USER${nc}"
         break
       fi
       PIA_USER=""
@@ -85,11 +85,11 @@ while :; do
 
     # Confirm format of PIA_PASS input
     if [[ -z $PIA_PASS ]]; then
-      echo -e "\n${RED}You must provide input.${NC}"
+      echo -e "\n${red}You must provide input.${nc}"
     elif [[ ${#PIA_PASS} -lt 8 ]]; then
-      echo -e "\n${RED}A PIA password is always a minimum of 8 characters long.${NC}"
+      echo -e "\n${red}A PIA password is always a minimum of 8 characters long.${nc}"
     else
-      echo -e "\n${GREEN}PIA_PASS input received.${NC}"
+      echo -e "\n${green}PIA_PASS input received.${nc}"
       echo
       break
     fi
@@ -130,7 +130,7 @@ if [[ $PIA_PF != "true" ]]; then
  PIA_PF="false"
 fi
 export PIA_PF
-echo -e "${GREEN}PIA_PF=$PIA_PF${NC}"
+echo -e "${green}PIA_PF=$PIA_PF${nc}"
 echo
 
 # Check for in-line definition of DISABLE_IPV6 and prompt for input
@@ -143,19 +143,19 @@ if [[ -z $DISABLE_IPV6 ]]; then
 fi
 
 if echo "${DISABLE_IPV6:0:1}" | grep -iq n; then
-  echo -e "${RED}IPv6 settings have not been altered.
-  ${NC}"
+  echo -e "${red}IPv6 settings have not been altered.
+  ${nc}"
 else
-  echo -e "The variable ${GREEN}DISABLE_IPV6=$DISABLE_IPV6${NC}, does not start with 'n' for 'no'.
-${GREEN}Defaulting to yes.${NC}
+  echo -e "The variable ${green}DISABLE_IPV6=$DISABLE_IPV6${nc}, does not start with 'n' for 'no'.
+${green}Defaulting to yes.${nc}
 "
   sysctl -w net.ipv6.conf.all.disable_ipv6=1
   sysctl -w net.ipv6.conf.default.disable_ipv6=1
   echo
-  echo -e "${RED}IPv6 has been disabled${NC}, you can ${GREEN}enable it again with: "
+  echo -e "${red}IPv6 has been disabled${nc}, you can ${green}enable it again with: "
   echo "sysctl -w net.ipv6.conf.all.disable_ipv6=0"
   echo "sysctl -w net.ipv6.conf.default.disable_ipv6=0"
-  echo -e "${NC}"
+  echo -e "${nc}"
 fi
 
 # Input validation and check for conflicting declarations of AUTOCONNECT and PREFERRED_REGION
@@ -166,26 +166,26 @@ if [[ -z $AUTOCONNECT ]]; then
   selectServer="ask"
 elif echo "${AUTOCONNECT:0:1}" | grep -iq f; then
   if [[ $AUTOCONNECT != "false" ]]; then
-    echo -e "The variable ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}, starts with 'f' for 'false'."
+    echo -e "The variable ${green}AUTOCONNECT=$AUTOCONNECT${nc}, starts with 'f' for 'false'."
     AUTOCONNECT="false"
-    echo -e "Updated ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}"
+    echo -e "Updated ${green}AUTOCONNECT=$AUTOCONNECT${nc}"
     echo
   fi
   selectServer="yes"
 else
   if [[ $AUTOCONNECT != "true" ]]; then
-    echo -e "The variable ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}, does not start with 'f' for 'false'."
+    echo -e "The variable ${green}AUTOCONNECT=$AUTOCONNECT${nc}, does not start with 'f' for 'false'."
     AUTOCONNECT="true"
-    echo -e "Updated ${GREEN}AUTOCONNECT=$AUTOCONNECT${NC}"
+    echo -e "Updated ${green}AUTOCONNECT=$AUTOCONNECT${nc}"
     echo
   fi
   if [[ -z $PREFERRED_REGION ]]; then
-    echo -e "${GREEN}AUTOCONNECT=true${NC}"
+    echo -e "${green}AUTOCONNECT=true${nc}"
     echo
   else
     echo
     echo "AUTOCONNECT supersedes in-line definitions of PREFERRED_REGION."
-    echo -e "${RED}PREFERRED_REGION=$PREFERRED_REGION will be ignored.${NC}
+    echo -e "${red}PREFERRED_REGION=$PREFERRED_REGION will be ignored.${nc}
     "
     PREFERRED_REGION=""
   fi
@@ -233,9 +233,9 @@ For example, you can try 0.2 for 200ms allowed latency.
         if [[ -z $latencyInput ]]; then
           break
         elif [[ $latencyInput == 0 ]]; then
-          echo -e "${RED}Latency input must not be zero.${NC}\n"
+          echo -e "${red}Latency input must not be zero.${nc}\n"
         elif ! [[ $customLatency =~ $floatCheck ]]; then
-          echo -e "${RED}Latency input must be numeric.${NC}\n"
+          echo -e "${red}Latency input must be numeric.${nc}\n"
         elif [[ $latencyInput =~ $intCheck ]]; then
           MAX_LATENCY=$latencyInput
           break
@@ -246,7 +246,7 @@ For example, you can try 0.2 for 200ms allowed latency.
         latencyInput=""
       done
       export MAX_LATENCY
-      echo -e "${GREEN}MAX_LATENCY=$MAX_LATENCY${NC}"
+      echo -e "${green}MAX_LATENCY=$MAX_LATENCY${nc}"
 
       PREFERRED_REGION="none"
       export PREFERRED_REGION
@@ -256,7 +256,7 @@ For example, you can try 0.2 for 200ms allowed latency.
 
       if [[ -s /opt/piavpn-manual/latencyList ]]; then
         # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
-        echo -e "Ordered list of servers with latency less than ${GREEN}$MAX_LATENCY${NC} seconds:"
+        echo -e "Ordered list of servers with latency less than ${green}$MAX_LATENCY${nc} seconds:"
         i=0
         while read -r line; do
           i=$((i+1))
@@ -277,17 +277,17 @@ For example, you can try 0.2 for 200ms allowed latency.
         while :; do
           read -r -p "Input the number of the server you want to connect to ([1]-[$i]) : " serverSelection
             if [[ -z $serverSelection ]]; then
-              echo -e "\n${RED}You must provide input.${NC}\n"
+              echo -e "\n${red}You must provide input.${nc}\n"
             elif ! [[ $serverSelection =~ $intCheck ]]; then
-              echo -e "\n${RED}You must enter a number.${NC}\n"
+              echo -e "\n${red}You must enter a number.${nc}\n"
             elif [[ $serverSelection -lt 1 ]]; then
-              echo -e "\n${RED}You must enter a number greater than 1.${NC}\n"
+              echo -e "\n${red}You must enter a number greater than 1.${nc}\n"
             elif [[ $serverSelection -gt $i ]]; then
-              echo -e "\n${RED}You must enter a number between 1 and $i.${NC}\n"
+              echo -e "\n${red}You must enter a number between 1 and $i.${nc}\n"
             else
               PREFERRED_REGION=$( awk 'NR == '"$serverSelection"' {print $2}' /opt/piavpn-manual/latencyList )
               echo
-              echo -e "${GREEN}PREFERRED_REGION=$PREFERRED_REGION${NC}"
+              echo -e "${green}PREFERRED_REGION=$PREFERRED_REGION${nc}"
               break
             fi
         done
@@ -300,7 +300,7 @@ For example, you can try 0.2 for 200ms allowed latency.
         exit 1
       fi
     else
-      echo -e "${GREEN}You will auto-connect to the server with the lowest latency.${NC}"
+      echo -e "${green}You will auto-connect to the server with the lowest latency.${nc}"
       echo
       break
     fi
@@ -357,15 +357,15 @@ case $VPN_PROTOCOL in
     ;;
 esac
 export VPN_PROTOCOL
-echo -e "${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL
-${NC}"
+echo -e "${green}VPN_PROTOCOL=$VPN_PROTOCOL
+${nc}"
 
 # Check for the required presence of resolvconf for setting DNS on wireguard connections
 setDNS="yes"
 if ! command -v resolvconf &>/dev/null && [[ $VPN_PROTOCOL == "wireguard" ]]; then
-  echo -e "${RED}The resolvconf package could not be found."
+  echo -e "${red}The resolvconf package could not be found."
   echo "This script can not set DNS for you and you will"
-  echo -e "need to invoke DNS protection some other way.${NC}"
+  echo -e "need to invoke DNS protection some other way.${nc}"
   echo
   setDNS="no"
 fi
@@ -386,7 +386,7 @@ elif [[ $PIA_DNS != "true" || $setDNS == "no" ]]; then
   PIA_DNS="false"
 fi
 export PIA_DNS
-echo -e "${GREEN}PIA_DNS=$PIA_DNS${NC}"
+echo -e "${green}PIA_DNS=$PIA_DNS${nc}"
 
 CONNECTION_READY="true"
 export CONNECTION_READY

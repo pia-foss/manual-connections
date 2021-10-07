@@ -50,13 +50,13 @@ fi
 if [[ -t 1 ]]; then
   ncolors=$(tput colors)
   if [[ -n $ncolors && $ncolors -ge 8 ]]; then
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    NC='\033[0m' # No Color
+    red=$(tput setaf 1) # ANSI red
+    green=$(tput setaf 2) # ANSI green
+    nc=$(tput sgr0) # No Color
   else
-    GREEN=''
-    RED=''
-    NC='' # No Color
+    red=''
+    green=''
+    nc='' # No Color
   fi
 fi
 
@@ -97,10 +97,10 @@ export payload_and_signature
 # Check if the payload and the signature are OK.
 # If they are not OK, just stop the script.
 if [[ $(echo "$payload_and_signature" | jq -r '.status') != "OK" ]]; then
-  echo -e "${RED}The payload_and_signature variable does not contain an OK status.${NC}"
+  echo -e "${red}The payload_and_signature variable does not contain an OK status.${nc}"
   exit 1
 fi
-echo -e "${GREEN}OK!${NC}"
+echo -e "${green}OK!${nc}"
 
 # We need to get the signature out of the previous response.
 # The signature will allow the us to bind the port on the server.
@@ -118,10 +118,10 @@ port=$(echo "$payload" | base64 -d | jq -r '.port')
 expires_at=$(echo "$payload" | base64 -d | jq -r '.expires_at')
 
 echo -ne "
-Signature ${GREEN}$signature${NC}
-Payload   ${GREEN}$payload${NC}
+Signature ${green}$signature${nc}
+Payload   ${green}$payload${nc}
 
---> The port is ${GREEN}$port${NC} and it will expire on ${RED}$expires_at${NC}. <--
+--> The port is ${green}$port${nc} and it will expire on ${red}$expires_at${nc}. <--
 
 Trying to bind the port... "
 
@@ -136,19 +136,19 @@ while true; do
     --data-urlencode "payload=${payload}" \
     --data-urlencode "signature=${signature}" \
     "https://${PF_HOSTNAME}:19999/bindPort")"
-    echo -e "${GREEN}OK!${NC}"
+    echo -e "${green}OK!${nc}"
 
     # If port did not bind, just exit the script.
     # This script will exit in 2 months, since the port will expire.
     export bind_port_response
     if [[ $(echo "$bind_port_response" | jq -r '.status') != "OK" ]]; then
-      echo -e "${RED}The API did not return OK when trying to bind port... Exiting.${NC}"
+      echo -e "${red}The API did not return OK when trying to bind port... Exiting.${nc}"
       exit 1
     fi
-    echo -e Forwarded port'\t'"${GREEN}$port${NC}"
-    echo -e Refreshed on'\t'"${GREEN}$(date)${NC}"
-    echo -e Expires on'\t'"${RED}$(date --date="$expires_at")${NC}"
-    echo -e "\n${GREEN}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${NC}\n"
+    echo -e Forwarded port'\t'"${green}$port${nc}"
+    echo -e Refreshed on'\t'"${green}$(date)${nc}"
+    echo -e Expires on'\t'"${red}$(date --date="$expires_at")${nc}"
+    echo -e "\n${green}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${nc}\n"
 
     # sleep 15 minutes
     sleep 900

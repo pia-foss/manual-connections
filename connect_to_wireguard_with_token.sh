@@ -37,13 +37,13 @@ check_tool jq
 if [[ -t 1 ]]; then
   ncolors=$(tput colors)
   if [[ -n $ncolors && $ncolors -ge 8 ]]; then
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    NC='\033[0m' # No Color
+    red=$(tput setaf 1) # ANSI red
+    green=$(tput setaf 2) # ANSI green
+    nc=$(tput sgr0) # No Color
   else
-    GREEN=''
-    RED=''
-    NC='' # No Color
+    red=''
+    green=''
+    nc='' # No Color
   fi
 fi
 
@@ -55,16 +55,16 @@ if [[ -f /proc/net/if_inet6 ]] &&
   [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ||
      $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]
 then
-  echo -e "${RED}You should consider disabling IPv6 by running:"
+  echo -e "${red}You should consider disabling IPv6 by running:"
   echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
-  echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${NC}"
+  echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
 fi
 
 # Check if the mandatory environment variables are set.
 if [[ -z $WG_SERVER_IP ||
       -z $WG_HOSTNAME ||
       -z $PIA_TOKEN ]]; then
-  echo -e "${RED}This script requires 3 env vars:"
+  echo -e "${red}This script requires 3 env vars:"
   echo "WG_SERVER_IP - IP that you want to connect to"
   echo "WG_HOSTNAME  - name of the server, required for ssl"
   echo "PIA_TOKEN    - your authentication token"
@@ -76,7 +76,7 @@ if [[ -z $WG_SERVER_IP ||
   echo "An easy solution is to just run get_region_and_token.sh"
   echo "as it will guide you through getting the best server and"
   echo "also a token. Detailed information can be found here:"
-  echo -e "https://github.com/pia-foss/manual-connections${NC}"
+  echo -e "https://github.com/pia-foss/manual-connections${nc}"
   exit 1
 fi
 
@@ -103,7 +103,7 @@ export wireguard_json
 
 # Check if the API returned OK and stop this script if it didn't.
 if [[ $(echo "$wireguard_json" | jq -r '.status') != "OK" ]]; then
-  >&2 echo -e "${RED}Server did not return OK. Stopping now.${NC}"
+  >&2 echo -e "${red}Server did not return OK. Stopping now.${nc}"
   exit 1
 fi
 
@@ -112,7 +112,7 @@ fi
 # these scripts. Feel free to fork the project and test it out.
 echo
 echo "Trying to disable a PIA WG connection in case it exists..."
-wg-quick down pia && echo -e "${GREEN}\nPIA WG connection disabled!${NC}"
+wg-quick down pia && echo -e "${green}\nPIA WG connection disabled!${nc}"
 echo
 
 # Create the WireGuard config based on the JSON received from the API
@@ -142,7 +142,7 @@ PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
 " > /etc/wireguard/pia.conf || exit 1
-echo -e "${GREEN}OK!${NC}"
+echo -e "${green}OK!${nc}"
 
 # Start the WireGuard interface.
 # If something failed, stop this script.
@@ -152,29 +152,29 @@ echo
 echo "Trying to create the wireguard interface..."
 wg-quick up pia || exit 1
 echo
-echo -e "${GREEN}The WireGuard interface got created.${NC}
+echo -e "${green}The WireGuard interface got created.${nc}
 
 At this point, internet should work via VPN.
 
 To disconnect the VPN, run:
 
---> ${GREEN}wg-quick down pia${NC} <--
+--> ${green}wg-quick down pia${nc} <--
 "
 
 # This section will stop the script if PIA_PF is not set to "true".
 if [[ $PIA_PF != "true" ]]; then
   echo "If you want to also enable port forwarding, you can start the script:"
-  echo -e "$ ${GREEN}PIA_TOKEN=$PIA_TOKEN" \
+  echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN" \
     "PF_GATEWAY=$WG_SERVER_IP" \
     "PF_HOSTNAME=$WG_HOSTNAME" \
-    "./port_forwarding.sh${NC}"
+    "./port_forwarding.sh${nc}"
   echo
   echo "The location used must be port forwarding enabled, or this will fail."
   echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
   exit 1
 fi
 
-echo -ne "This script got started with ${GREEN}PIA_PF=true${NC}.
+echo -ne "This script got started with ${green}PIA_PF=true${nc}.
 
 Starting port forwarding in "
 for i in {5..1}; do
@@ -185,10 +185,10 @@ echo
 echo
 
 echo -e "Starting procedure to enable port forwarding by running the following command:
-$ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
+$ ${green}PIA_TOKEN=$PIA_TOKEN \\
   PF_GATEWAY=$WG_SERVER_IP \\
   PF_HOSTNAME=$WG_HOSTNAME \\
-  ./port_forwarding.sh${NC}"
+  ./port_forwarding.sh${nc}"
 
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY=$WG_SERVER_IP \
