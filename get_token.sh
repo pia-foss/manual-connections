@@ -41,19 +41,19 @@ timeout_timestamp() {
 if [[ -t 1 ]]; then
   ncolors=$(tput colors)
   if [[ -n $ncolors && $ncolors -ge 8 ]]; then
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    NC='\033[0m' # No Color
+    red=$(tput setaf 1) # ANSI red
+    green=$(tput setaf 2) # ANSI green
+    nc=$(tput sgr0) # No Color
   else
-    GREEN=''
-    RED=''
-    NC='' # No Color
+    red=''
+    green=''
+    nc='' # No Color
   fi
 fi
 
 # Only allow script to run as root
 if (( EUID != 0 )); then
-  echo -e "${RED}This script needs to be run as root. Try again with 'sudo $0'${NC}"
+  echo -e "${red}This script needs to be run as root. Try again with 'sudo $0'${nc}"
   exit 1
 fi
 
@@ -74,17 +74,17 @@ generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
 if [[ $(echo "$generateTokenResponse" | jq -r '.status') != "OK" ]]; then
   echo
   echo
-  echo -e "${RED}Could not authenticate with the login credentials provided!${NC}"
+  echo -e "${red}Could not authenticate with the login credentials provided!${nc}"
   echo
   exit
 fi
 
-echo -e "${GREEN}OK!"
+echo -e "${green}OK!"
 echo
 token=$(echo "$generateTokenResponse" | jq -r '.token')
 tokenExpiration=$(timeout_timestamp)
 tokenLocation="/opt/piavpn-manual/token"
-echo -e "PIA_TOKEN=$token${NC}"
+echo -e "PIA_TOKEN=$token${nc}"
 echo "$token" > "$tokenLocation" || exit 1
 echo "$tokenExpiration" >> "$tokenLocation"
 echo
