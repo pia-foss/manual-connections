@@ -61,7 +61,7 @@ Some users have created their own repositories for manual connections, based on 
 | Linux | No | Python | WireGuard, PF | [milahu/python-piavpn](https://github.com/milahu/python-piavpn) |
 | Linux | No | Bash | WireGuard, PF,<br/>router and android config | [triffid/pia-wg](https://github.com/triffid/pia-wg) |
 | Linux/FreeBSD/Win | No | Go | WireGuard,<br />config generation | [ddb_db/piawgcli](https://gitlab.com/ddb_db/piawgcli) |
-| OPNsense | No | Python | WireGuard, PF | [FingerlessGlov3s/OPNsensePIAWireguard](https://github.com/FingerlessGlov3s/OPNsensePIAWireguard) |
+| OPNsense | No | Python | WireGuard, PF, DIP | [FingerlessGlov3s/OPNsensePIAWireguard](https://github.com/FingerlessGlov3s/OPNsensePIAWireguard) |
 | pfSense | No | Sh | OpenVPN, PF | [fm407/PIA-NextGen-PortForwarding](https://github.com/fm407/PIA-NextGen-PortForwarding) |
 | pfSense | No | Java/PHP | WireGuard, PF | [ddb_db/pfpiamgr](https://gitlab.com/ddb_db/pfpiamgr) |
 | Synology | Yes | Bash | Compatibility | [steff2632/manual-connections](https://github.com/steff2632/manual-connections) |
