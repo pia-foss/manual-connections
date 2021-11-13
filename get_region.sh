@@ -95,7 +95,7 @@ touch /opt/piavpn-manual/latencyList
 MAX_LATENCY=${MAX_LATENCY:-0.05}
 export MAX_LATENCY
 
-serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
+serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v6'
 
 # This function checks the latency you have to a specific region.
 # It will print a human-readable message to stderr,
