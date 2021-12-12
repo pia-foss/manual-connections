@@ -145,8 +145,8 @@ iptables -A OUTPUT -o wlan0 -p udp --dport 123 -m comment --comment 'ntp' -j ACC
 iptables -A OUTPUT -o wlan0 -p udp --dport 53 -m comment --comment 'dns' -j ACCEPT; \
 iptables -A FORWARD -i pia -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT; \
 iptables -A FORWARD -i wlan0 -o pia -m comment --comment 'LAN out to VPN' -j ACCEPT; \
-iptables -t nat -A POSTROUTING -o pia -j MASQUERADE \
-sudo ip route add 10.0.0.0/16 via 172.16.40.10 dev wlan0 proto static
+iptables -t nat -A POSTROUTING -o pia -j MASQUERADE; \
+ip route add 10.0.0.0/16 via 172.16.40.10 dev wlan0 proto static
 
 PostDown = iptables -D INPUT -i wlan0 -m comment --comment 'In from LAN' -j ACCEPT; \
 iptables -D OUTPUT -o pia -m comment --comment 'Out to VPN' -j ACCEPT; \
@@ -155,8 +155,8 @@ iptables -D OUTPUT -o wlan0 -p udp --dport 123 -m comment --comment 'ntp' -j ACC
 iptables -D OUTPUT -o wlan0 -p udp --dport 53 -m comment --comment 'dns' -j ACCEPT; \
 iptables -D FORWARD -i pia -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT; \
 iptables -D FORWARD -i wlan0 -o pia -m comment --comment 'LAN out to VPN' -j ACCEPT; \
-iptables -t nat -D POSTROUTING -o pia -j MASQUERADE \
-sudo ip route add 10.0.0.0/16 via 172.16.40.10 dev wlan0 proto static
+iptables -t nat -D POSTROUTING -o pia -j MASQUERADE; \
+ip route add 10.0.0.0/16 via 172.16.40.10 dev wlan0 proto static
 
 [Peer]
 PersistentKeepalive = 25
