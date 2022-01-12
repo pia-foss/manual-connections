@@ -18,6 +18,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+parent_folder=$(dirname $(realpath $0))
 
 # This function allows you to check if the required tools have been installed.
 function check_tool() {
@@ -168,7 +169,7 @@ if [[ $selectedRegion == "none" ]]; then
   if [ -z "$selectedRegion" ]; then
     echo -e ${RED}No region responded within ${MAX_LATENCY}s, consider using a higher timeout.
     echo For example, to wait 1 second for each region, inject MAX_LATENCY=1 like this:
-    echo -e $ MAX_LATENCY=1 ./get_region.sh${NC}
+    echo -e $ MAX_LATENCY=1 $parent_folder/get_region.sh${NC}
     exit 1
   else
     echo -e "A list of servers and connection details, ordered by latency can be 
@@ -219,10 +220,10 @@ if [[ -z "$PIA_TOKEN" ]] || [[ $PIA_TOKEN == "" ]]; then
   if [[ ! $PIA_USER || ! $PIA_PASS ]]; then
     echo -e ${RED}If you want this script to automatically get an authentication
     echo token, please add the variables PIA_USER and PIA_PASS. Example:
-    echo -e $ PIA_USER=p0123456 PIA_PASS=xxx ./get_region.sh${NC}
+    echo -e $ PIA_USER=p0123456 PIA_PASS=xxx $parent_folder/get_region.sh${NC}
     exit 0
   fi
-  ./get_token.sh
+  $parent_folder/get_token.sh
   PIA_TOKEN=$( awk 'NR == 1' /opt/piavpn-manual/token )
   export PIA_TOKEN
   rm -f /opt/piavpn-manual/token
@@ -233,15 +234,15 @@ fi
 
 # Connect with WireGuard and clear authentication token file and latencyList
 if [[ $VPN_PROTOCOL == wireguard ]]; then
-  echo The ./get_region.sh script got started with
+  echo The $parent_folder/get_region.sh script got started with
   echo -e ${GREEN}VPN_PROTOCOL=wireguard${NC}, so we will automatically connect to WireGuard,
   echo by running this command:
   echo -e $ ${GREEN}PIA_TOKEN=$PIA_TOKEN \\
   echo WG_SERVER_IP=$bestServer_WG_IP WG_HOSTNAME=$bestServer_WG_hostname \\
-  echo -e PIA_PF=$PIA_PF ./connect_to_wireguard_with_token.sh${NC}
+  echo -e PIA_PF=$PIA_PF $parent_folder/connect_to_wireguard_with_token.sh${NC}
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN WG_SERVER_IP=$bestServer_WG_IP \
-    WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
+    WG_HOSTNAME=$bestServer_WG_hostname $parent_folder/connect_to_wireguard_with_token.sh
   rm -f /opt/piavpn-manual/latencyList
   exit 0
 fi
@@ -254,20 +255,20 @@ if [[ $VPN_PROTOCOL == openvpn* ]]; then
     serverIP=$bestServer_OT_IP
     serverHostname=$bestServer_OT_hostname
   fi
-  echo The ./get_region.sh script got started with
+  echo The $parent_folder/get_region.sh script got started with
   echo -e ${GREEN}VPN_PROTOCOL=$VPN_PROTOCOL${NC}, so we will automatically
   echo connect to OpenVPN, by running this command:
   echo -e $ ${GREEN}PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \\
   echo   OVPN_SERVER_IP=$serverIP \\
   echo   OVPN_HOSTNAME=$serverHostname \\
   echo   CONNECTION_SETTINGS=$VPN_PROTOCOL \\
-  echo -e ./connect_to_openvpn_with_token.sh${NC}
+  echo -e $parent_folder/connect_to_openvpn_with_token.sh${NC}
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \
     OVPN_SERVER_IP=$serverIP \
     OVPN_HOSTNAME=$serverHostname \
     CONNECTION_SETTINGS=$VPN_PROTOCOL \
-    ./connect_to_openvpn_with_token.sh
+    $parent_folder/connect_to_openvpn_with_token.sh
   rm -f /opt/piavpn-manual/latencyList
   exit 0
 fi
