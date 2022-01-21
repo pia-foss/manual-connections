@@ -81,6 +81,12 @@ fi
 # If you already have a signature, and you would like to re-use that port,
 # save the payload_and_signature received from your previous request
 # in the env var PAYLOAD_AND_SIGNATURE, and that will be used instead.
+
+mkdir -p /opt/piavpn-manual
+
+# remove previous stored port before obtaining a new one
+rm -f /opt/piavpn-manual/port_forwarding
+
 if [[ ! $PAYLOAD_AND_SIGNATURE ]]; then
   echo
   echo -n "Getting new signature... "
@@ -99,9 +105,14 @@ export payload_and_signature
 # If they are not OK, just stop the script.
 if [ "$(echo "$payload_and_signature" | jq -r '.status')" != "OK" ]; then
   echo -e "${RED}The payload_and_signature variable does not contain an OK status.${NC}"
+  # deleve invalid payload and signature
+  rm -f /opt/piavpn-manual/payload_and_signature
   exit 1
 fi
 echo -e "${GREEN}OK!${NC}"
+
+# store last valid payload and signature
+echo $payload_and_signature > /opt/piavpn-manual/payload_and_signature || exit 1
 
 # We need to get the signature out of the previous response.
 # The signature will allow the us to bind the port on the server.
@@ -117,6 +128,11 @@ port="$(echo "$payload" | base64 -d | jq -r '.port')"
 # The port normally expires after 2 months. If you consider
 # 2 months is not enough for your setup, please open a ticket.
 expires_at="$(echo "$payload" | base64 -d | jq -r '.expires_at')"
+
+# store port
+echo $port > /opt/piavpn-manual/port_forwarding || exit 1
+# store port expiration
+echo $expires_at >> /opt/piavpn-manual/port_forwarding
 
 echo -ne "
 Signature ${GREEN}$signature${NC}
@@ -144,6 +160,8 @@ while true; do
     export bind_port_response
     if [ "$(echo "$bind_port_response" | jq -r '.status')" != "OK" ]; then
       echo -e "${RED}The API did not return OK when trying to bind port... Exiting."
+      # remove stored port as it is now invalid
+      rm -f /opt/piavpn-manual/port_forwarding
       exit 1
     fi
     echo -e Forwarded port'\t'${GREEN}$port${NC}
