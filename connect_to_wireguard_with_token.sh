@@ -80,6 +80,11 @@ if [[ -z $WG_SERVER_IP ||
   exit 1
 fi
 
+# Check if an Wireguard interface name has been specified (e.g. /etc/wireguard/INTERFACE.conf)
+if [[ -z "$WG_INTERFACE" ]]; then
+  WG_INTERFACE=pia
+fi
+
 # Create ephemeral wireguard keys, that we don't need to save to disk.
 privKey=$(wg genkey)
 export privKey
@@ -112,7 +117,7 @@ fi
 # these scripts. Feel free to fork the project and test it out.
 echo
 echo "Trying to disable a PIA WG connection in case it exists..."
-wg-quick down pia && echo -e "${green}\nPIA WG connection disabled!${nc}"
+wg-quick down "$WG_INTERFACE" && echo -e "${green}\nPIA WG connection disabled!${nc}"
 echo
 
 # Create the WireGuard config based on the JSON received from the API
@@ -129,7 +134,7 @@ if [[ $PIA_DNS == "true" ]]; then
   echo
   dnsSettingForVPN="DNS = $dnsServer"
 fi
-echo -n "Trying to write /etc/wireguard/pia.conf..."
+echo -n "Trying to write /etc/wireguard/$WG_INTERFACE.conf..."
 mkdir -p /etc/wireguard
 echo "
 [Interface]
@@ -141,7 +146,7 @@ PersistentKeepalive = 25
 PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
-" > /etc/wireguard/pia.conf || exit 1
+" > "/etc/wireguard/$WG_INTERFACE.conf" || exit 1
 echo -e "${green}OK!${nc}"
 
 # Start the WireGuard interface.
@@ -149,8 +154,8 @@ echo -e "${green}OK!${nc}"
 # If you get DNS errors because you miss some packages,
 # just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
 echo
-echo "Trying to create the wireguard interface..."
-wg-quick up pia || exit 1
+echo Trying to create the wireguard interface...
+wg-quick up "$WG_INTERFACE" || exit 1
 echo
 echo -e "${green}The WireGuard interface got created.${nc}
 
@@ -158,7 +163,7 @@ At this point, internet should work via VPN.
 
 To disconnect the VPN, run:
 
---> ${green}wg-quick down pia${nc} <--
+--> ${green}wg-quick down ${WG_INTERFACE}${nc} <--
 "
 
 # This section will stop the script if PIA_PF is not set to "true".
