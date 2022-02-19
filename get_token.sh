@@ -69,7 +69,7 @@ fi
 echo -n "Checking login credentials..."
 
 generateTokenResponse=$(curl -s -u "$PIA_USER:$PIA_PASS" \
-  "https://privateinternetaccess.com/gtoken/generateToken")
+  "https://www.privateinternetaccess.com/gtoken/generateToken")
 
 if [[ $(echo "$generateTokenResponse" | jq -r '.status') != "OK" ]]; then
   echo
