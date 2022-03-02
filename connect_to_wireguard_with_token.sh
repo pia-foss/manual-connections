@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
@@ -172,10 +174,10 @@ if [[ $PIA_PF != "true" ]]; then
   echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN" \
     "PF_GATEWAY=$WG_SERVER_IP" \
     "PF_HOSTNAME=$WG_HOSTNAME" \
-    "./port_forwarding.sh${nc}"
+    "$DIR/port_forwarding.sh${nc}"
   echo
   echo "The location used must be port forwarding enabled, or this will fail."
-  echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
+  echo "Calling the $DIR/get_region script with PIA_PF=true will provide a filtered list."
   exit 1
 fi
 
@@ -193,9 +195,9 @@ echo -e "Starting procedure to enable port forwarding by running the following c
 $ ${green}PIA_TOKEN=$PIA_TOKEN \\
   PF_GATEWAY=$WG_SERVER_IP \\
   PF_HOSTNAME=$WG_HOSTNAME \\
-  ./port_forwarding.sh${nc}"
+  $DIR/port_forwarding.sh${nc}"
 
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY=$WG_SERVER_IP \
   PF_HOSTNAME=$WG_HOSTNAME \
-  ./port_forwarding.sh
+  $DIR/port_forwarding.sh

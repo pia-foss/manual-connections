@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
@@ -62,7 +64,7 @@ mkdir -p /opt/piavpn-manual
 if [[ -z $PIA_USER || -z $PIA_PASS ]]; then
   echo "If you want this script to automatically get a token from the Meta"
   echo "service, please add the variables PIA_USER and PIA_PASS. Example:"
-  echo "$ PIA_USER=p0123456 PIA_PASS=xxx ./get_token.sh"
+  echo "$ PIA_USER=p0123456 PIA_PASS=xxx $DIR/get_token.sh"
   exit 1
 fi
 
