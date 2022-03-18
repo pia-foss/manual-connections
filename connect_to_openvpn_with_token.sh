@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
@@ -173,7 +175,7 @@ if [[ $PIA_DNS != "true" ]]; then
   echo "with the env var PIA_DNS=true. Example:"
   echo $ OVPN_SERVER_IP=\""$OVPN_SERVER_IP"\" OVPN_HOSTNAME=\""$OVPN_HOSTNAME"\" \
     PIA_TOKEN=\""$PIA_TOKEN"\" CONNECTION_SETTINGS=\""$CONNECTION_SETTINGS"\" \
-    PIA_PF=true PIA_DNS=true ./connect_to_openvpn_with_token.sh
+    PIA_PF=true PIA_DNS=true $DIR/connect_to_openvpn_with_token.sh
 else
   cp openvpn_config/openvpn_up_dnsoverwrite.sh /opt/piavpn-manual/openvpn_up.sh
   cp openvpn_config/openvpn_down_dnsoverwrite.sh /opt/piavpn-manual/openvpn_down.sh
@@ -237,10 +239,10 @@ if [[ $PIA_PF != "true" ]]; then
   echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN" \
     "PF_GATEWAY=$gateway_ip" \
     "PF_HOSTNAME=$OVPN_HOSTNAME" \
-    "./port_forwarding.sh${nc}"
+    "$DIR/port_forwarding.sh${nc}"
   echo
   echo "The location used must be port forwarding enabled, or this will fail."
-  echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
+  echo "Calling the $DIR/get_region script with PIA_PF=true will provide a filtered list."
   exit 1
 fi
 
@@ -258,9 +260,9 @@ echo -e "Starting procedure to enable port forwarding by running the following c
 $ ${green}PIA_TOKEN=$PIA_TOKEN \\
   PF_GATEWAY=$gateway_ip \\
   PF_HOSTNAME=$OVPN_HOSTNAME \\
-  ./port_forwarding.sh${nc}"
+  $DIR/port_forwarding.sh${nc}"
 
 PIA_TOKEN=$PIA_TOKEN \
   PF_GATEWAY=$gateway_ip \
   PF_HOSTNAME=$OVPN_HOSTNAME \
-  ./port_forwarding.sh
+  $DIR/port_forwarding.sh
