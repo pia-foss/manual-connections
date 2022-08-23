@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Copyright (C) 2020 Private Internet Access, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,7 +22,7 @@
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
-  if ! command -v "$cmd" >/dev/null; then
+  if ! command -v $cmd &>/dev/null; then
     echo "$cmd could not be found"
     echo "Please install $cmd"
     exit 1
@@ -32,11 +32,6 @@ check_tool() {
 # Now we call the function to make sure we can use curl and jq.
 check_tool curl
 check_tool jq
-
-# This function creates a timestamp, to use for setting $TOKEN_EXPIRATION
-timeout_timestamp() {
-  date +"%c" --date='1 day' # Timestamp 24 hours
-}
 
 # Check if terminal allows output, if yes, define colors for output
 if [[ -t 1 ]]; then
@@ -60,36 +55,56 @@ fi
 
 mkdir -p /opt/piavpn-manual
 
-if [[ -z $PIA_USER || -z $PIA_PASS ]]; then
-  echo "If you want this script to automatically get a token from the Meta"
-  echo "service, please add the variables PIA_USER and PIA_PASS. Example:"
-  echo "$ PIA_USER=p0123456 PIA_PASS=xxx ./get_token.sh"
+if [[ -z $PIA_TOKEN ]]; then
+  echo "If you want this script to automatically retrieve dedicated IP location details"
+  echo "from the Meta service, please add the variables PIA_TOKEN and DIP_TOKEN. Example:"
+  echo "$ PIA_TOKEN DIP_TOKEN=DIP1a2b3c4d5e6f7g8h9i10j11k12l13 ./get_token.sh"
   exit 1
 fi
 
-echo -n "Checking login credentials..."
+dipSavedLocation=/opt/piavpn-manual/dipAddress
 
-generateTokenResponse=$(curl -s --location --request POST \
-  'https://www.privateinternetaccess.com/api/client/v2/token' \
-  --form "username=$PIA_USER" \
-  --form "password=$PIA_PASS" )
+echo
+echo -n "Checking DIP token..."
 
-if [ "$(echo "$generateTokenResponse" | jq -r '.token')" == "" ]; then
+generateDIPResponse=$(curl -s --location --request POST \
+  'https://www.privateinternetaccess.com/api/client/v2/dedicated_ip' \
+  --header 'Content-Type: application/json' \
+  --header "Authorization: Token $PIA_TOKEN" \
+  --data-raw '{
+    "tokens":["'"$DIP_TOKEN"'"]
+  }')
+
+if [ "$(echo "$generateDIPResponse" | jq -r '.[0].status')" != "active" ]; then
   echo
   echo
-  echo -e "${red}Could not authenticate with the login credentials provided!${nc}"
+  echo -e "${red}Could not validate the dedicated IP token provided!${nc}"
   echo
   exit
 fi
-
-echo -e "${green}OK!"
+  
+echo -e ${green}OK!${nc}
 echo
-token=$(echo "$generateTokenResponse" | jq -r '.token')
-tokenExpiration=$(timeout_timestamp)
-tokenLocation=/opt/piavpn-manual/token
-echo -e "PIA_TOKEN=$token${nc}"
-echo "$token" > "$tokenLocation" || exit 1
-echo "$tokenExpiration" >> "$tokenLocation"
+dipAddress=$(echo "$generateDIPResponse" | jq -r '.[0].ip')
+dipHostname=$(echo "$generateDIPResponse" | jq -r '.[0].cn')
+keyHostname=$(echo "dedicated_ip_$DIP_TOKEN")
+dipExpiration=$(echo "$generateDIPResponse" | jq -r '.[0].dip_expire')
+dipExpiration=$(date -d @$dipExpiration)
+dipID=$(echo "$generateDIPResponse" | jq -r '.[0].id')
+echo -e The hostname of your dedicated IP is ${green}$dipHostname${nc}
 echo
-echo "This token will expire in 24 hours, on $tokenExpiration."
+echo -e The dedicated IP address is ${green}$dipAddress${nc}
+echo 
+echo This dedicated IP is valid until $dipExpiration.
 echo
+pfCapable="true"
+if [[ $dipID == us_* ]]; then
+  pfCapable="false"
+  echo This location does not have port forwarding capability.
+  echo
+fi
+echo $dipAddress > /opt/piavpn-manual/dipAddress || exit 1
+echo $dipHostname >> /opt/piavpn-manual/dipAddress
+echo $keyHostname >> /opt/piavpn-manual/dipAddress
+echo $dipExpiration >> /opt/piavpn-manual/dipAddress
+echo $pfCapable >> /opt/piavpn-manual/dipAddress

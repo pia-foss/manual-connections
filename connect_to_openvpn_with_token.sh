@@ -28,6 +28,7 @@ check_tool() {
     exit 1
   fi
 }
+
 # Now we call the function to make sure we can use openvpn, curl and jq.
 check_tool openvpn
 check_tool curl
@@ -124,13 +125,22 @@ if [[ -z $OVPN_SERVER_IP ||
   exit 1
 fi
 
+splitToken="dedicated_ip_$DIP_TOKEN"
+
 # Create a credentials file with the login token
 echo -n "Trying to write /opt/piavpn-manual/pia.ovpn..."
 mkdir -p /opt/piavpn-manual
 rm -f /opt/piavpn-manual/credentials /opt/piavpn-manual/route_info
-echo "${PIA_TOKEN:0:62}
+
+if [[ -z $DIP_TOKEN ]]; then
+  echo "${PIA_TOKEN:0:62}
 ${PIA_TOKEN:62}" > /opt/piavpn-manual/credentials || exit 1
-chmod 600 /opt/piavpn-manual/credentials
+  chmod 600 /opt/piavpn-manual/credentials
+else
+  echo "${splitToken:0:62}
+${splitToken:62}" > /opt/piavpn-manual/credentials || exit 1
+  chmod 600 /opt/piavpn-manual/credentials
+fi
 echo -e "${green}OK!${nc}"
 
 # Translate connection settings variable

@@ -27,7 +27,7 @@ The scripts were written so that they are easy to read and to modify. The code a
 In order for the scripts to work (probably even if you do a manual setup), you will need the following packages:
  * `curl`
  * `jq`
- * (only for WireGuard) `wg-quick` and `wireguard` kernel module
+ * (only for WireGuard) `wireguard-tools` (`wg-quick` and `wireguard` kernel module)
  * (only for OpenVPN) `openvpn`
 
 ## Disclaimers
@@ -90,6 +90,7 @@ Here is a list of scripts you could find useful:
  * [Prompt based connection](run_setup.sh): This script allows connections with a one-line call, or will prompt for any missing or invalid variables. Variables available for one-line calls include:
    * `PIA_USER` - your PIA username
    * `PIA_PASS` - your PIA password
+   * `DIP_TOKEN` - your PIA dedicated IP token (can be purchased in the client control panel)
    * `PIA_DNS` - true/false
    * `PIA_PF` - true/false
    * `MAX_LATENCY` - numeric value, in seconds

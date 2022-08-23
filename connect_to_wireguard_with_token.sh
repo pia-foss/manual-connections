@@ -22,16 +22,18 @@
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
+  pkg=$2
   if ! command -v "$cmd" >/dev/null; then
     echo "$cmd could not be found"
-    echo "Please install $cmd"
+    echo "Please install $pkg"
     exit 1
   fi
 }
+
 # Now we call the function to make sure we can use wg-quick, curl and jq.
-check_tool wg-quick
-check_tool curl
-check_tool jq
+check_tool wg-quick wireguard-tools
+check_tool curl curl
+check_tool jq jq
 
 # Check if terminal allows output, if yes, define colors for output
 if [[ -t 1 ]]; then
@@ -93,12 +95,21 @@ export pubKey
 # https://github.com/pia-foss/manual-connections/blob/master/ca.rsa.4096.crt
 # In case you want to troubleshoot the script, replace -s with -v.
 echo "Trying to connect to the PIA WireGuard API on $WG_SERVER_IP..."
-wireguard_json="$(curl -s -G \
-  --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
-  --cacert "ca.rsa.4096.crt" \
-  --data-urlencode "pt=${PIA_TOKEN}" \
-  --data-urlencode "pubkey=$pubKey" \
-  "https://${WG_HOSTNAME}:1337/addKey" )"
+if [[ -z $DIP_TOKEN ]]; then
+  wireguard_json="$(curl -s -G \
+    --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
+    --cacert "ca.rsa.4096.crt" \
+    --data-urlencode "pt=${PIA_TOKEN}" \
+    --data-urlencode "pubkey=$pubKey" \
+    "https://${WG_HOSTNAME}:1337/addKey" )"
+else
+  wireguard_json="$(curl -s -G \
+    --connect-to "$WG_HOSTNAME::$WG_SERVER_IP:" \
+    --cacert "ca.rsa.4096.crt" \
+    --user "dedicated_ip_$DIP_TOKEN:$WG_SERVER_IP" \
+    --data-urlencode "pubkey=$pubKey" \
+    "https://$WG_HOSTNAME:1337/addKey" )"
+fi
 export wireguard_json
 
 # Check if the API returned OK and stop this script if it didn't.
