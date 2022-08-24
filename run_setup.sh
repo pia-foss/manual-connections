@@ -117,21 +117,33 @@ while :; do
   fi
 done
 
-# Check for dedicated IP
-echo -n "Do you want to use a dedicated IP token ([N]o/[y]es): "
-read useDIP
-echo
-pfOption="true"
+# Check for in-line definition of $DIP_TOKEN
+if [[ -z $DIP_TOKEN ]]; then
+    # Check for dedicated IP
+    echo -n "Do you want to use a dedicated IP token ([N]o/[y]es): "
+    read useDIP
+    echo
+    pfOption="true"
+else
+    if echo ${DIP_TOKEN:0:1} | grep -iq n; then
+      useDIP="no"
+      echo -e "${red}Not using a dedicated IP.${nc}"
+      echo
+      DIP_TOKEN=""
+    else
+      useDIP="yes"
+    fi
+fi
+
 if echo ${useDIP:0:1} | grep -iq y; then
-useDIP="true"
+  useDIP="true"
   while :; do
     while :; do
       # Check for in-line definition of $DIP_TOKEN
       if [[ -z $DIP_TOKEN ]]; then
         read -p "Dedicated token (DIP#############################): " DIP_TOKEN
       fi
-
-      # Confirm format of PIA_USER input
+      # Confirm format of DIP_TOKEN input
       dipPrefix=$( echo ${DIP_TOKEN:0:3} )
       if [[ -z "$DIP_TOKEN" ]]; then
         echo -e "\n${red}You must provide input.${nc}"
@@ -142,31 +154,38 @@ useDIP="true"
       else
         break
       fi
+      echo
       DIP_TOKEN=""
     done
     export DIP_TOKEN
-
     # Confirm DIP_TOKEN and retrieve connection details
     ./get_dip.sh
-
     dipDetails="/opt/piavpn-manual/dipAddress"
     # If the script failed to generate retrieve dedicated IP information, the script will exit early.
-    if [ ! -f "$dipDetails" ]; then
-      read -p "Do you want to try again ([N]o/[y]es): " tryAgain
-      if ! echo ${tryAgain:0:1} | grep -iq y; then
-        exit 1
+      if [ ! -f "$dipDetails" ]; then
+        read -p "Do you want to try again ([N]o/[y]es): " tryAgain
+        echo
+        if ! echo ${tryAgain:0:1} | grep -iq y; then
+          exit 1
+        fi
+          DIP_TOKEN=""
+      else
+        dipAddress=$( awk 'NR == 1' /opt/piavpn-manual/dipAddress )
+        dipHostname=$( awk 'NR == 2' /opt/piavpn-manual/dipAddress)
+        dipKey=$( awk 'NR == 3' /opt/piavpn-manual/dipAddress )
+        pfOption=$( awk 'NR == 5' /opt/piavpn-manual/dipAddress )
+        rm -f /opt/piavpn-manual/dipAddress
+        break
       fi
-      DIP_TOKEN=""
-    else
-      dipAddress=$( awk 'NR == 1' /opt/piavpn-manual/dipAddress )
-      dipHostname=$( awk 'NR == 2' /opt/piavpn-manual/dipAddress)
-      dipKey=$( awk 'NR == 3' /opt/piavpn-manual/dipAddress )
-      pfOption=$( awk 'NR == 5' /opt/piavpn-manual/dipAddress )
-      rm -f /opt/piavpn-manual/dipAddress
-    break
-    fi
   done
 fi
+
+if [[ -z $DIP_TOKEN ]]; then
+  echo "${green}DIP_TOKEN=none${nc}"
+else
+  echo "${green}DIP_TOKEN=$DIP_TOKEN${nc}"
+fi
+echo
 
 # Erase previous connection details if present
 rm -f /opt/piavpn-manual/token /opt/piavpn-manual/latencyList
