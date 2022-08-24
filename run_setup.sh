@@ -118,9 +118,15 @@ while :; do
 done
 
 # Check for dedicated IP
-echo -n "Do you want to use a dedicated IP token ([N]o/[y]es): "
-read useDIP
-echo
+if [[ $USE_DIP == "false" ]]; then
+  useDIP=n
+elif [[ $USE_DIP == "true" ]]; then
+  useDIP=y
+else
+  echo -n "Do you want to use a dedicated IP token ([N]o/[y]es): "
+  read useDIP
+  echo
+fi
 pfOption="true"
 if echo ${useDIP:0:1} | grep -iq y; then
 useDIP="true"
