@@ -64,6 +64,7 @@ fi
 
 dipSavedLocation=/opt/piavpn-manual/dipAddress
 
+echo
 echo -n "Checking DIP token..."
 
 generateDIPResponse=$(curl -s --location --request POST \
