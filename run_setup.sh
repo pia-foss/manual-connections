@@ -328,7 +328,7 @@ if [[ -z $DIP_TOKEN ]]; then
             location3=$( awk 'NR == '$i' {print $6}' /opt/piavpn-manual/latencyList )
             location4=$( awk 'NR == '$i' {print $7}' /opt/piavpn-manual/latencyList )
             location="$location1 $location2 $location3 $location4"
-            printf "%3s : %-8s %-15s %23s" $i "$time" "$ip" "$id"
+            printf "%3s : %-8s %-15s %17s" $i "$time" "$ip" "$id"
             echo " - $location"
           done < /opt/piavpn-manual/latencyList
           echo
