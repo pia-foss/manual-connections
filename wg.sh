@@ -1,13 +1,14 @@
 #!/bin/bash
 
-region="finland"
+region="fi"
 serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
-netname=eth0
+netname="enp1s0"
 vpnport="51820/udp"
 vpnname="pia"
 localnet="192.168.1.0/24"
-certloc="/etc/ssl/certs/pia.rsa.4096.pem"
-services=("transmission-daemon" "jackett" "radarr" "sonarr")
+certloc="/etc/ssl/certs/pia.rsa.4096.crt"
+#services=("transmission-daemon" "jackett" "radarr" "sonarr")
+services=()
 tools=(wg-quick curl jq resolvconf ufw systemctl)
 retry=5
 usage="${0##*/} <start/stop/restart> [pia username] [pia password]"
@@ -35,7 +36,7 @@ function check_default_tools ()
     for i in "${tools[@]}";
     do
         check_tool
-    done    
+    done
 }
 
 function get_token ()
@@ -78,8 +79,8 @@ function get_server_info ()
     #echo $regionData
     wg_ip="$(echo $regionData | jq -r '.servers.wg[0].ip')"
     wg_cn="$(echo $regionData | jq -r '.servers.wg[0].cn')"
-    echo "WG_IP: $wg_ip"
-    echo "WG_CN: $wg_cn"
+    #echo "WG_IP: $wg_ip"
+    #echo "WG_CN: $wg_cn"
 }
 
 function fw_start ()
@@ -89,15 +90,13 @@ function fw_start ()
     sudo ufw default deny outgoing
     sudo ufw default deny incoming
     sudo ufw allow in from $wg_ip to any
-    sudo ufw allow out from any to $wg_ip
-    sudo ufw allow in from $dnsServer to any
+    sudo ufw allow in from $dnsServer
     sudo ufw allow out from any to $dnsServer
-    sudo ufw allow out on $vpnname from any
-    sudo ufw allow in on $vpnname from any
-    sudo ufw allow 53
-    sudo ufw allow in on $netname from $localnet to $localnet 
-    sudo ufw allow 22
-    sudo ufw allow out $vpnport
+    sudo ufw allow out on $vpnname
+    sudo ufw allow in on $vpnname
+    sudo ufw allow in on $netname from $localnet
+    sudo ufw allow out on $netname to $localnet
+    
     sudo ufw disable
     sudo ufw --force enable
 }
@@ -114,14 +113,16 @@ function wg_start ()
     get_token
     privKey="$(wg genkey)"
     pubKey="$( echo "$privKey" | wg pubkey)"
+    #echo "$privKey :::: $pubKey"
+    #echo "$wg_cn::$wg_ip:"
     local tries=0
     while [ $tries -lt $retry ]
     do
         wireguard_json=$(curl -s -G \
-        --connect-to "$wg_cn::$wg_ip:" \
-        --cacert "$certloc" \
+        --connect-to "${wg_cn}::${wg_ip}:" \
+        --cacert "${certloc}" \
         --data-urlencode "pt=${wg_token}" \
-        --data-urlencode "pubkey=$pubKey" \
+        --data-urlencode "pubkey=${pubKey}" \
         "https://${wg_cn}:1337/addKey" )
         #echo $wireguard_json
         if [ "$(echo "$wireguard_json" | jq -r '.status')" == "OK" ]; then
