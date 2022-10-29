@@ -60,6 +60,7 @@ Some users have created their own repositories for manual connections, based on 
 | Linux | No | Bash | NetworkManager <br> GUI integration | [ThePowerTool/PIA-NetworkManager-GUI-Support](https://github.com/ThePowerTool/PIA-NetworkManager-GUI-Support) |
 | Linux | No | Python | WireGuard, PF | [milahu/python-piavpn](https://github.com/milahu/python-piavpn) |
 | Linux | No | Bash | WireGuard, PF,<br/>router and android config | [triffid/pia-wg](https://github.com/triffid/pia-wg) |
+| Linux | No | Sh | WireGuard, PF, PF test | [milahu/vpn-client-pia-wireguard-posix-shell](https://github.com/milahu/vpn-client-pia-wireguard-posix-shell) |
 | Linux/FreeBSD/Win | No | Go | WireGuard,<br />config generation | [ddb_db/piawgcli](https://gitlab.com/ddb_db/piawgcli) |
 | OPNsense | No | Python | WireGuard, PF, DIP | [FingerlessGlov3s/OPNsensePIAWireguard](https://github.com/FingerlessGlov3s/OPNsensePIAWireguard) |
 | pfSense | No | Sh | OpenVPN, PF | [fm407/PIA-NextGen-PortForwarding](https://github.com/fm407/PIA-NextGen-PortForwarding) |
