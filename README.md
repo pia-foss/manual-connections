@@ -94,6 +94,8 @@ Here is a list of scripts you could find useful:
    * `DIP_TOKEN` - your PIA dedicated IP token (can be purchased in the client control panel)
    * `PIA_DNS` - true/false
    * `PIA_PF` - true/false
+   * `PIA_CONNECT` - true/false; connect to VPN after configuration has been created. Set to false to only create configuration file. Only effective for wireguard protocol. Default true.
+   * `PIA_CONF_PATH` - path of wireguard config file to be written. Used when only creating config file for wireguard.
    * `MAX_LATENCY` - numeric value, in seconds
    * `AUTOCONNECT` - true/false; this will test for and select the server with the lowest latency, it will override PREFERRED_REGION
    * `PREFERRED_REGION` - the region ID for a PIA server
@@ -102,7 +104,7 @@ Here is a list of scripts you could find useful:
  * [Get region details](get_region.sh): This script will provide server details, validate `PREFERRED_REGION` input, and can determine the lowest latency location. The script can also trigger VPN connections, if you specify `VPN_PROTOCOL=wireguard` or `VPN_PROTOCOL=openvpn`; doing so requires a token. This script can reference `get_token.sh` with use of `PIA_USER` and `PIA_PASS`. If called without specifying `PREFERRED_REGION` this script writes a list of servers within lower than `MAX_LATENCY` to a `/opt/piavpn-manual/latencyList` for reference.
  * [Get a token](get_token.sh): This script allows you to get an authentication token with a valid 'PIA_USER' and 'PIA_PASS'. It will write the token and its expiration date to `/opt/piavpn-manual/token` for reference.
  * [Get DIP details](get_dip.sh): This script will provide necessary connection details to use a dedicated IP.
- * [Connect to WireGuard](connect_to_wireguard_with_token.sh): This script allows you to connect to the VPN server via WireGuard.
+ * [Connect to WireGuard](connect_to_wireguard_with_token.sh): This script allows you to connect to the VPN server via WireGuard, or create a WireGuard config file by setting environment variable `PIA_CONNECT=false`.
  * [Connect to OpenVPN](connect_to_openvpn_with_token.sh): This script allows you to connect to the VPN server via OpenVPN.
  * [Enable Port Forwarding](port_forwarding.sh): Enables you to add Port Forwarding to an existing VPN connection. Adding the environment variable `PIA_PF=true` to any of the previous scripts will also trigger this script.
 

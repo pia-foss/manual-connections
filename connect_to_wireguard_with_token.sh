@@ -49,6 +49,11 @@ if [[ -t 1 ]]; then
   fi
 fi
 
+: "${PIA_CONNECT=true}"
+
+DEFAULT_PIA_CONF_PATH=/etc/wireguard/pia.conf
+: "${PIA_CONF_PATH:=$DEFAULT_PIA_CONF_PATH}"
+
 # PIA currently does not support IPv6. In order to be sure your VPN
 # connection does not leak, it is best to disabled IPv6 altogether.
 # IPv6 can also be disabled via kernel commandline param, so we must
@@ -118,13 +123,17 @@ if [[ $(echo "$wireguard_json" | jq -r '.status') != "OK" ]]; then
   exit 1
 fi
 
-# Multi-hop is out of the scope of this repo, but you should be able to
-# get multi-hop running with both WireGuard and OpenVPN by playing with
-# these scripts. Feel free to fork the project and test it out.
-echo
-echo "Trying to disable a PIA WG connection in case it exists..."
-wg-quick down pia && echo -e "${green}\nPIA WG connection disabled!${nc}"
-echo
+if [[ $PIA_CONNECT == "true" ]]; then
+  # Ensure config file path is set to default used for WG connection
+  PIA_CONF_PATH=$DEFAULT_PIA_CONF_PATH
+  # Multi-hop is out of the scope of this repo, but you should be able to
+  # get multi-hop running with both WireGuard and OpenVPN by playing with
+  # these scripts. Feel free to fork the project and test it out.
+  echo
+  echo "Trying to disable a PIA WG connection in case it exists..."
+  wg-quick down pia && echo -e "${green}\nPIA WG connection disabled!${nc}"
+  echo
+fi
 
 # Create the WireGuard config based on the JSON received from the API
 # In case you want this section to also add the DNS setting, please
@@ -140,8 +149,8 @@ if [[ $PIA_DNS == "true" ]]; then
   echo
   dnsSettingForVPN="DNS = $dnsServer"
 fi
-echo -n "Trying to write /etc/wireguard/pia.conf..."
-mkdir -p /etc/wireguard
+echo -n "Trying to write ${PIA_CONF_PATH}..."
+mkdir -p "$(dirname "$PIA_CONF_PATH")"
 echo "
 [Interface]
 Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
@@ -152,56 +161,59 @@ PersistentKeepalive = 25
 PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${WG_SERVER_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
-" > /etc/wireguard/pia.conf || exit 1
+" > ${PIA_CONF_PATH} || exit 1
 echo -e "${green}OK!${nc}"
 
-# Start the WireGuard interface.
-# If something failed, stop this script.
-# If you get DNS errors because you miss some packages,
-# just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
-echo
-echo "Trying to create the wireguard interface..."
-wg-quick up pia || exit 1
-echo
-echo -e "${green}The WireGuard interface got created.${nc}
 
-At this point, internet should work via VPN.
-
-To disconnect the VPN, run:
-
---> ${green}wg-quick down pia${nc} <--
-"
-
-# This section will stop the script if PIA_PF is not set to "true".
-if [[ $PIA_PF != "true" ]]; then
-  echo "If you want to also enable port forwarding, you can start the script:"
-  echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN" \
-    "PF_GATEWAY=$WG_SERVER_IP" \
-    "PF_HOSTNAME=$WG_HOSTNAME" \
-    "./port_forwarding.sh${nc}"
+if [[ $PIA_CONNECT == "true" ]]; then
+  # Start the WireGuard interface.
+  # If something failed, stop this script.
+  # If you get DNS errors because you miss some packages,
+  # just hardcode /etc/resolv.conf to "nameserver 10.0.0.242".
   echo
-  echo "The location used must be port forwarding enabled, or this will fail."
-  echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
-  exit 1
+  echo "Trying to create the wireguard interface..."
+  wg-quick up pia || exit 1
+  echo
+  echo -e "${green}The WireGuard interface got created.${nc}
+
+  At this point, internet should work via VPN.
+
+  To disconnect the VPN, run:
+
+  --> ${green}wg-quick down pia${nc} <--
+  "
+
+  # This section will stop the script if PIA_PF is not set to "true".
+  if [[ $PIA_PF != "true" ]]; then
+    echo "If you want to also enable port forwarding, you can start the script:"
+    echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN" \
+      "PF_GATEWAY=$WG_SERVER_IP" \
+      "PF_HOSTNAME=$WG_HOSTNAME" \
+      "./port_forwarding.sh${nc}"
+    echo
+    echo "The location used must be port forwarding enabled, or this will fail."
+    echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
+    exit 1
+  fi
+
+  echo -ne "This script got started with ${green}PIA_PF=true${nc}.
+
+  Starting port forwarding in "
+  for i in {5..1}; do
+    echo -n "$i..."
+    sleep 1
+  done
+  echo
+  echo
+
+  echo -e "Starting procedure to enable port forwarding by running the following command:
+  $ ${green}PIA_TOKEN=$PIA_TOKEN \\
+    PF_GATEWAY=$WG_SERVER_IP \\
+    PF_HOSTNAME=$WG_HOSTNAME \\
+    ./port_forwarding.sh${nc}"
+
+  PIA_TOKEN=$PIA_TOKEN \
+    PF_GATEWAY=$WG_SERVER_IP \
+    PF_HOSTNAME=$WG_HOSTNAME \
+    ./port_forwarding.sh
 fi
-
-echo -ne "This script got started with ${green}PIA_PF=true${nc}.
-
-Starting port forwarding in "
-for i in {5..1}; do
-  echo -n "$i..."
-  sleep 1
-done
-echo
-echo
-
-echo -e "Starting procedure to enable port forwarding by running the following command:
-$ ${green}PIA_TOKEN=$PIA_TOKEN \\
-  PF_GATEWAY=$WG_SERVER_IP \\
-  PF_HOSTNAME=$WG_HOSTNAME \\
-  ./port_forwarding.sh${nc}"
-
-PIA_TOKEN=$PIA_TOKEN \
-  PF_GATEWAY=$WG_SERVER_IP \
-  PF_HOSTNAME=$WG_HOSTNAME \
-  ./port_forwarding.sh
