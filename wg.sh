@@ -1,15 +1,17 @@
 #!/bin/bash
 
 region="fi"
-serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
 netname="enp1s0"
-vpnport="51820/udp"
 vpnname="pia"
 localnet="192.168.1.0/24"
 certloc="/etc/ssl/certs/pia.rsa.4096.crt"
 #services=("transmission-daemon" "jackett" "radarr" "sonarr")
 services=()
+
+vpnport="51820/udp"
 tools=(wg-quick curl jq resolvconf ufw systemctl)
+serverlist_url='https://serverlist.piaservers.net/vpninfo/servers/v4'
+
 retry=5
 usage="${0##*/} <start/stop/restart> [pia username] [pia password]"
 
