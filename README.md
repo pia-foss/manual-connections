@@ -87,6 +87,23 @@ The easiest way to trigger a fully automated connection is by running this oneli
 sudo VPN_PROTOCOL=wireguard DISABLE_IPV6=yes DIP_TOKEN=no AUTOCONNECT=true PIA_PF=false PIA_DNS=true PIA_USER=p0123456 PIA_PASS=xxxxxxxx ./run_setup.sh
 ```
 
+The next easiest way to trigger a fully automated connection is to create a ".env" file inside the script directory that contains the settings on a line by line basis, e.g.:
+```
+VPN_PROTOCOL=wireguard
+DISABLE_IPV6=yes
+DIP_TOKEN=no
+AUTOCONNECT=true
+PIA_PF=false
+PIA_DNS=true
+PIA_USER=p0123456
+PIA_PASS=xxxxxxxx
+```
+
+Then run:
+```
+sudo /path/to/script/run_setup.sh
+```
+
 Here is a list of scripts you could find useful:
  * [Prompt based connection](run_setup.sh): This script allows connections with a one-line call, or will prompt for any missing or invalid variables. Variables available for one-line calls include:
    * `PIA_USER` - your PIA username
