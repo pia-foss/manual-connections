@@ -183,11 +183,13 @@ if [[ $PIA_CONNECT == "true" ]]; then
   --> ${green}wg-quick down pia${nc} <--
   "
 
+  WG_SERVER_VIP=$(echo "$wireguard_json" | jq -r '.server_vip')
+
   # This section will stop the script if PIA_PF is not set to "true".
   if [[ $PIA_PF != "true" ]]; then
     echo "If you want to also enable port forwarding, you can start the script:"
     echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN" \
-      "PF_GATEWAY=$WG_SERVER_IP" \
+      "PF_GATEWAY=$WG_SERVER_VIP" \
       "PF_HOSTNAME=$WG_HOSTNAME" \
       "./port_forwarding.sh${nc}"
     echo
@@ -208,12 +210,12 @@ if [[ $PIA_CONNECT == "true" ]]; then
 
   echo -e "Starting procedure to enable port forwarding by running the following command:
   $ ${green}PIA_TOKEN=$PIA_TOKEN \\
-    PF_GATEWAY=$WG_SERVER_IP \\
+    PF_GATEWAY=$WG_SERVER_VIP \\
     PF_HOSTNAME=$WG_HOSTNAME \\
     ./port_forwarding.sh${nc}"
 
   PIA_TOKEN=$PIA_TOKEN \
-    PF_GATEWAY=$WG_SERVER_IP \
+    PF_GATEWAY=$WG_SERVER_VIP \
     PF_HOSTNAME=$WG_HOSTNAME \
     ./port_forwarding.sh
 fi
