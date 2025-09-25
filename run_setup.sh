@@ -491,7 +491,7 @@ elif [[ $VPN_PROTOCOL == wireguard ]]; then
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN DIP_TOKEN=$DIP_TOKEN \
     WG_SERVER_IP=$dipAddress WG_HOSTNAME=$dipHostname \
-    "$SCRIPT_DIR/connect_to_wireguard_with_token.s"h
+    "$SCRIPT_DIR/connect_to_wireguard_with_token.sh"
   rm -f /opt/piavpn-manual/latencyList
   exit 0
 elif [[ $VPN_PROTOCOL == openvpn* ]]; then
