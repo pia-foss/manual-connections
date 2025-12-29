@@ -19,6 +19,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+log() {
+    USE_LOGGER=${USE_LOGGER:-""}
+    if [[ -n $USE_LOGGER ]]; then
+        logger -t pia "$@"
+    else
+        echo "$@"
+    fi
+}
+
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
@@ -48,16 +57,15 @@ exit 1
 fi
 
 # Check if terminal allows output, if yes, define colors for output
+red=''
+green=''
+nc='' # No Color
 if [[ -t 1 ]]; then
   ncolors=$(tput colors)
   if [[ -n $ncolors && $ncolors -ge 8 ]]; then
     red=$(tput setaf 1) # ANSI red
     green=$(tput setaf 2) # ANSI green
     nc=$(tput sgr0) # No Color
-  else
-    red=''
-    green=''
-    nc='' # No Color
   fi
 fi
 
@@ -81,14 +89,31 @@ fi
 # If you already have a signature, and you would like to re-use that port,
 # save the payload_and_signature received from your previous request
 # in the env var PAYLOAD_AND_SIGNATURE, and that will be used instead.
+
+PAYLOAD_AND_SIGNATURE=${PAYLOAD_AND_SIGNATURE:-""}
+
+if [[ -f /opt/piavpn-manual/port_forward_token ]]; then
+    saved_payload_and_signature=$(cat /opt/piavpn-manual/port_forward_token)
+    payload=$(echo "$saved_payload_and_signature" | jq -r '.payload')
+    expires_at=$(echo "$payload" | base64 -d | jq -r '.expires_at')
+    TARGET_ISO="$expires_at"
+    TARGET_SECONDS=$(date -d "$TARGET_ISO" +%s)
+    CURRENT_SECONDS=$(date +%s)
+    if [ "$CURRENT_SECONDS" -lt "$TARGET_SECONDS" ]; then
+        log "Reusing token for port_forwarding"
+        PAYLOAD_AND_SIGNATURE=$saved_payload_and_signature
+    fi
+fi
+
 if [[ -z $PAYLOAD_AND_SIGNATURE ]]; then
+  log "Requesting port forward token"
   echo
   echo -n "Getting new signature... "
   payload_and_signature="$(curl -s -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
     --cacert "ca.rsa.4096.crt" \
     -G --data-urlencode "token=${PIA_TOKEN}" \
-    "https://${PF_HOSTNAME}:19999/getSignature")"
+    "https://${PF_HOSTNAME}:19999/getSignature" || true)"
 else
   payload_and_signature=$PAYLOAD_AND_SIGNATURE
   echo -n "Checking the payload_and_signature from the env var... "
@@ -98,10 +123,13 @@ export payload_and_signature
 # Check if the payload and the signature are OK.
 # If they are not OK, just stop the script.
 if [[ $(echo "$payload_and_signature" | jq -r '.status') != "OK" ]]; then
+  log "Invalid port forward token received"
   echo -e "${red}The payload_and_signature variable does not contain an OK status.${nc}"
   exit 1
 fi
 echo -e "${green}OK!${nc}"
+
+echo "$payload_and_signature" > /opt/piavpn-manual/port_forward_token
 
 # We need to get the signature out of the previous response.
 # The signature will allow the us to bind the port on the server.
@@ -126,31 +154,52 @@ Payload   ${green}$payload${nc}
 
 Trying to bind the port... "
 
+echo "$port" > /opt/piavpn-manual/forwarded_port
+
+PORT_FORWARD_HOOK=${PORT_FORWARD_HOOK:-""}
+if [[ -n $PORT_FORWARD_HOOK ]]; then
+    log "Running port forward hook"
+    $PORT_FORWARD_HOOK "$port"
+fi
+
 # Now we have all required data to create a request to bind the port.
 # We will repeat this request every 15 minutes, in order to keep the port
 # alive. The servers have no mechanism to track your activity, so they
 # will just delete the port forwarding if you don't send keepalives.
-while true; do
+log "Start polling port forward API"
+PORT_FORWARD_MAX_POLL_NUM=${PORT_FORWARD_MAX_POLL_NUM:-0}
+current_consecutive_failure_num=0
+while [[ $PORT_FORWARD_MAX_POLL_NUM -eq 0 ]] || [[ $current_consecutive_failure_num -lt $PORT_FORWARD_MAX_POLL_NUM ]]; do
   bind_port_response="$(curl -Gs -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
     --cacert "ca.rsa.4096.crt" \
     --data-urlencode "payload=${payload}" \
     --data-urlencode "signature=${signature}" \
-    "https://${PF_HOSTNAME}:19999/bindPort")"
+    "https://${PF_HOSTNAME}:19999/bindPort" || true)"
     echo -e "${green}OK!${nc}"
 
     # If port did not bind, just exit the script.
     # This script will exit in 2 months, since the port will expire.
     export bind_port_response
     if [[ $(echo "$bind_port_response" | jq -r '.status') != "OK" ]]; then
-      echo -e "${red}The API did not return OK when trying to bind port... Exiting.${nc}"
-      exit 1
+        echo -e "${red}The API did not return OK when trying to bind port... Exiting.${nc}"
+        log "Port forwarding failed, retrying"
+        current_consecutive_failure_num=$((current_consecutive_failure_num + 1))
+        sleep 1
+        continue
     fi
+    current_consecutive_failure_num=0
+
     echo -e Forwarded port'\t'"${green}$port${nc}"
     echo -e Refreshed on'\t'"${green}$(date)${nc}"
     echo -e Expires on'\t'"${red}$(date --date="$expires_at")${nc}"
     echo -e "\n${green}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${nc}\n"
 
     # sleep 15 minutes
-    sleep 900
+    sleep 900 &
+    # For signal handler to kick in, make sleep go bg and wait
+    wait $!
 done
+
+log "Failed to bind port for $PORT_FORWARD_MAX_POLL_NUM"
+exit 1

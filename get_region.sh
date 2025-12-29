@@ -19,6 +19,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+log() {
+    USE_LOGGER=${USE_LOGGER:-""}
+    if [[ -n $USE_LOGGER ]]; then
+        logger -t pia "$@"
+    else
+        echo "$@"
+    fi
+}
+
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
@@ -33,6 +42,19 @@ check_tool() {
 check_tool curl
 check_tool jq
 
+red=''
+green=''
+nc=''
+
+if [[ -t 1 ]]; then
+  ncolors=$(tput colors)
+  if [[ -n $ncolors && $ncolors -ge 8 ]]; then
+    red=$(tput setaf 1) # ANSI red
+    green=$(tput setaf 2) # ANSI green
+    nc=$(tput sgr0) # No Color
+  fi
+fi
+
 # If the server list has less than 1000 characters, it means curl failed.
 check_all_region_data() {
   echo
@@ -42,6 +64,7 @@ check_all_region_data() {
     echo -e "${red}Could not get correct region data. To debug this, run:"
     echo "$ curl -v $serverlist_url"
     echo -e "If it works, you will get a huge JSON as a response.${nc}"
+    log "Failed to get server list"
     exit 1
   fi
 
@@ -63,19 +86,6 @@ get_selected_region_data() {
   fi
 }
 
-# Check if terminal allows output, if yes, define colors for output
-if [[ -t 1 ]]; then
-  ncolors=$(tput colors)
-  if [[ -n $ncolors && $ncolors -ge 8 ]]; then
-    red=$(tput setaf 1) # ANSI red
-    green=$(tput setaf 2) # ANSI green
-    nc=$(tput sgr0) # No Color
-  else
-    red=''
-    green=''
-    nc='' # No Color
-  fi
-fi
 
 # Only allow script to run as root
 if (( EUID != 0 )); then
@@ -130,10 +140,14 @@ if [[ -z $VPN_PROTOCOL ]]; then
 fi
 
 # Get all region data
-all_region_data=$(curl -s "$serverlist_url" | head -1)
+EXTRA_CURL_OPT=${EXTRA_CURL_OPT:-}
+curled_region=$(curl $EXTRA_CURL_OPT -s "$serverlist_url" || true)
+all_region_data=$(echo "$curled_region" | head -1)
 
 # Set the region the user has specified
 selectedRegion=$PREFERRED_REGION
+
+PIA_PF=${PIA_PF:-false}
 
 # If a server isn't being specified, auto-select the server with the lowest latency
 if [[ $selectedRegion == "none" ]]; then
@@ -190,7 +204,8 @@ bestServer_OT_IP=$(echo "$regionData" | jq -r '.servers.ovpntcp[0].ip')
 bestServer_OT_hostname=$(echo "$regionData" | jq -r '.servers.ovpntcp[0].cn')
 bestServer_OU_IP=$(echo "$regionData" | jq -r '.servers.ovpnudp[0].ip')
 bestServer_OU_hostname=$(echo "$regionData" | jq -r '.servers.ovpnudp[0].cn')
-
+bestServer_IKEV2_IP=$(echo "$regionData" | jq -r '.servers.ikev2[0].ip')
+bestServer_IKEV2_hostname=$(echo "$regionData" | jq -r '.dns')
 
 if [[ $VPN_PROTOCOL == "no" ]]; then
   echo -ne "The $selectedOrLowestLatency region is ${green}$(echo "$regionData" | jq -r '.name')${nc}"
@@ -210,6 +225,7 @@ ${green}Meta Services $bestServer_meta_IP\t-     $bestServer_meta_hostname
 WireGuard     $bestServer_WG_IP\t-     $bestServer_WG_hostname
 OpenVPN TCP   $bestServer_OT_IP\t-     $bestServer_OT_hostname
 OpenVPN UDP   $bestServer_OU_IP\t-     $bestServer_OU_hostname
+IKEv2         $bestServer_IKEV2_IP\t-     $bestServer_hostname
 ${nc}"
 fi
 
@@ -231,8 +247,23 @@ else
   echo
 fi
 
+if [[ $VPN_PROTOCOL == "ikev2" ]]; then
+  echo "The ./get_region.sh script got started with"
+  echo -e "${green}VPN_PROTOCOL=ikev2${nc}, so we will automatically connect to IKEv2,"
+  echo "by running this command:"
+  echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN \\"
+  echo "IKEV2_SERVER_IP=$bestServer_IKEV2_IP IKEV2_HOSTNAME=$bestServer_IKEV2_hostname \\"
+  echo -e "PIA_PF=$PIA_PF ./connect_to_ikev2_with_token.sh${nc}"
+  echo
+
+  export IKEV2_SERVER_IP=$bestServer_IKEV2_IP
+  export IKEV2_HOSTNAME=$bestServer_IKEV2_hostname
+  export PIA_PF=$PIA_PF
+  export PIA_TOKEN=$PIA_TOKEN
+  log "Selected region is $IKEV2_SERVER_IP $IKEV2_HOSTNAME"
+  . ./connect_to_ikev2_with_token.sh
 # Connect with WireGuard and clear authentication token file and latencyList
-if [[ $VPN_PROTOCOL == "wireguard" ]]; then
+elif [[ $VPN_PROTOCOL == "wireguard" ]]; then
   echo "The ./get_region.sh script got started with"
   echo -e "${green}VPN_PROTOCOL=wireguard${nc}, so we will automatically connect to WireGuard,"
   echo "by running this command:"
@@ -244,10 +275,7 @@ if [[ $VPN_PROTOCOL == "wireguard" ]]; then
     WG_HOSTNAME=$bestServer_WG_hostname ./connect_to_wireguard_with_token.sh
   rm -f /opt/piavpn-manual/latencyList
   exit 0
-fi
-
-# Connect with OpenVPN and clear authentication token file and latencyList
-if [[ $VPN_PROTOCOL == openvpn* ]]; then
+elif [[ $VPN_PROTOCOL == openvpn* ]]; then
   serverIP=$bestServer_OU_IP
   serverHostname=$bestServer_OU_hostname
   if [[ $VPN_PROTOCOL == *tcp* ]]; then

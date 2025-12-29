@@ -19,6 +19,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+log() {
+    USE_LOGGER=${USE_LOGGER:-""}
+    if [[ -n $USE_LOGGER ]]; then
+        logger -t pia "$@"
+    else
+        echo "$@"
+    fi
+}
+
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
@@ -39,16 +48,16 @@ timeout_timestamp() {
 }
 
 # Check if terminal allows output, if yes, define colors for output
+red=''
+green=''
+nc='' # No Color
+
 if [[ -t 1 ]]; then
   ncolors=$(tput colors)
   if [[ -n $ncolors && $ncolors -ge 8 ]]; then
     red=$(tput setaf 1) # ANSI red
     green=$(tput setaf 2) # ANSI green
     nc=$(tput sgr0) # No Color
-  else
-    red=''
-    green=''
-    nc='' # No Color
   fi
 fi
 
@@ -69,27 +78,43 @@ fi
 
 echo -n "Checking login credentials..."
 
-generateTokenResponse=$(curl -s --location --request POST \
-  'https://www.privateinternetaccess.com/api/client/v2/token' \
-  --form "username=$PIA_USER" \
-  --form "password=$PIA_PASS" )
-
-if [ "$(echo "$generateTokenResponse" | jq -r '.token')" == "" ]; then
-  echo
-  echo
-  echo -e "${red}Could not authenticate with the login credentials provided!${nc}"
-  echo
-  exit
+tokenLocation=/opt/piavpn-manual/token
+token=""
+if [[ -f $tokenLocation ]]; then
+    if [[ $(date +%s) -le $(date -d "$(cat $tokenLocation | tail -n1)" +%s) ]]; then
+        log "Reusing the login token"
+        token=$(cat /opt/piavpn-manual/token | head -n1)
+    fi
 fi
 
-echo -e "${green}OK!"
-echo
-token=$(echo "$generateTokenResponse" | jq -r '.token')
-tokenExpiration=$(timeout_timestamp)
-tokenLocation=/opt/piavpn-manual/token
-echo -e "PIA_TOKEN=$token${nc}"
-echo "$token" > "$tokenLocation" || exit 1
-echo "$tokenExpiration" >> "$tokenLocation"
-echo
-echo "This token will expire in 24 hours, on $tokenExpiration."
-echo
+if [ -z "$token" ]; then
+    log "Generating a new login token"
+    EXTRA_CURL_OPT=${EXTRA_CURL_OPT:-}
+    generateTokenResponse=$(curl ${EXTRA_CURL_OPT} -s --location --request POST \
+                                 'https://www.privateinternetaccess.com/api/client/v2/token' \
+                                 --data-urlencode "username=$PIA_USER" \
+                                 --data-urlencode "password=$PIA_PASS" || true)
+
+    if [ "$(echo "$generateTokenResponse" | jq -r '.token')" == "" ]; then
+        echo
+        echo
+        echo -e "${red}Could not authenticate with the login credentials provided!${nc}"
+        echo
+        log "Login token generation failed"
+        exit 1
+    fi
+
+    echo -e "${green}OK!"
+    echo
+    token=$(echo "$generateTokenResponse" | jq -r '.token')
+    tokenExpiration=$(timeout_timestamp)
+    echo -e "PIA_TOKEN=$token${nc}"
+    echo "$token" > "$tokenLocation" || exit 1
+    echo "$tokenExpiration" >> "$tokenLocation"
+    echo
+    echo "This token will expire in 24 hours, on $tokenExpiration."
+    echo
+fi
+
+# For some parent script to source the script instead of spawning
+export PIA_TOKEN=$token
