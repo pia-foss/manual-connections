@@ -404,10 +404,13 @@ case $VPN_PROTOCOL in
   openvpn)
     VPN_PROTOCOL="openvpn_udp_standard"
     ;;
+  ikev2)
+    VPN_PROTOCOL="ikev2"
+    ;;
   wireguard | openvpn_udp_standard | openvpn_udp_strong | openvpn_tcp_standard | openvpn_tcp_strong)
     ;;
   none | *)
-    echo -n "Connection method ([W]ireguard/[o]penvpn): "
+    echo -n "Connection method ([W]ireguard/[o]penvpn/[i]kev2): "
     read -r connection_method
     echo
 
@@ -433,6 +436,8 @@ case $VPN_PROTOCOL in
       fi
 
       VPN_PROTOCOL="openvpn_${protocol}_${encryption}"
+    elif echo "${connection_method:0:1}" | grep -iq i; then
+      VPN_PROTOCOL="ikev2"
     fi
     ;;
 esac
@@ -506,4 +511,7 @@ elif [[ $VPN_PROTOCOL == openvpn* ]]; then
     ./connect_to_openvpn_with_token.sh
   rm -f /opt/piavpn-manual/latencyList
   exit 0
+elif [[ $VPN_PROTOCOL == ikev2* ]]; then
+    echo "DIP is not supported in the ikev2 script"
+    exit 1
 fi
