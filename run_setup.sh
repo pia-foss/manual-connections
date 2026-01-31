@@ -402,9 +402,9 @@ fi
 # This section asks for user connection preferences
 case $VPN_PROTOCOL in
   openvpn)
-    VPN_PROTOCOL="openvpn_udp_standard"
+    VPN_PROTOCOL="openvpn_udp_strong"
     ;;
-  wireguard | openvpn_udp_standard | openvpn_udp_strong | openvpn_tcp_standard | openvpn_tcp_strong)
+  wireguard | openvpn_udp_strong | openvpn_tcp_strong)
     ;;
   none | *)
     echo -n "Connection method ([W]ireguard/[o]penvpn): "
@@ -422,17 +422,7 @@ case $VPN_PROTOCOL in
         protocol="tcp"
       fi
 
-      echo "Higher levels of encryption trade performance for security. "
-      echo -n "Do you want to use strong encryption ([N]o/[y]es): "
-      read -r strongEncryption
-      echo
-
-      encryption="standard"
-      if echo "${strongEncryption:0:1}" | grep -iq y; then
-        encryption="strong"
-      fi
-
-      VPN_PROTOCOL="openvpn_${protocol}_${encryption}"
+      VPN_PROTOCOL="openvpn_${protocol}_strong"
     fi
     ;;
 esac
