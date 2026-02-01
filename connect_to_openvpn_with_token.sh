@@ -109,9 +109,7 @@ if [[ -z $OVPN_SERVER_IP ||
   echo "OVPN_HOSTNAME       - name of the server, required for ssl"
   echo "CONNECTION_SETTINGS - the protocol and encryption specification"
   echo "                    - available options for CONNECTION_SETTINGS are:"
-  echo "                        * openvpn_udp_standard"
   echo "                        * openvpn_udp_strong"
-  echo "                        * openvpn_tcp_standard"
   echo "                        * openvpn_tcp_strong"
   echo
   echo "You can also specify optional env vars:"
@@ -150,23 +148,12 @@ IFS=' '
 protocol=${connection_settings[1]}
 encryption=${connection_settings[2]}
 
-prefix_filepath="openvpn_config/standard.ovpn"
-if [[ $encryption == "strong" ]]; then
-  prefix_filepath="openvpn_config/strong.ovpn"
-fi
+prefix_filepath="openvpn_config/strong.ovpn"
 
 if [[ $protocol == "udp" ]]; then
-  if [[ $encryption == "standard" ]]; then
-    port=1198
-  else
-    port=1197
-  fi
+  port=8080
 else
-  if [[ $encryption == "standard" ]]; then
-    port=502
-  else
-    port=501
-  fi
+  port=8443
 fi
 
 # Create the OpenVPN config based on the settings specified
