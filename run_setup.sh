@@ -19,6 +19,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+SCRIPT=$(realpath -s "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+if [[ -f "${SCRIPT_DIR}/.env" ]]; then
+  set -a
+  . ${SCRIPT_DIR}/.env
+  set +a
+fi
+
 # Check if terminal allows output, if yes, define colors for output
 if [[ -t 1 ]]; then
   ncolors=$(tput colors)
@@ -98,7 +106,7 @@ while :; do
   export PIA_PASS
 
   # Confirm credentials and generate token
-  ./get_token.sh
+  ${SCRIPT_DIR}/get_token.sh
 
   tokenLocation="/opt/piavpn-manual/token"
   # If the script failed to generate an authentication token, the script will exit early.
@@ -159,7 +167,7 @@ if echo ${useDIP:0:1} | grep -iq y; then
     done
     export DIP_TOKEN
     # Confirm DIP_TOKEN and retrieve connection details
-    ./get_dip.sh
+    ${SCRIPT_DIR}/get_dip.sh
     dipDetails="/opt/piavpn-manual/dipAddress"
     # If the script failed to generate retrieve dedicated IP information, the script will exit early.
       if [ ! -f "$dipDetails" ]; then
@@ -331,7 +339,7 @@ if [[ -z $DIP_TOKEN ]]; then
         export PREFERRED_REGION
         VPN_PROTOCOL="no"
         export VPN_PROTOCOL
-        VPN_PROTOCOL=no ./get_region.sh
+        VPN_PROTOCOL=no ${SCRIPT_DIR}/get_region.sh
 
         if [[ -s /opt/piavpn-manual/latencyList ]]; then
           # Output the ordered list of servers that meet the latency specification $MAX_LATENCY
@@ -387,7 +395,7 @@ if [[ -z $DIP_TOKEN ]]; then
       # Validate in-line declaration of PREFERRED_REGION; if invalid remove input to initiate prompts
       echo "Region input is : $PREFERRED_REGION"
       export PREFERRED_REGION
-      VPN_PROTOCOL=no ./get_region.sh
+      VPN_PROTOCOL=no ${SCRIPT_DIR}/get_region.sh
       if [[ $? != 1 ]]; then
         break
       fi
@@ -462,7 +470,7 @@ CONNECTION_READY="true"
 export CONNECTION_READY
 
 if [[ -z $DIP_TOKEN ]]; then
-  ./get_region.sh
+  ${SCRIPT_DIR}/get_region.sh
 elif [[ $VPN_PROTOCOL == wireguard ]]; then
   echo
   echo -e "You will be connecting with ${green}WG_SERVER_IP=$dipAddress${nc} using"
@@ -471,11 +479,11 @@ elif [[ $VPN_PROTOCOL == wireguard ]]; then
   echo -e "$ ${green}PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN" \\
   echo "DIP_TOKEN=$DIP_TOKEN" \\
   echo "WG_SERVER_IP=$dipAddress WG_HOSTNAME=$dipHostname" \\
-  echo -e "./connect_to_wireguard_with_token.sh${nc}"
+  echo -e "${SCRIPT_DIR}/connect_to_wireguard_with_token.sh${nc}"
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN DIP_TOKEN=$DIP_TOKEN \
     WG_SERVER_IP=$dipAddress WG_HOSTNAME=$dipHostname \
-    ./connect_to_wireguard_with_token.sh
+    ${SCRIPT_DIR}/connect_to_wireguard_with_token.sh
   rm -f /opt/piavpn-manual/latencyList
   exit 0
 elif [[ $VPN_PROTOCOL == openvpn* ]]; then
@@ -487,13 +495,13 @@ elif [[ $VPN_PROTOCOL == openvpn* ]]; then
   echo   "DIP_TOKEN=$DIP_TOKEN OVPN_SERVER_IP=$dipAddress" \\
   echo   "OVPN_HOSTNAME=$dipHostname" \\
   echo   "CONNECTION_SETTINGS=$VPN_PROTOCOL" \\
-  echo -e "./connect_to_openvpn_with_token.sh${nc}"
+  echo -e "${SCRIPT_DIR}/connect_to_openvpn_with_token.sh${nc}"
   echo
   PIA_PF=$PIA_PF PIA_TOKEN=$PIA_TOKEN \
     DIP_TOKEN=$DIP_TOKEN OVPN_SERVER_IP=$dipAddress \
     OVPN_HOSTNAME=$dipHostname \
     CONNECTION_SETTINGS=$VPN_PROTOCOL \
-    ./connect_to_openvpn_with_token.sh
+    ${SCRIPT_DIR}/connect_to_openvpn_with_token.sh
   rm -f /opt/piavpn-manual/latencyList
   exit 0
 fi
