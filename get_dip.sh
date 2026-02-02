@@ -29,6 +29,12 @@ check_tool() {
   fi
 }
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+if [ -z "$SCRIPT_DIR" ]; then 
+  echo "Error: Could not resolve script directory. Exiting..."
+  exit 1
+fi
+
 # Now we call the function to make sure we can use curl and jq.
 check_tool curl
 check_tool jq
@@ -58,7 +64,7 @@ mkdir -p /opt/piavpn-manual
 if [[ -z $PIA_TOKEN ]]; then
   echo "If you want this script to automatically retrieve dedicated IP location details"
   echo "from the Meta service, please add the variables PIA_TOKEN and DIP_TOKEN. Example:"
-  echo "$ PIA_TOKEN DIP_TOKEN=DIP1a2b3c4d5e6f7g8h9i10j11k12l13 ./get_token.sh"
+  echo "$ PIA_TOKEN DIP_TOKEN=DIP1a2b3c4d5e6f7g8h9i10j11k12l13 $SCRIPT_DIR/get_token.sh"
   exit 1
 fi
 
