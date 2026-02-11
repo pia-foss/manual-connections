@@ -171,6 +171,80 @@ listening on any, link-type LINUX_SLL (Linux cooked v1), capture size 262144 byt
 
 If you run curl on the same machine (the one that is connected to the VPN), you will see the traffic in tcpdump anyway and the test won't prove anything. At the same time, the request will get firewall so you will not be able to access the port from the same machine. This can only be tested properly by running curl on another system.
 
+## Docker
+
+> Some features are not still available in Docker natively, like port forwarding.
+
+### Manual build
+
+```bash
+docker build -t pia-manual-connections .
+```
+
+### Run
+
+```bash
+docker run -d --name pia-vpn \
+  --cap-add=NET_ADMIN \
+  --device /dev/net/tun \
+  -e VPN_PROTOCOL=wireguard \
+  -e DISABLE_IPV6=yes \
+  -e DIP_TOKEN=no \
+  -e AUTOCONNECT=true \
+  -e PIA_PF=false \
+  -e PIA_DNS=true \
+  -e PIA_USER=your_username \
+  -e PIA_PASS=your_password \
+  -e PIA_CONNECT=true \
+  -e MAX_LATENCY=50 \
+  pia-manual-connections
+```
+
+### Docker Compose example
+
+```yaml
+version: '3'
+services:
+  vpn:
+    # image: not-published-yet
+    build:
+      dockerfile: Dockerfile
+      context: vpn/manual-connection-pia
+    container_name: docker-pia
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - PIA_USER=your_username
+      - PIA_PASS=your_password
+      - AUTOCONNECT=true
+      - PIA_CONNECT=true
+      - DIP_TOKEN=YOUR_TOKEN_OR_NOTHING
+      - PREFERRED_REGION=auto # Ignored when DIP_TOKEN
+      - VPN_PROTOCOL=wireguard # or openvpn
+    volumes:
+      - ./config:/config
+    # dns:
+    #   - 8.8.8.8
+    #   - 8.8.4.4
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+
+  # Example of another service sharing the VPN
+  # If this service needs LAN access then LOCAL_NETWORK must be set appropriatley on the vpn container
+  # Forwared ports should also be set on the vpn container if needed rather than this one in
+  # order to access from the LAN
+  # It may be preferable to use a reverse proxy connected via the docker bridge network instead
+  # to keep the vpn isolated from the LAN
+  other-service:
+    image: some-other-image
+    # Other services can share the VPN using 'network_mode'
+    # See https://docs.docker.com/engine/reference/run/#network-container and
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
+    network_mode: "service:vpn"
+```
+
 ## Thanks
 
 A big special thanks to [faireOwl](https://github.com/faireOwl) for his contributions to this repo.
