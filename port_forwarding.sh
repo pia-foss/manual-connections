@@ -130,6 +130,8 @@ Trying to bind the port... "
 # We will repeat this request every 15 minutes, in order to keep the port
 # alive. The servers have no mechanism to track your activity, so they
 # will just delete the port forwarding if you don't send keepalives.
+
+old_port=0
 while true; do
   bind_port_response="$(curl -Gs -m 5 \
     --connect-to "$PF_HOSTNAME::$PF_GATEWAY:" \
@@ -149,6 +151,19 @@ while true; do
     echo -e Forwarded port'\t'"${green}$port${nc}"
     echo -e Refreshed on'\t'"${green}$(date)${nc}"
     echo -e Expires on'\t'"${red}$(date --date="$expires_at")${nc}"
+    echo -e "\n${green}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${nc}\n"
+
+    if [[ "${PF_POST_COMMAND}" ]] && [[ "${port}" != "${old_port}" ]]; then
+      echo -e "${green}Note: Port has changed from ${old_port} to ${port}. Running PF_POST_COMMAND.${nc}"
+      if ! "${PF_POST_COMMAND}" "${port}" "${old_port}"; then
+        echo -e "${red}Warning: "${PF_POST_COMMAND}" returned non-zero.${nc}"
+      fi
+      old_port="${port}"
+    fi
+
+    echo -e Forwarded port'\t'${green}$port${nc}
+    echo -e Refreshed on'\t'${green}$(date)${nc}
+    echo -e Expires on'\t'${red}$(date --date="$expires_at")${nc}
     echo -e "\n${green}This script will need to remain active to use port forwarding, and will refresh every 15 minutes.${nc}\n"
 
     # sleep 15 minutes
