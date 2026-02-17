@@ -69,10 +69,18 @@ fi
 
 echo -n "Checking login credentials..."
 
-generateTokenResponse=$(curl -s --location --request POST \
+generateTokenResponse=$(curl --fail-with-body -s --location --request POST \
   'https://www.privateinternetaccess.com/api/client/v2/token' \
   --form "username=$PIA_USER" \
-  --form "password=$PIA_PASS" )
+  --form "password=$PIA_PASS" ) || {
+    echo
+    echo -e "${red}Could not authenticate with the login credentials provided!${nc}"
+    echo "Error response:"
+    echo $generateTokenResponse
+    echo
+    exit 1
+}
+
 
 if [ "$(echo "$generateTokenResponse" | jq -r '.token')" == "" ]; then
   echo
