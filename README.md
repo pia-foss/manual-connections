@@ -57,6 +57,7 @@ Some users have created their own repositories for manual connections, based on 
 | System | Fork | Language | Scope | Repository |
 |:-:|:-:|:-:|:-:|-|
 | FreeBSD | Yes | Bash | Compatibility | [glorious1/manual-connections](https://github.com/glorious1/manual-connections) |
+| FreshTomato | No | Bash | WireGuard, PF | [rveznaver/pia-freshtomato](https://github.com/rveznaver/pia-freshtomato) |
 | Linux | No | Bash | NetworkManager <br> GUI integration | [ThePowerTool/PIA-NetworkManager-GUI-Support](https://github.com/ThePowerTool/PIA-NetworkManager-GUI-Support) |
 | Linux | No | Python | WireGuard, PF | [milahu/python-piavpn](https://github.com/milahu/python-piavpn) |
 | Linux | No | Bash | WireGuard, PF,<br/>router and android config | [triffid/pia-wg](https://github.com/triffid/pia-wg) |
