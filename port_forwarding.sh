@@ -146,6 +146,12 @@ while true; do
       echo -e "${red}The API did not return OK when trying to bind port... Exiting.${nc}"
       exit 1
     fi
+
+    if [[ -n "$PIA_SAVEPF" ]];
+    then
+	    echo "$port" > "$PIA_SAVEPF"
+    fi
+
     echo -e Forwarded port'\t'"${green}$port${nc}"
     echo -e Refreshed on'\t'"${green}$(date)${nc}"
     echo -e Expires on'\t'"${red}$(date --date="$expires_at")${nc}"
@@ -154,3 +160,9 @@ while true; do
     # sleep 15 minutes
     sleep 900
 done
+
+# Remove the file when done
+if [[ -n "$PIA_SAVEPF" ]];
+then
+	rm "$PIA_SAVEPF"
+fi
