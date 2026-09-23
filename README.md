@@ -63,6 +63,7 @@ Some users have created their own repositories for manual connections, based on 
 | Linux | No | Go | WireGuard via systemd-networkd, PF | [jdelkins/pia-tools](https://github.com/jdelkins/pia-tools) |
 | Linux/FreeBSD/Win | No | Go | WireGuard,<br />config generation | [ddb_db/piawgcli](https://gitlab.com/ddb_db/piawgcli) |
 | OPNsense | No | Python | WireGuard, PF, DIP | [FingerlessGlov3s/OPNsensePIAWireguard](https://github.com/FingerlessGlov3s/OPNsensePIAWireguard) |
+| Docker/Linux/Synology | No | Sh, Bash, Docker Compose | WireGuard, PF, DIP, config generation | [☠ scottgigawatt/privateerr ☠](https://github.com/scottgigawatt/privateerr) |
 | pfSense | No | Sh | OpenVPN, PF | [fm407/PIA-NextGen-PortForwarding](https://github.com/fm407/PIA-NextGen-PortForwarding) |
 | pfSense | No | Java/PHP | WireGuard, PF | [ddb_db/pfpiamgr](https://gitlab.com/ddb_db/pfpiamgr) |
 | Synology | Yes | Bash | Compatibility | [steff2632/manual-connections](https://github.com/steff2632/manual-connections) |
