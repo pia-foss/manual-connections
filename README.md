@@ -171,6 +171,31 @@ listening on any, link-type LINUX_SLL (Linux cooked v1), capture size 262144 byt
 
 If you run curl on the same machine (the one that is connected to the VPN), you will see the traffic in tcpdump anyway and the test won't prove anything. At the same time, the request will get firewall so you will not be able to access the port from the same machine. This can only be tested properly by running curl on another system.
 
+## Integrating IPFS with Ethereum
+
+### Installation and Usage
+
+1. **Install IPFS**: Follow the instructions on the IPFS installation page.
+2. **Initialize IPFS**: Run `ipfs init` to initialize the IPFS repository.
+3. **Start the IPFS daemon**: Run `ipfs daemon` to start the IPFS daemon.
+4. **Add files to IPFS**: Use the command `ipfs add <file>` to add files to IPFS. This will return a CID (Content Identifier).
+5. **Store CID on Ethereum**: Use a smart contract to store the CID on the Ethereum blockchain. You can use Solidity to create a contract that stores the CID as a string.
+6. **Retrieve files from IPFS**: Use the command `ipfs cat <CID>` to retrieve files from IPFS using the CID.
+7. **Pinning files on IPFS**: Use the command `ipfs pin add <CID>` to pin files on IPFS, ensuring they are not garbage collected.
+
+### Troubleshooting
+
+If you encounter any issues while integrating IPFS with Ethereum, refer to the following common issues and their solutions:
+
+1. **IPFS daemon not starting**: Ensure that you have installed IPFS correctly and that there are no conflicting processes using the same ports.
+2. **Unable to add files to IPFS**: Check if the file path is correct and that you have the necessary permissions to access the file.
+3. **Smart contract deployment issues**: Verify that your Solidity code is correct and that you have sufficient gas to deploy the contract on the Ethereum network.
+4. **File retrieval issues**: Ensure that the CID is correct and that the IPFS daemon is running. If the file is not pinned, it may have been garbage collected.
+
+## Frequently Asked Questions (FAQ)
+
+For quick answers to common queries, refer to the [FAQ.md](FAQ.md) file.
+
 ## Thanks
 
 A big special thanks to [faireOwl](https://github.com/faireOwl) for his contributions to this repo.
