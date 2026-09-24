@@ -30,6 +30,12 @@ check_tool() {
   fi
 }
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+if [ -z "$SCRIPT_DIR" ]; then 
+  echo "Error: Could not resolve script directory. Exiting..."
+  exit 1
+fi
+
 # Now we call the function to make sure we can use wg-quick, curl and jq.
 check_tool wg-quick wireguard-tools
 check_tool curl curl
@@ -189,10 +195,10 @@ if [[ $PIA_CONNECT == "true" ]]; then
     echo -e "$ ${green}PIA_TOKEN=$PIA_TOKEN" \
       "PF_GATEWAY=$WG_SERVER_IP" \
       "PF_HOSTNAME=$WG_HOSTNAME" \
-      "./port_forwarding.sh${nc}"
+      "$SCRIPT_DIR/port_forwarding.sh${nc}"
     echo
     echo "The location used must be port forwarding enabled, or this will fail."
-    echo "Calling the ./get_region script with PIA_PF=true will provide a filtered list."
+    echo "Calling the $SCRIPT_DIR/get_region script with PIA_PF=true will provide a filtered list."
     exit 1
   fi
 
@@ -210,10 +216,10 @@ if [[ $PIA_CONNECT == "true" ]]; then
   $ ${green}PIA_TOKEN=$PIA_TOKEN \\
     PF_GATEWAY=$WG_SERVER_IP \\
     PF_HOSTNAME=$WG_HOSTNAME \\
-    ./port_forwarding.sh${nc}"
+    $SCRIPT_DIR/port_forwarding.sh${nc}"
 
   PIA_TOKEN=$PIA_TOKEN \
     PF_GATEWAY=$WG_SERVER_IP \
     PF_HOSTNAME=$WG_HOSTNAME \
-    ./port_forwarding.sh
+    "$SCRIPT_DIR/port_forwarding.sh"
 fi
