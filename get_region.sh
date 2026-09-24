@@ -109,12 +109,15 @@ printServerLatency() {
     --connect-timeout "$MAX_LATENCY" \
     --write-out "%{time_connect}" \
     "http://$serverIP:443")
-  if [[ $? -eq 0 ]]; then
+  exit_status=$?
+  if [[ $exit_status -eq 0 ]]; then
     >&2 echo "Got latency ${time}s for region: $regionName"
     echo "$time $regionID $serverIP"
     # Write a list of servers with acceptable latency
     # to /opt/piavpn-manual/latencyList
     echo -e "$time" "$regionID"'\t'"$serverIP"'\t'"$regionName" >> /opt/piavpn-manual/latencyList
+  else
+    >&2 echo "❌ Failed to connect to $serverIP (region: $regionName, time: $time) with status $exit_status"
   fi
   # Sort the latencyList, ordered by latency
   sort -no /opt/piavpn-manual/latencyList /opt/piavpn-manual/latencyList
@@ -131,6 +134,7 @@ fi
 
 # Get all region data
 all_region_data=$(curl -s "$serverlist_url" | head -1)
+check_all_region_data
 
 # Set the region the user has specified
 selectedRegion=$PREFERRED_REGION
@@ -138,7 +142,6 @@ selectedRegion=$PREFERRED_REGION
 # If a server isn't being specified, auto-select the server with the lowest latency
 if [[ $selectedRegion == "none" ]]; then
   selectedOrLowestLatency="lowest latency"
-  check_all_region_data
 
   # Making sure this variable doesn't contain some strange string
   if [[ $PIA_PF != "true" ]]; then
@@ -177,7 +180,6 @@ found in at : ${green}/opt/piavpn-manual/latencyList${nc}
   fi
 else
   selectedOrLowestLatency="selected"
-  check_all_region_data
 fi
 
 get_selected_region_data
